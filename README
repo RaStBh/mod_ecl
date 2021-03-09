@@ -65,6 +65,11 @@ this program in the file COPYING.  If not, see <https://www.gnu.org/licenses/>.
 CHangelog
 ---------
 
+0.1.0
+
+    This version is a basic Apache HTTP Server extension which does nothing more
+    than to output the string "Hello World".
+
 0.0.0
 
     Nothing special here.
