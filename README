@@ -1,10 +1,10 @@
-This is the README file for the mod_ecl distribution.
+This file is part of RaSt mod_ecl.
 
-The mod_ecl distribution is an extension  module for the Apache HTTP Server.  It
-enables  the  Apache HTTP  Server  to  run  scripts  written in  the  Embeddable
-Common-Lisp language.
+RaSt mod_ecl is an extension module for  the Apache HTTP Server.  It enables the
+Apache  HTTP  Server  to  run  scripts written  in  the  Embeddable  Common-Lisp
+language.
 
-Copyright (C) 2021 Ralf Stephan <me@ralf-stephan.name>
+Copyright (C) 2021 Ralf Stephan (RaSt) <me@ralf-stephan.name>
 
 Copying  and  distribution of  this  file,  with  or without  modification,  are
 permitted in any  medium without royalty provided the copyright  notice and this
