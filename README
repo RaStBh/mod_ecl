@@ -91,4 +91,4 @@ Apache HTTP Server
     HTTP Server 2.4.   2020.  -- https://httpd.apache.org/docs/2.4/en/developer/
     modguide.html (online: 2021-03-09 13:57:33 +0000)
 
-Embeddable  Common-Lisp
+Embeddable Common-Lisp
