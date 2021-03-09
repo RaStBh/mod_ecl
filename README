@@ -18,7 +18,7 @@ Contents
 About
 Install
 Usage
-COPYING
+Copying
 Changelog
 References
 
@@ -39,7 +39,7 @@ Usage
 
 ================================================================================
 
-COPYING
+Copying
 -------
 
 RaSt mod_ecl is an extension module for  the Apache HTTP Server.  It enables the
