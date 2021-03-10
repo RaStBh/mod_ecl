@@ -125,6 +125,20 @@ should show an output similar to the following:
 
     The sample page from mod_ecl.c
 
+You can use the make command. You might require root privileges to do this.  But
+I will not cover  the usage of make here, I just list  some of the make commands
+here .
+
+    bash$> cd $HOME/mod_ecl/src/
+
+    bash$> make
+
+    bash$> make install
+
+    bash$> make test
+
+    bash$> make clean
+
 ================================================================================
 
 Copying
