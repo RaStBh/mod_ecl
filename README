@@ -88,6 +88,11 @@ Create the /etc/apache2/mods-available/ecl.conf file with following content:
         </Location>
     </IfModule>
 
+Enable the  extension module using the  a2enmod command. You might  require root
+privileges to do this.
+
+    bash$> a2enmod ecl
+
 Create the /var/www/html/mod_ecl/ directory.
 
     bash$> mkdir /var/www/html/mod_ecl/
