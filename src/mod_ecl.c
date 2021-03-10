@@ -79,7 +79,7 @@ static int ecl_handler(request_rec *r)
     return OK;
 }
 
-static void ecl_register_hooks_X(apr_pool_t *p)
+static void ecl_register_hooks(apr_pool_t *p)
 {
     ap_hook_handler(ecl_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
@@ -92,5 +92,5 @@ module AP_MODULE_DECLARE_DATA ecl_module = {
     NULL,                  /* create per-server config structures */
     NULL,                  /* merge  per-server config structures */
     NULL,                  /* table of config file commands       */
-    ecl_register_hooks_X     /* register hooks                      */
+    ecl_register_hooks     /* register hooks                      */
 };
