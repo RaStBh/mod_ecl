@@ -53,7 +53,7 @@ My source code is in the $HOME/mod_ecl/ directory.
 
 Generate template for creating your own extension module using the apxs command.
 
-    bash$> apxs -g -n 'ecl'
+    bash$> apxs -g -n ecl
 
 This creates the ecl/ directory and within the template files.
 
