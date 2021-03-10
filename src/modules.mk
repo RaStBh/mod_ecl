@@ -1,5 +1,9 @@
 ## This file is part of RaSt mod_ecl.
 ##
+## RaSt mod_ecl is  an extension module for the Apache  HTTP Server.  It enables
+## the Apache HTTP  Server to run scripts written in  the Embeddable Common-Lisp
+## language.
+##
 ## Copyright (C) 2021 Ralf Stephan (RaSt) <me@ralf-stephan.name>
 ##
 ## RaSt mod_ecl is free software: you can redistribute it and/or modify it under
