@@ -100,4 +100,8 @@ Apache HTTP Server
     2020.   -- https://httpd.apache.org/docs/2.4/en/programs/apxs.html  (online:
     2021-03-09 17:08:43 +0000)
 
+    see also:
+    bash$> man 1 apxs
+    bash> info apxs
+
 Embeddable Common-Lisp
