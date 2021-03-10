@@ -18,6 +18,7 @@ Contents
 About
 Install
 Usage
+Development
 Copying
 Changelog
 References
@@ -36,6 +37,87 @@ Install
 
 Usage
 -----
+
+================================================================================
+
+Development
+-----------
+
+My development environment is:
+
+    Debian GNU/Linux 9.13 (stretch)
+    Apache HTTP Server 2.4.25
+    ECL 15.3.7
+
+My source code is in the $HOME/mod_ecl/ directory.
+
+Generate template for creating your own extension module using the apxs command.
+
+    bash$> apxs -g -n 'ecl'
+
+This creates the ecl/ directory and within the template files.
+
+    ecl/.deps
+    ecl/Makefile
+    ecl/mod_ecl.c
+    ecl/modules.mk
+
+Move this files to the $HOME/mod_ecl/src/ source code directory.
+
+Compile the extension module into a DSO file.
+
+    bash> apxs -c ./mod_ecl.c
+
+Than install  the extension  module.  You  might require  root privileges  to do
+this.
+
+    bash> apxs -i ./mod_ecl.la
+
+The    extension    module    mod_ecl.so    file    is    installed    in    the
+/usr/lib/apache2/modules/ directory.
+
+Create the /etc/apache2/mods-available/ecl.load file with following content:
+
+    LoadModule ecl_module /usr/lib/apache2/modules/mod_ecl.so
+
+Create the /etc/apache2/mods-available/ecl.conf file with following content:
+
+    <IfModule mod_ecl.c>
+        <Location /mod_ecl>
+            SetHandler ecl
+        </Location>
+    </IfModule>
+
+Create the /var/www/html/mod_ecl/ directory.
+
+    bash$> mkdir /var/www/html/mod_ecl/
+
+Restart the  Apache HTTP Server using  the apachectl command. You  might require
+root privileges to do this.
+
+    bash$> apachectl restart
+
+You now should be able to requet the URLs
+
+    http://localhost/mod_ecl
+    http://127.0.0.1/mod_ecl
+
+and you should read the string 'The sample page from mod_ecl.c'.
+
+For example using the lynx command
+
+    bash$> lynx -mime_header http://localhost/mod_ecl/
+
+should show an output similar to the following:
+
+    HTTP/1.1 200 OK
+    Date: Wed, 10 Mar 2021 08:10:35 GMT
+    Server: Apache/2.4.25 (Debian)
+    Content-Length: 31
+    Connection: close
+    Content-Type: text/html
+
+    The sample page from mod_ecl.c
 
 ================================================================================
 
