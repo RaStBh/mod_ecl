@@ -43,6 +43,19 @@ Usage
 Development
 -----------
 
+Generate template for creating your own extension module using the apxs command.
+
+bash$> apxs -g -n 'ecl'
+
+This creates the files:
+
+.deps
+Makefile
+mod_ecl.c
+modules.mk
+
+Move this files to the mod_ecl/src/ directory.
+
 ================================================================================
 
 Copying
