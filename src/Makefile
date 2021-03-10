@@ -48,7 +48,7 @@ clean:
 
 #   simple test
 test: reload
-	lynx -mime_header http://localhost/ecl
+	lynx -mime_header http://localhost/mod_ecl/
 
 #   install and activate shared object by reloading Apache to
 #   force a reload of the shared object file
@@ -62,4 +62,3 @@ restart:
 	$(APACHECTL) restart
 stop:
 	$(APACHECTL) stop
-
