@@ -1,0 +1,8 @@
+src/.libs/
+
+src/*.c~
+src/*.h~
+
+src/*.la
+src/*.lo
+src/*.slo
