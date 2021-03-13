@@ -49,6 +49,9 @@ My development environment is:
     Debian GNU/Linux 9.13 (stretch)
     Apache HTTP Server 2.4.25
     ECL 15.3.7
+    Embeddable  Common-Lisp (EXL) 15.3.7
+    Apache Portable Runtime (APR) 1.5.2
+    Apache Portable Runtime Utility Library (APR-util) 1.5.4
 
 My source code is in the $HOME/mod_ecl/ directory.
 
