@@ -51,6 +51,14 @@
 
 
 
+/**
+ * @file
+ *
+ * @brief This file contains the core functionality of mod_ecl.
+ */
+
+
+
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
