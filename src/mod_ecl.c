@@ -63,6 +63,9 @@
 #include "http_config.h"
 #include "http_protocol.h"
 #include "ap_config.h"
+#include "mod_ecl.h"
+
+
 
 /* The sample content handler */
 static int ecl_handler(request_rec *r)
