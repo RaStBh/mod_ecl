@@ -166,7 +166,7 @@ Copying
 
 ================================================================================
 
-CHangelog
+Changelog
 ---------
 
 0.0.0
@@ -202,6 +202,10 @@ Apache HTTP Server
 [1615298253] The Apache Software Foundation.   Developing modules for the Apache
     HTTP Server 2.4.   2020.  -- https://httpd.apache.org/docs/2.4/en/developer/
     modguide.html (online: 2021-03-09 13:57:33 +0000)
+
+[1615386286] The Apache  Software Foundation.  Apache Module  mod_so.  2020.  --
+    https://httpd.apache.org/docs/2.4/en/mod/mod_so.html   (online:   2021-03-10
+    14:24:46 +0000)
 
 [1615309723] The  Apache Software  Foundation.   apxs -  APache eXtenSion  tool.
     2020.   -- https://httpd.apache.org/docs/2.4/en/programs/apxs.html  (online:
