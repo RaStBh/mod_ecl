@@ -30,4 +30,12 @@
 
 
 
+#ifndef MOD_ECL_H
+#define MOD_ECL_H
+
+
+
 module AP_MODULE_DECLARE_DATA ecl_module;
+
+
+#endif MOD_ECL_H
