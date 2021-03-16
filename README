@@ -82,7 +82,7 @@ Compile module using the make command.
 
     bash$> make
 
-Install module using  the make command.  You might require  root privileges to do
+Install module using the make command.  You might require root privileges to do
 this.
 
     bash$> make install
