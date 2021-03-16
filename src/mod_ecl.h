@@ -25,7 +25,9 @@
 /**
  * @file mod_ecl.h
  *
- * @brief This file contains the core functionality of mod_ecl.
+ * @brief This file contains the core functionality of this module.
+ *
+ * @details
  */
 
 
@@ -35,7 +37,28 @@
 
 
 
+/**
+ * @brief Function to handle the request.
+ */
+
+static int ecl_handler(request_rec * request);
+
+
+
+/**
+ * @brief Function to hook in the request processing.
+ */
+
+static void register_hooks(apr_pool_t * pool);
+
+
+
+/**
+ * @brief Apache HTTP Server Core DSO variable.
+ */
+
 module AP_MODULE_DECLARE_DATA ecl_module;
 
 
-#endif MOD_ECL_H
+
+#endif // MOD_ECL_H

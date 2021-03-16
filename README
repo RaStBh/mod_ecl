@@ -34,10 +34,68 @@ About
 Install
 -------
 
+You can download the source code from:
+
+https://github.com/RaStBh/mod_ecl
+https://gitlab.com/RaStBh/mod_ecl
+
 ================================================================================
 
 Usage
 -----
+
+Apache HTTP Server 2.x configuration:
+
+Create the /etc/apache2/mods-available/ecl.load file with following content:
+
+    LoadModule ecl_module /usr/lib/apache2/modules/mod_ecl.so
+
+Create the /etc/apache2/mods-available/ecl.conf file with following content:
+
+    # Handle all files with file xtension .ecl by the mod_ecl module.
+
+    <FilesMatch ".+\.ecl$">
+        SetHandler application/x-httpd-ecl
+    </FilesMatch>
+
+    # Deny access to files without filename (e.g. '.ecl')
+
+    <FilesMatch "^\.ecl$">
+        Require all denied
+    </FilesMatch>
+
+Enable the extension  module using the a2enmod command.  You  might require root
+privileges to do this.
+
+    bash$> a2enmod ecl
+
+Restart the Apache  HTTP Server using the apachectl command.   You might require
+root privileges to do this.
+
+    bash$> apachectl restart
+
+Change to the source directory.
+
+    bash> cd $DIR/mod_ecl/src/
+
+Compile module using the make command.
+
+    bash$> make
+
+Install module using  the make command.  You might require  root privileges to do
+this.
+
+    bash$> make install
+
+Restart the Apache  HTTP Server using the make command.   You might require root
+privileges to do this.
+
+    bash§> make restart
+
+Build  doxygen documentation  using the  make command.   You might  require root
+privileges to do this.
+
+    bash$> make doc
 
 ================================================================================
 
@@ -52,9 +110,10 @@ My development environment is:
     Apache Portable Runtime (APR) 1.5.2
     Apache Portable Runtime Utility Library (APR-util) 1.5.4
 
-My source code is in the $HOME/mod_ecl/ directory.
+To create an example module to test your environment you can generate a template
+module by using the APache eXtenSion tool (apxs).
 
-Generate template for creating your own extension module using the apxs command.
+Generate template using the apxs command.
 
     bash$> apxs -g -n ecl
 
@@ -71,7 +130,7 @@ Compile the extension module into a DSO file.
 
     bash> apxs -c ./mod_ecl.c
 
-Than install  the extension  module.  You  might require  root privileges  to do
+Then install  the extension  module.  You  might require  root privileges  to do
 this.
 
     bash> apxs -i ./mod_ecl.la
@@ -91,19 +150,19 @@ Create the /etc/apache2/mods-available/ecl.conf file with following content:
         </Location>
     </IfModule>
 
-Enable the  extension module using the  a2enmod command. You might  require root
+Enable the extension  module using the a2enmod command.  You  might require root
 privileges to do this.
 
     bash$> a2enmod ecl
 
-Create the /var/www/html/mod_ecl/ directory.
-
-    bash$> mkdir /var/www/html/mod_ecl/
-
-Restart the  Apache HTTP Server using  the apachectl command. You  might require
+Restart the Apache  HTTP Server using the apachectl command.   You might require
 root privileges to do this.
 
     bash$> apachectl restart
+
+Create the /var/www/html/mod_ecl/ directory.
+
+    bash$> mkdir /var/www/html/mod_ecl/
 
 You now should be able to requet the URLs
 
@@ -179,6 +238,11 @@ Changelog
 
     This version is a basic Apache HTTP Server extension which does nothing more
     than to output the string "Hello World".
+
+0.1.1
+
+    Introducing  doxygen  for  documentation.  Adding  proper  comments.   Small
+    changes to the code.  And other changes.
 
 ================================================================================
 
