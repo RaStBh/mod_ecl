@@ -284,6 +284,10 @@ Changelog
 
     Add missing comment.
 
+0.2.0
+
+    Read file and output its content.
+
 ================================================================================
 
 References
