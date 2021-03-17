@@ -1380,7 +1380,12 @@ static void register_hooks(apr_pool_t * pool)
  *    A function  to allow  this module  to merge  the per  server configuration
  *    structures for two servers.
  *
- * 6. \c register_hooks
+ * 6. \c directives_list
+ *
+ *    List  of  directives which  we  respond  to  in  a configuration  file  or
+ *    .htaccess file.
+ *
+ * 7. \c register_hooks
  *
  *    A  hook  to  allow  this  module  to hook  other  points  in  the  request
  *    processing.   In this  function, modules  should call  the \c  ap_hook_*()
