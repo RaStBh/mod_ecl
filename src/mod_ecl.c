@@ -690,7 +690,7 @@ APLOG_USE_MODULE(ecl);
  *
  *     The server is  unable to store the representation needed  to complete the
  *     request.
-  *
+ *
  *   * \c HTTP_LOOP_DETECTED
  *
  *     \c 508 \c Loop \c Detected
@@ -798,7 +798,7 @@ static int ecl_handler(request_rec * request)
  *   ap_hook_check_authz().  If  "Satisfy any"  is in effect,  this hook  may be
  *   skipped.
  *
- * * \c ap_hook_cache_status<p></p>  
+ * * \c ap_hook_cache_status<p></p>
  *
  * * \c ap_hook_canon_handler<p></p>
  *
