@@ -39,6 +39,8 @@ You can download the source code from:
 https://github.com/RaStBh/mod_ecl
 https://gitlab.com/RaStBh/mod_ecl
 
+Download the latest Version.
+
 ================================================================================
 
 Usage
@@ -74,15 +76,19 @@ root privileges to do this.
 
     bash$> apachectl restart
 
+Create an empty file test.ecl in e.g. /var/www/html/.
+
+    bash$> touch /var/www/html/mod_ecl/test.ecl
+
 Change to the source directory.
 
-    bash> cd $DIR/mod_ecl/src/
+    bash$> cd $DIR/mod_ecl/src/
 
 Compile module using the make command.
 
     bash$> make
 
-Install module using  the make command.  You might require  root privileges to do
+Install module using the make command.  You might require root privileges to do
 this.
 
     bash$> make install
@@ -96,6 +102,32 @@ Build  doxygen documentation  using the  make command.   You might  require root
 privileges to do this.
 
     bash$> make doc
+
+Using the lynx command
+
+    bash$> lynx -mime_header http://localhost/mod_ecl/test.ecl
+
+should show an output similar to the following:
+
+    HTTP/1.1 200 OK
+    Date: Tue, 16 Mar 2021 19:49:13 GMT
+    Server: Apache/2.4.25 (Debian)
+    Vary: Accept-Encoding
+    Content-Length: 207
+    Connection: close
+    Content-Type: text/html
+
+    <!DODCTYPE html>
+    <html>
+        <head>
+            <title>RaSt mod_ecl</title>
+        </head>
+        <body>
+            Hello World!<br>
+            <br>
+            This is the sample page from RaSt mod_ecl!<br>
+        </body>
+    </html>
 
 ================================================================================
 
