@@ -76,7 +76,7 @@ root privileges to do this.
 
     bash$> apachectl restart
 
-Create an empty file test.ecl in e.g. /var/www/html/.
+Create a file test.ecl in e.g. /var/www/html/ containing some content.
 
     bash$> touch /var/www/html/mod_ecl/test.ecl
 
@@ -109,23 +109,24 @@ Using the lynx command
 
 should show an output similar to the following:
 
-    HTTP/1.1 200 OK
-    Date: Tue, 16 Mar 2021 19:49:13 GMT
-    Server: Apache/2.4.25 (Debian)
-    Vary: Accept-Encoding
-    Content-Length: 207
-    Connection: close
-    Content-Type: text/html
 
     <!DODCTYPE html>
     <html>
         <head>
-            <title>RaSt mod_ecl</title>
+            <meta charset="utf-8"/>        <title>RaSt mod_ecl</title>
         </head>
         <body>
             Hello World!<br>
             <br>
             This is the sample page from RaSt mod_ecl!<br>
+            <br>
+            file name:<br>
+            /var/www/html/mod_ecl/test.ecl<br>
+            <br>
+            file content:<br>
+            ===== Begin =====<br>
+    Hello form test.ecl!<br>
+            ===== END =======<br>
         </body>
     </html>
 
@@ -286,7 +287,7 @@ Changelog
 
 0.2.0
 
-    Read file and output its content.
+    Read file and output its content. And other changes.
 
 ================================================================================
 
