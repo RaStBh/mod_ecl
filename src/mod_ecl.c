@@ -70,9 +70,35 @@
 
 // Header files from Apache Runtime Library.
 
+#include "apr_file_info.h"
+#include "apr_strings.h"
+
 // Header files from RaSt mod_ecl.
 
 #include "mod_ecl.h"
+
+
+/**
+ * @brief mod_ecl failure status codes.
+ */
+
+#define MECL_FAILURE 0
+
+
+
+/**
+ * @brief mod_ecl success status codes.
+ */
+
+#define MECL_SUCCESS 1
+
+
+
+/**
+ * @brief Datatype for mod_ecl status codes.
+ */
+
+typedef int mecl_status_t;
 
 
 
@@ -84,6 +110,171 @@
  */
 
 APLOG_USE_MODULE(ecl);
+
+
+
+/**
+ * @brief Function to get the file name from the request data.
+ *
+ * @details
+ *
+ * @param[in] request
+ * : the request data
+ *
+ * @param[in,out] file_name
+ * : the filename
+ *
+ * @return mecl_status
+ * : on failure: MECL_FAILURE / on success: MECL_SUCCESS
+ */
+
+static mecl_status_t get_file_name(request_rec * request, char const ** file_name)
+{
+    mecl_status_t status = MECL_FAILURE;
+
+    if (   request
+        && request->filename)
+    {
+        * file_name = apr_pstrdup(request->pool, request->filename);
+        status = MECL_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief Function to get the file content from the request data.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] file_name
+ *   : the file name
+ *
+ * @param[in,out] file_content
+ *   : the file content
+ *
+ * @return apr_status
+ *  : on failure: HTTP_NOT_FOUND or HTTP_FORBIDDEN / on success: APR_SUCCESS
+ */
+
+static apr_status_t get_file_content(request_rec * request, char const * file_name, char const ** file_content)
+{
+    apr_status_t apr_status = APR_SUCCESS;
+    apr_finfo_t file_info = {};
+    apr_file_t * file = NULL;
+    apr_size_t read_bytes = 4 * 1024;
+    apr_size_t buffer_size = read_bytes;
+    char * buffer = NULL;
+
+    // Make the file_content an empty string.
+
+    * file_content = "";
+
+    // Get the file stats.
+
+    apr_status = apr_stat(& file_info, file_name, APR_FINFO_MIN, request->pool);
+
+    // Check the status.
+
+    if (APR_SUCCESS == apr_status)
+    {
+        // Getting the file stats have been sucessfully.
+
+        // Check  the file stats.
+
+        if (file_info.filetype == APR_NOFILE)
+        {
+            // Script is not found or unable to stat.
+
+            return HTTP_NOT_FOUND;
+        }
+        if (file_info.filetype == APR_DIR)
+        {
+            // Attempt to invoke a directory as script.
+
+            return HTTP_FORBIDDEN;
+        }
+    }
+    else
+    {
+      // Getting the file stats have not been sucessfully.
+
+      return apr_status;
+    }
+
+    // Open the file.
+
+    apr_status = apr_file_open(& file, file_name, APR_READ | APR_FOPEN_BUFFERED, APR_OS_DEFAULT, request->pool);
+
+    // Check the status.
+
+    if (APR_SUCCESS == apr_status)
+    {
+        // Opening the file have been successfully.
+
+        // Allocate buffer.
+
+        buffer = (char *) malloc(buffer_size);
+
+        // Cleare buffer.
+
+        memset(buffer, 0, buffer_size);
+
+        // Read the file content.
+
+        while (APR_SUCCESS == apr_status)
+        {
+            // Read bytes into the buffer.
+            //
+            // After reading  readBytes contains the  number of byte to  read in
+            // the next loop iteration.
+
+            apr_status = apr_file_read_full(file, buffer, buffer_size, & read_bytes);
+
+            // Append the buffer to the file_content.
+
+            * file_content = apr_pstrcat(request->pool, * file_content, buffer, NULL);
+
+            // Ajust the buffer size;
+
+            buffer_size = read_bytes;
+
+            // Reallocate buffer.
+
+            buffer = (char *) realloc(buffer, buffer_size);
+
+            // Cleare buffer.
+
+            memset(buffer, 0, buffer_size);
+        }
+
+        // Free buffer.
+
+        free(buffer);
+
+        // Close the file.
+
+        apr_file_close(file);
+
+        apr_status = APR_SUCCESS;
+    }
+    else
+    {
+        // Getting the file stats have not been sucessfully.
+
+        return apr_status;
+    }
+
+    // If we reach this line we assume everything worked fina.
+
+    return apr_status;
+}
+
 
 
 
@@ -112,6 +303,9 @@ APLOG_USE_MODULE(ecl);
  *
  *   Module  will handle  the remainder  of the  request.  The  core will  never
  *   invoke the request again.
+ *
+ * @see https://ci.apache.org/projects/httpd/trunk/doxygen/httpd_8h.html
+ * @see httpd-2.4.25/include/httpd.h
  *
  * HTTP status codes:
  *
@@ -690,7 +884,7 @@ APLOG_USE_MODULE(ecl);
  *
  *     The server is  unable to store the representation needed  to complete the
  *     request.
-  *
+ *
  *   * \c HTTP_LOOP_DETECTED
  *
  *     \c 508 \c Loop \c Detected
@@ -721,11 +915,16 @@ APLOG_USE_MODULE(ecl);
  * @param[in] request
  * : the request data
  *
- * @return DECLINED | OK
+ * @return OK
  */
 
 static int ecl_handler(request_rec * request)
 {
+    mecl_status_t mecl_status = MECL_SUCCESS;
+    apr_status_t apr_status = APR_SUCCESS;
+    char const * file_name = "";
+    char const * file_content = apr_pcalloc(request->pool, 0);;
+
     // Shall we decline to handle the request?
 
     if (   (!request->handler)
@@ -743,12 +942,37 @@ static int ecl_handler(request_rec * request)
         ap_rputs("<!DODCTYPE html>\n", request);
         ap_rputs("<html>\n", request);
         ap_rputs("    <head>\n", request);
+        ap_rputs("        <meta charset=\"utf-8\"/>", request);
         ap_rputs("        <title>RaSt mod_ecl</title>\n", request);
         ap_rputs("    </head>\n", request);
         ap_rputs("    <body>\n", request);
         ap_rputs("        Hello World!<br>\n", request);
         ap_rputs("        <br>\n", request);
         ap_rputs("        This is the sample page from RaSt mod_ecl!<br>\n", request);
+        ap_rputs("        <br>\n", request);
+
+        // Get and output file name.
+
+        ap_rputs("        file name:<br>\n", request);
+        mecl_status = get_file_name(request, & file_name);
+        if (MECL_SUCCESS == mecl_status)
+        {
+            ap_rprintf(request, "        %s<br>\n", file_name);
+            ap_rputs("        <br>\n", request);
+        }
+
+        // Get and output the file content.
+
+        ap_rputs("        file content:", request);
+        apr_status = get_file_content(request, file_name, & file_content);
+        if (APR_SUCCESS == apr_status)
+        {
+            ap_rputs("<br>\n", request);
+            ap_rputs("        ===== Begin =====<br>\n", request);
+            ap_rprintf(request, "%s<br>\n", file_content);
+            ap_rputs("        ===== END =======\n", request);
+        }
+
         ap_rputs("    </body>\n", request);
         ap_rputs("</html>\n", request);
     }
@@ -798,7 +1022,7 @@ static int ecl_handler(request_rec * request)
  *   ap_hook_check_authz().  If  "Satisfy any"  is in effect,  this hook  may be
  *   skipped.
  *
- * * \c ap_hook_cache_status<p></p>  
+ * * \c ap_hook_cache_status<p></p>
  *
  * * \c ap_hook_canon_handler<p></p>
  *
@@ -1410,10 +1634,10 @@ module AP_MODULE_DECLARE_DATA ecl_module =
 {
     STANDARD20_MODULE_STUFF, // FIll  in  with  boilerplate code  to  make  this
                              // module a standard 2.x module.
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    register_hooks           // Funtction to handel the request.
+    NULL,                    // Per-directory configuration handler.
+    NULL,                    // Merge handler for per-directory configurations.
+    NULL,                    // Per-server configuration handler.
+    NULL,                    // Merge handler for per-server configurations.
+    NULL,                    // Any directives we may have for httpd1.
+    register_hooks           // Funtction to handel the request..
 };
