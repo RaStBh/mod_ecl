@@ -184,7 +184,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
     // Make the file_content an empty string.
 
-    * file_content = "";
+    * file_content = apr_pstrdup(request->pool, "");
 
     // Get the file stats.
 
@@ -963,7 +963,7 @@ static int ecl_handler(request_rec * request)
 {
     mecl_status_t mecl_status = MECL_SUCCESS;
     apr_status_t apr_status = APR_SUCCESS;
-    char const * file_name = "";
+    char const * file_name = apr_pstrdup(request->pool, "");
     char const * file_content = apr_pcalloc(request->pool, 0);;
 
     // Shall we decline to handle the request?
