@@ -185,7 +185,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
     if (APR_SUCCESS == apr_status)
     {
-        // Getting the file stats have been sucessfully.
+        // Getting the file stats has been sucessfully.
 
         // Check  the file stats.
 
@@ -217,7 +217,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
     if (APR_SUCCESS == apr_status)
     {
-        // Opening the file have been successfully.
+        // Opening the file has been successfully.
 
         // Create new pool.
 
