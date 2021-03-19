@@ -223,15 +223,15 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
         apr_pool_create(& buffer_pool, NULL);
 
-        // Allocate empty buffer.
-
-        buffer = apr_pcalloc(buffer_pool, buffer_size);
-
         // Read the file content.
 
         while (   (APR_SUCCESS == apr_status)
                && (APR_EOF != apr_status))
         {
+            // Allocate empty buffer.
+
+            buffer = (char *) apr_pcalloc(buffer_pool, buffer_size + 1);
+
             // Read bytes into the buffer.
             //
             // After reading  readBytes contains the  number of byte to  read in
@@ -250,10 +250,6 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
             // Clear pool.
 
             apr_pool_clear(buffer_pool);
-
-            // Allocate empty buffer.
-
-            buffer = apr_pcalloc(buffer_pool, buffer_size);
         }
 
         // Destroy buffer.
