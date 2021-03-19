@@ -263,6 +263,8 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
         apr_file_close(file);
 
+        // Reading the file content has been successfully.
+
         apr_status = APR_SUCCESS;
     }
     else
