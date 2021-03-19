@@ -239,20 +239,34 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
             apr_status = apr_file_read_full(file, buffer, buffer_size, & read_bytes);
 
-            // Append the buffer to the file_content.
+            // Check the status.
 
-            * file_content = apr_pstrcat(request->pool, * file_content, buffer, NULL);
+            if (   (APR_SUCCESS == apr_status)
+                || (APR_EOF == apr_status))
+            {
+                // Reading the file content has been successfully.
 
-            // Ajust the buffer size;
+                // Append the buffer to the file_content.
 
-            buffer_size = read_bytes;
+                * file_content = apr_pstrcat(request->pool, * file_content, buffer, NULL);
 
-            // Clear pool.
+                // Ajust the buffer size;
+
+                buffer_size = read_bytes;
+            }
+            else
+            {
+                // Reading the file content has not been successfully.
+
+                return apr_status;
+            }
+
+            // Clear the pool.
 
             apr_pool_clear(buffer_pool);
         }
 
-        // Destroy buffer.
+        // Destroy the buffer.
 
         apr_pool_destroy(buffer_pool);
 
