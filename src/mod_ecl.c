@@ -172,7 +172,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
     apr_size_t buffer_size = read_bytes;
     apr_pool_t * buffer_pool = NULL;
     char * buffer = NULL;
-    
+
     // Make the file_content an empty string.
 
     * file_content = "";
@@ -222,7 +222,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
         // Create new pool.
 
         apr_pool_create(& buffer_pool, NULL);
-      
+
         // Allocate empty buffer.
 
         buffer = apr_pcalloc(buffer_pool, buffer_size);
@@ -249,16 +249,16 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
             // Clear pool.
 
             apr_pool_clear(buffer_pool);
-            
+
             // Allocate empty buffer.
-            
+
             buffer = apr_pcalloc(buffer_pool, buffer_size);
         }
 
         // Destroy buffer.
 
         apr_pool_destroy(buffer_pool);
-        
+
         // Close the file.
 
         apr_file_close(file);
