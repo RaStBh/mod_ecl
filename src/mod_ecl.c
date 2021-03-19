@@ -229,7 +229,8 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
         // Read the file content.
 
-        while (APR_SUCCESS == apr_status)
+        while (   (APR_SUCCESS == apr_status)
+               && (APR_EOF != apr_status))
         {
             // Read bytes into the buffer.
             //
