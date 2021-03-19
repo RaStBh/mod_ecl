@@ -79,6 +79,15 @@
 #include "mod_ecl.h"
 
 
+
+/**
+ * @brief Number of byts to read at once to read from a file.
+ */
+
+#define MECL_READ_BYTES (4 * 1024)
+
+
+
 /**
  * @brief mod_ecl failure status codes.
  */
@@ -168,8 +177,8 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
     apr_status_t apr_status = APR_SUCCESS;
     apr_finfo_t file_info = {};
     apr_file_t * file = NULL;
-    apr_size_t read_bytes = 4 * 1024;
-    apr_size_t buffer_size = read_bytes;
+    apr_size_t read_bytes = MECL_READ_BYTES;
+    apr_size_t buffer_size = MECL_READ_BYTES;
     apr_pool_t * buffer_pool = NULL;
     char * buffer = NULL;
 
