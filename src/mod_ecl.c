@@ -204,7 +204,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
     }
     else
     {
-      // Getting the file stats have not been sucessfully.
+      // Getting the file stats has not been sucessfully.
 
       return apr_status;
     }
@@ -266,7 +266,7 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
     }
     else
     {
-        // Getting the file stats have not been sucessfully.
+        // Getting the file stats has not been sucessfully.
 
         return apr_status;
     }
