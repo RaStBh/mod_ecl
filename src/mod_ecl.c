@@ -213,74 +213,91 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
     apr_status = apr_file_open(& file, file_name, APR_READ | APR_FOPEN_BUFFERED, APR_OS_DEFAULT, request->pool);
 
+    // Lock the file.
+
+    apr_status = apr_file_lock(file, APR_FLOCK_SHARED | APR_FLOCK_NONBLOCK);
+
     // Check the status.
 
     if (APR_SUCCESS == apr_status)
     {
-        // Opening the file has been successfully.
+    //Locking the file has been successfully.
 
-        // Create new pool.
+        // Check the status.
 
-        apr_pool_create(& buffer_pool, NULL);
-
-        // Read the file content.
-
-        while (   (APR_SUCCESS == apr_status)
-               && (APR_EOF != apr_status))
+        if (APR_SUCCESS == apr_status)
         {
-            // Allocate empty buffer.
+            // Opening the file has been successfully.
 
-            buffer = (char *) apr_pcalloc(buffer_pool, buffer_size + 1);
+            // Create new pool.
 
-            // Read bytes into the buffer.
-            //
-            // After reading  readBytes contains the  number of byte to  read in
-            // the next loop iteration.
+            apr_pool_create(& buffer_pool, NULL);
 
-            apr_status = apr_file_read_full(file, buffer, buffer_size, & read_bytes);
+            // Read the file content.
 
-            // Check the status.
-
-            if (   (APR_SUCCESS == apr_status)
-                || (APR_EOF == apr_status))
+            while (   (APR_SUCCESS == apr_status)
+                   && (APR_EOF != apr_status))
             {
-                // Reading the file content has been successfully.
+                // Allocate empty buffer.
 
-                // Append the buffer to the file_content.
+                buffer = (char *) apr_pcalloc(buffer_pool, buffer_size + 1);
 
-                * file_content = apr_pstrcat(request->pool, * file_content, buffer, NULL);
+                // Read bytes into the buffer.
+                //
+                // After reading  readBytes contains the  number of byte to  read in
+                // the next loop iteration.
 
-                // Ajust the buffer size;
+                apr_status = apr_file_read_full(file, buffer, buffer_size, & read_bytes);
 
-                buffer_size = read_bytes;
+                // Check the status.
+
+                if (   (APR_SUCCESS == apr_status)
+                    || (APR_EOF == apr_status))
+                {
+                    // Reading the file content has been successfully.
+
+                    // Append the buffer to the file_content.
+
+                    * file_content = apr_pstrcat(request->pool, * file_content, buffer, NULL);
+
+                    // Ajust the buffer size;
+
+                    buffer_size = read_bytes;
+                }
+                else
+                {
+                    // Reading the file content has not been successfully.
+
+                    return apr_status;
+                }
+
+                // Clear the pool.
+
+                apr_pool_clear(buffer_pool);
             }
-            else
-            {
-                // Reading the file content has not been successfully.
 
-                return apr_status;
-            }
+            // Destroy the buffer.
 
-            // Clear the pool.
+            apr_pool_destroy(buffer_pool);
 
-            apr_pool_clear(buffer_pool);
+            // Close the file.
+
+            apr_file_close(file);
+
+            // Reading the file content has been successfully.
+
+            apr_status = APR_SUCCESS;
         }
+        else
+        {
+            // Getting the file stats has not been sucessfully.
 
-        // Destroy the buffer.
-
-        apr_pool_destroy(buffer_pool);
-
-        // Close the file.
-
-        apr_file_close(file);
-
-        // Reading the file content has been successfully.
-
-        apr_status = APR_SUCCESS;
+            return apr_status;
+        }
     }
     else
     {
-        // Getting the file stats has not been sucessfully.
+        // Locking the file stats has not been sucessfully.
 
         return apr_status;
     }
