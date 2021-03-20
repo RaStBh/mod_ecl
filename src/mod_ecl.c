@@ -89,18 +89,10 @@
 
 
 /**
- * @brief mod_ecl failure status codes.
+ * @brief Failure status codes.
  */
 
-#define MECL_FAILURE 0
-
-
-
-/**
- * @brief mod_ecl success status codes.
- */
-
-#define MECL_SUCCESS 1
+#define APR_FAILURE 1
 
 
 
@@ -131,22 +123,23 @@ APLOG_USE_MODULE(ecl);
  * @param[in] request
  * : the request data
  *
- * @param[in,out] file_name
+ * @param[in,out] filename
  * : the filename
  *
  * @return mecl_status
  * : on failure: MECL_FAILURE / on success: MECL_SUCCESS
  */
 
-static mecl_status_t get_file_name(request_rec * request, char const ** file_name)
+static mecl_status_t getFilename(request_rec * request, char const ** filename)
 {
-    mecl_status_t status = MECL_FAILURE;
+    apr_status_t status = APR_FAILURE;
 
+    * filename = NULL;
     if (   request
         && request->filename)
     {
-        * file_name = apr_pstrdup(request->pool, request->filename);
-        status = MECL_SUCCESS;
+        * filename = apr_pstrdup(request->pool, request->filename);
+        status = APR_SUCCESS;
     }
 
     return status;
@@ -162,160 +155,179 @@ static mecl_status_t get_file_name(request_rec * request, char const ** file_nam
  * @param[in] request
  *   : the request data
  *
- * @param[in] file_name
+ * @param[in] filename
  *   : the file name
  *
- * @param[in,out] file_content
+ * @param[in,out] filecontent
  *   : the file content
  *
  * @return apr_status
  *  : on failure: HTTP_NOT_FOUND or HTTP_FORBIDDEN / on success: APR_SUCCESS
  */
 
-static apr_status_t get_file_content(request_rec * request, char const * file_name, char const ** file_content)
+static apr_status_t getFilecontent(request_rec * request, char const * filename, char const ** filecontent)
 {
-    apr_status_t apr_status = APR_SUCCESS;
-    apr_finfo_t file_info = {};
+    apr_status_t status = APR_FAILURE;
+    apr_finfo_t fileinfo = {};
     apr_file_t * file = NULL;
-    apr_size_t read_bytes = MECL_READ_BYTES;
-    apr_size_t buffer_size = MECL_READ_BYTES;
+    apr_size_t buffersize = MECL_READ_BYTES;
+    apr_size_t bytes_read = MECL_READ_BYTES;
     apr_pool_t * buffer_pool = NULL;
     char * buffer = NULL;
 
-    // Make the file_content an empty string.
+    // Initialize the filecontent.
 
-    * file_content = apr_pstrdup(request->pool, "");
+    * filecontent = apr_pstrdup(request->pool, "");;
 
-    // Get the file stats.
+    // Get the filestats.
 
-    apr_status = apr_stat(& file_info, file_name, APR_FINFO_MIN, request->pool);
+    status = apr_stat(& fileinfo, filename, APR_FINFO_MIN, request->pool);
 
     // Check the status.
 
-    if (APR_SUCCESS == apr_status)
+    if (APR_SUCCESS != status)
     {
-        // Getting the file stats has been sucessfully.
+        // Getting the file stats has not been successfully.
 
-        // Check  the file stats.
-
-        if (file_info.filetype == APR_NOFILE)
-        {
-            // Script is not found or unable to stat.
-
-            return HTTP_NOT_FOUND;
-        }
-        if (file_info.filetype == APR_DIR)
-        {
-            // Attempt to invoke a directory as script.
-
-            return HTTP_FORBIDDEN;
-        }
+        return status;
     }
-    else
-    {
-      // Getting the file stats has not been sucessfully.
 
-      return apr_status;
+    // Getting the file stats has been successfully.
+
+    // Check the file stats.
+
+    if (fileinfo.filetype == APR_NOFILE)
+    {
+        // Script is not found or unable to stat.
+
+        return HTTP_NOT_FOUND;
+    }
+    if (fileinfo.filetype == APR_DIR)
+    {
+        // Attempt to invoke a directory as script.
+
+        return HTTP_FORBIDDEN;
     }
 
     // Open the file.
 
-    apr_status = apr_file_open(& file, file_name, APR_READ | APR_FOPEN_BUFFERED, APR_OS_DEFAULT, request->pool);
-
-    // Lock the file.
-
-    apr_status = apr_file_lock(file, APR_FLOCK_SHARED | APR_FLOCK_NONBLOCK);
+    status = apr_file_open(& file, filename, APR_READ | APR_FOPEN_BUFFERED, APR_OS_DEFAULT, request->pool);
 
     // Check the status.
 
-    if (APR_SUCCESS == apr_status)
+    if (APR_SUCCESS != status)
     {
-    //Locking the file has been successfully.
+        // OPening the file has not been successfully.
+
+        return status;
+    }
+
+    // Opening the file has been successfully.
+
+    // Lock the file.
+
+    status = apr_file_lock(file, APR_FLOCK_SHARED | APR_FLOCK_NONBLOCK);
+
+    // Check the status.
+
+    if (APR_SUCCESS != status)
+    {
+        // Locking the file has not been successfully.
+
+        return status;
+    }
+
+    // Locking the file has been successfully.
+
+    // Create new pool.
+
+    status = apr_pool_create(& buffer_pool, NULL);
+
+    // Check the status.
+
+    if (APR_SUCCESS != status)
+    {
+        // Creating the pool has not been successfully.
+
+        return status;
+    }
+
+    // Creating the pool has been successfully.
+
+    // Read the file content.
+
+    while (   (APR_SUCCESS == status)
+           && (APR_EOF != status))
+    {
+        // Allocate empty buffer.
+
+        buffer = (char *) apr_pcalloc(buffer_pool, buffersize + 1);
+
+        // Check the buffer.
+
+        if (NULL == buffer)
+        {
+            // Allocating the buffer has not been successfully.
+
+            return APR_FAILURE;
+        }
+
+        // Allocating the buffer has been successfully.
+
+        // Read bytes into the buffer.
+        //
+        // After reading read_bytes  contains the number of byte to  read in the
+        // next loop iteration.
+
+        status = apr_file_read_full(file, buffer, buffersize, & bytes_read);
 
         // Check the status.
 
-        if (APR_SUCCESS == apr_status)
+        if ((APR_SUCCESS != status) && (APR_EOF != status))
         {
-            // Opening the file has been successfully.
+            // Reading the filecontent has not been successfully.
 
-            // Create new pool.
-
-            apr_pool_create(& buffer_pool, NULL);
-
-            // Read the file content.
-
-            while (   (APR_SUCCESS == apr_status)
-                   && (APR_EOF != apr_status))
-            {
-                // Allocate empty buffer.
-
-                buffer = (char *) apr_pcalloc(buffer_pool, buffer_size + 1);
-
-                // Read bytes into the buffer.
-                //
-                // After reading  readBytes contains the  number of byte to  read in
-                // the next loop iteration.
-
-                apr_status = apr_file_read_full(file, buffer, buffer_size, & read_bytes);
-
-                // Check the status.
-
-                if (   (APR_SUCCESS == apr_status)
-                    || (APR_EOF == apr_status))
-                {
-                    // Reading the file content has been successfully.
-
-                    // Append the buffer to the file_content.
-
-                    * file_content = apr_pstrcat(request->pool, * file_content, buffer, NULL);
-
-                    // Ajust the buffer size;
-
-                    buffer_size = read_bytes;
-                }
-                else
-                {
-                    // Reading the file content has not been successfully.
-
-                    return apr_status;
-                }
-
-                // Clear the pool.
-
-                apr_pool_clear(buffer_pool);
-            }
-
-            // Destroy the buffer.
-
-            apr_pool_destroy(buffer_pool);
-
-            // Close the file.
-
-            apr_file_close(file);
-
-            // Reading the file content has been successfully.
-
-            apr_status = APR_SUCCESS;
+            return status;
         }
-        else
-        {
-            // Getting the file stats has not been sucessfully.
 
-            return apr_status;
-        }
+        // Reading the filecontent has been successfully.
+
+        // Append the buffer to the file content.
+
+        * filecontent = apr_pstrcat(request->pool, * filecontent, buffer, NULL);
+
+        // Ajust the buffer size;
+
+        buffersize = bytes_read;
+
+        // Clear the pool.
+
+        apr_pool_clear(buffer_pool);
     }
-    else
+
+    // Destroy the buffer.
+
+    apr_pool_destroy(buffer_pool);
+
+    // Close the file.
+
+    status = apr_file_close(file);
+
+    // Check the state.
+
+    if (APR_SUCCESS != status)
     {
-        // Locking the file stats has not been sucessfully.
+        // Closing the file has not been successfully.
 
-        return apr_status;
+        return status;
     }
+
+    // Closing the file has been successfully.
 
     // If we reach this line we assume everything worked fina.
 
-    return apr_status;
+    return status;
 }
-
 
 
 
@@ -961,10 +973,9 @@ static apr_status_t get_file_content(request_rec * request, char const * file_na
 
 static int ecl_handler(request_rec * request)
 {
-    mecl_status_t mecl_status = MECL_SUCCESS;
-    apr_status_t apr_status = APR_SUCCESS;
-    char const * file_name = apr_pstrdup(request->pool, "");
-    char const * file_content = apr_pcalloc(request->pool, 0);;
+    apr_status_t status = APR_SUCCESS;
+    char const * filename = apr_pstrdup(request->pool, "");
+    char const * filecontent = apr_pcalloc(request->pool, 0);;
 
     // Shall we decline to handle the request?
 
@@ -995,22 +1006,22 @@ static int ecl_handler(request_rec * request)
         // Get and output file name.
 
         ap_rputs("        file name:<br>\n", request);
-        mecl_status = get_file_name(request, & file_name);
-        if (MECL_SUCCESS == mecl_status)
+        status = getFilename(request, & filename);
+        if (APR_SUCCESS == status)
         {
-            ap_rprintf(request, "        %s<br>\n", file_name);
+            ap_rprintf(request, "        %s<br>\n", filename);
             ap_rputs("        <br>\n", request);
         }
 
         // Get and output the file content.
 
         ap_rputs("        file content:", request);
-        apr_status = get_file_content(request, file_name, & file_content);
-        if (APR_SUCCESS == apr_status)
+        status = getFilecontent(request, filename, & filecontent);
+        if (APR_SUCCESS == status)
         {
             ap_rputs("<br>\n", request);
             ap_rputs("        ===== Begin =====<br>\n", request);
-            ap_rprintf(request, "%s<br>\n", file_content);
+            ap_rprintf(request, "%s<br>\n", filecontent);
             ap_rputs("        ===== END =======\n", request);
         }
 

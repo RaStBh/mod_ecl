@@ -141,6 +141,7 @@ My development environment is:
     Embeddable  Common-Lisp (EXL) 15.3.7
     Apache Portable Runtime (APR) 1.5.2
     Apache Portable Runtime Utility Library (APR-util) 1.5.4
+    Apache HTTP Request Library 2.13
 
 To create an example module to test your environment you can generate a template
 module by using the APache eXtenSion tool (apxs).
@@ -296,6 +297,10 @@ Changelog
 
   Add missing comment.
 
+0.2.3
+
+  Some Refactoring.
+
 ================================================================================
 
 References
@@ -316,13 +321,13 @@ Apache HTTP Server
 [1615296743]
 
     The Apache Software Foundation.  The  Apache HTTP Server Project.  2020.  --
-    https://httpd.apache.org/ (online: 2021-03-09 13:32:23 +0000)
+    URL: <https://httpd.apache.org/> (online: 2021-03-09 13:32:23 +0000)
 
 [1615297216]
 
     The   Apache  Software   Foundation.    Apache  HTTP   Server  Version   2.4
-    Documentation.   2020.   --  https://httpd.apache.org/docs/2.4/en/  (online:
-    2021-03-09 13:40:16 +0000)
+    Documentation.    2020.   --   URL:  <https://httpd.apache.org/docs/2.4/en/>
+    (online: 2021-03-09 13:40:16 +0000)
 
     see also:
     /usr/share/doc/apache2-doc/
@@ -330,134 +335,249 @@ Apache HTTP Server
 [1615297807]
 
     The Apache Software Foundation.  Developer Documentation for the Apache HTTP
-    Server   2.4.   2020.    --  https://httpd.apache.org/docs/2.4/en/developer/
-    (online: 2021-03-09 13:50:07 +0000)
+    Server   2.4.    2020.    --   URL:   <https://httpd.apache.org/docs/2.4/en/
+    developer/> (online: 2021-03-09 13:50:07 +0000)
 
 [1615449618]
 
-    The    Apache   Software    Foundation.     Module    Index.    2020.     --
-    https://httpd.apache.org/docs/2.4/en/mod/   (online:   2021-03-11   08:00:18
-    +0000)
+    The Apache  Software Foundation.   Module Index.   2020.  --  URL: <https://
+    httpd.apache.org/docs/2.4/en/mod/> (online: 2021-03-11 08:00:18 +0000)
 
 [1615449737]
 
     The Apache Software Foundation.  Apache Module mod_example_hooks.  2020.  --
-    https://httpd.apache.org/docs/2.4/en/mod/mod_example_hooks.html  (2021-03-11
-    08:02:17 +0000)
+    URL:       <https://httpd.apache.org/docs/2.4/en/mod/mod_example_hooks.html>
+    (online: 2021-03-11 08:02:17 +0000)
 
-        see also:
-        httpd-2.4.25\modules\examples\
-        httpd-2.4.25\modules\examples\README
-        httpd-2.4.25\modules\examples\mod_case_filter.c
-        httpd-2.4.25\modules\examples\mod_case_filter_in.c
-        httpd-2.4.25\modules\examples\mod_example_hooks.c
-        httpd-2.4.25\modules\examples\mod_example_ipc.c
+    see also:
+    httpd-2.4.25\modules\examples\
+    httpd-2.4.25\modules\examples\README
+    httpd-2.4.25\modules\examples\mod_case_filter.c
+    httpd-2.4.25\modules\examples\mod_case_filter_in.c
+    httpd-2.4.25\modules\examples\mod_example_hooks.c
+    httpd-2.4.25\modules\examples\mod_example_ipc.c
 
 [1615386286]
 
-    The  Apache   Software  Foundation.    Apache  Module  mod_so.    2020.   --
-    https://httpd.apache.org/docs/2.4/en/mod/mod_so.html   (online:   2021-03-10
+    The  Apache Software  Foundation.   Apache Module  mod_so.   2020.  --  URL:
+    <https://httpd.apache.org/docs/2.4/en/mod/mod_so.html>  (online:  2021-03-10
     14:24:46 +0000)
 
 [1615298253]
 
     The  Apache Software  Foundation.  Developing  modules for  the Apache  HTTP
-    Server   2.4.   2020.    --  https://httpd.apache.org/docs/2.4/en/developer/
-    modguide.html (online: 2021-03-09 13:57:33 +0000)
+    Server   2.4.    2020.    --   URL:   <https://httpd.apache.org/docs/2.4/en/
+    developer/modguide.html> (online: 2021-03-09 13:57:33 +0000)
 
 [1615450908]
 
     The Apache  Software Foundation.  Hook  Functions in the Apache  HTTP Server
-    2.x.   2020.   --  https://httpd.apache.org/docs/2.4/en/developer/hooks.html
-    (2021-03-11 08:21:48 +0000)
+    2.x.   2020.  --  URL: <https://httpd.apache.org/docs/2.4/en/developer/hooks
+    .html> (online: 2021-03-11 08:21:48 +0000)
 
 [1615451523]
 
     The  Apache Software  Foundation.   Request Processing  in  the Apache  HTTP
-    Server   2.x.   2020.    --  https://httpd.apache.org/docs/2.4/en/developer/
-    request.html (online: 2021-03-11 08:32:03 +0000)
+    Server   2.x.    2020.    --   URL:   <https://httpd.apache.org/docs/2.4/en/
+    developer/request.html> (online: 2021-03-11 08:32:03 +0000)
 
 [1615569331]
 
     The Apache Software Foundation.  How filters  work in Apache 2.0.  2020.  --
-    https://httpd.apache.org/docs/2.4/en/developer/filters.html         (online:
+    URL:  <https://httpd.apache.org/docs/2.4/en/developer/filters.html> (online:
     2021-03-12 17:15:31 +0000)
 
 [1615572244]
 
     The Apache Software Foundation.  Guide to writing output filters.  2020.  --
-    https://httpd.apache.org/docs/2.4/en/developer/output-filters.html  (online:
-    2021-03-12 18:04:04 +0000)
+    URL:    <https://httpd.apache.org/docs/2.4/en/developer/output-filters.html>
+    (online: 2021-03-12 18:04:04 +0000)
 
 [1615617303]
 
-    The Apache  Software Foundation.  Documenting  code in Apache 2.4  2020.  --
-    https://httpd.apache.org/docs/2.4/en/developer/documenting.html     (online:
-    2021-03-13 06:35:03 +0000)
+    The Apache Software Foundation.  Documenting  code in Apache 2.4.  2020.  --
+    URL:       <https://httpd.apache.org/docs/2.4/en/developer/documenting.html>
+    (online: 2021-03-13 06:35:03 +0000)
 
 [1615618803]
 
     The  Apache  Software Foundation.   Apache  HTTP  Server 2.x  Thread  Safety
-    Issues.     2020.      --    https://httpd.apache.org/docs/2.4/en/developer/
-    thread_safety.html (online: 2021-03-13 07:00:03 +0000)
+    Issues.   2020.   --  URL:  <https://httpd.apache.org/docs/2.4/en/developer/
+    thread_safety.html> (online: 2021-03-13 07:00:03 +0000)
 
 [1615625036]
 
     The Apache Software Foundation.  Dynamic Shared Object (DSO) Support.  2020.
-    -- https://httpd.apache.org/docs/current/dso.html     (online:    2021-03-13
+    -- <URL: https://httpd.apache.org/docs/current/dso.html> (online: 2021-03-13
     08:43:56 +0000)
 
 [1615452234]
 
-    The  Apache   Software  Foundation.    Apache2  Documentation.    2020.   --
-    https://ci.apache.org/projects (online: 2021-03-11 08:43:54 +0000)
+    The  Apache Software  Foundation.   Apache2 Documentation.   2020.  --  URL:
+    <https://ci.apache.org/projects> (online: 2021-03-11 08:43:54 +0000)
 
 [1615451871]
 
     The Apache Software Foundation.  Apache2  Documentation - Apache HTTP Server
-    - Core routines  - Apache Hooks.  2020.   -- https://ci.apache.org/projects/
-    -- httpd/trunk/doxygen/group__hooks.html (2021-03-11 08:37:51 0000)
+    - Core  routines -  Apache  Hooks.  2020.   -- URL:  <https://ci.apache.org/
+    projects/httpd/trunk/doxygen/group__hooks.html> (online: 2021-03-11 08:37:51
+    +0000)
 
 [1615619857]
 
     The Apache Software Foundation.   Apache2 Documentation - Apache Portability
-    Runtime  library   -  Hook  Functions.   2020.    --  https://ci.apache.org/
-    projects/httpd/trunk/doxygen/group__APR__Util__Hook.html (online: 2021-03-13
-    07:17:37 +0000)
+    Runtime library  - Hook  Functions.  2020.  --  URL: <https://ci.apache.org/
+    projects/httpd/trunk/doxygen/group__APR__Util__Hook.html>           (online:
+    2021-03-13 07:17:37 +0000)
 
 [1615622955]
 
     The Apache Software Foundation.  Apache2  Documentation - Apache HTTP Server
-    - Core routines  - module.  2020.   -- https://ci.apache.org/projects/httpd/
-    trunk/doxygen/group__APACHE__CORE__CONFIG.html
-    #ga0ea4f633a5f9f88e1603aaeb1f2b2e69 (online: 2021-03-13 08:09:15 +0000)
+    - Core routines  - module.  2020.  --  URL: <https://ci.apache.org/projects/
+    httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html
+    #ga0ea4f633a5f9f88e1603aaeb1f2b2e69> (online: 2021-03-13 08:09:15 +0000)
 
 [1615623911]
 
     The Apache Software Foundation.  Apache2  Documentation - Apache HTTP Server
-    - Core  routines  -  AP_DECLARE_MODULE.   2020.   --  https://ci.apache.org/
-    projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html
-    #ga662f6bc4b401d52b293a80b1768534af (online: 2021-03-13 08:25:11 + 0000)
+    - Core  routines -  AP_DECLARE_MODULE.   2020.   -- URL:  <https://ci.apache
+    .org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html
+    #ga662f6bc4b401d52b293a80b1768534af> (online: 2021-03-13 08:25:11 +0000)
 
-[1615309723] The  Apache Software  Foundation.   apxs -  APache eXtenSion  tool.
-    2020.   -- https://httpd.apache.org/docs/2.4/en/programs/apxs.html  (online:
+[1615309723]
+
+    The Apache  Software Foundation.  apxs  - APache eXtenSion tool.   2020.  --
+    URL:    <https://httpd.apache.org/docs/2.4/en/programs/apxs.html>   (online:
     2021-03-09 17:08:43 +0000)
 
     see also:
     bash$> man 1 apxs
     bash$> info apxs
 
-Embeddable Common-Lisp
-
 Apache Portable Runtime
 
-    Apache Portable Runtime (APR)
+[1616085270]
 
-    Apache Portable Runtime Utility Library (APR-util)
+    The Apache Software Foundation.  The Apache Portable Runtime Project.  2020.
+    -- URL: <https://apr.apache.org/> (online: 2021-03-18 16:34:30 +0000)
 
-    Apache Portable Runtime Iconv Library (APR-iconv)
+[1616085431]
 
-    exampes
+    The  Apache  Software  Foundation.   Apache  Portable  Runtime  Version  1.5
+    Documentation.    2015.    --  URL:   <https://apr.apache.org/docs/apr/1.5/>
+    (online: 2021-03-18 16:37:11 +0000)
+
+[1616085582]
+
+    The  Apache Software  Foundation.  Apache  Portable Runtime  Utility Library
+    Version  1.5 Documentation.   2014.   -- URL:  <https://apr.apache.org/docs/
+    apr-util/1.5/> (online: 2021-03-18 16:39:42 +0000)
+
+[1616085734]
+
+    The  Apache  Software Foundation.   Apache  Portable  Runtime Iconv  Library
+    Version  1.2 Documentation.   2020.   -- URL:  <https://apr.apache.org/docs/
+    apr-iconv/1.2/> (online: 2021-03-18 16:42:14 +000)
+
+[1616241868]
+
+    The Apache Software Foundation.  Apache  Portability Runtime library - Error
+    Codes - APR Error  Values.  2020.  -- URL: <https://apr.apache.org/docs/apr/
+    1.5/ group___a_p_r___error .html> (online: 2021-03-20 12:04:28)
+
+Apache HTTP Request Library
+
+[1616086484]
+
+    The Apache  Software Foundation.   Apache HTTP  Request Library.   2020.  --
+    URL: <https://httpd.apache.org/apreq/> (online: 2021-03-18 16:54:44 +0000)
+
+[1616086620]
+
+    The  Apache  Software  Foundation.  libapreq2  Version  2.13  Documentation.
+    2010.   --  <URL:  https://httpd.apache.org/apreq/docs/libapreq2/>  (online:
+    2021-03-18 16:57:00 +0000)
+
+Apache Tutor
+
+[1616182636]
+
+    Nick  Kew.   Apache  Tutor.  2008.   --  URL:  <http://www.apachetutor.org/>
+    (online: 2021-03-19 19:37:16 +0000)
+
+[1616182934]
+
+    Nick Kew.  Developer: Apache  Tutor.  2008.  -- URL: <http://www.apachetutor
+    .org/dev/> (online: 2021-03-19 19:42:14 +0000)
+
+[1616224574]
+
+    Nick  Kew.   Request  Processing  in Apache.   2008.   --  URL:  <http://www
+    .apachetutor.org/dev/request> (online: 2021-03-20 07:16:14 +0000)
+
+[1616228006]
+
+    Nick  Kew.    Configuration  for   Modules.   2008.   --   URL:  <http://www
+    .apachetutor.org/dev/config> (online: 2021-03-20 08:13:26 +000)
+
+[1616230447]
+
+    Nick  Kew.   Resource Management  in  Apache.   2008.  --  URL:  <http://www
+    .apachetutor.org/dev/pools> (online: 2021-03-20 08:54:07 +0000)
+
+[1616236695]
+
+    Nick  Kew.   Connection  Pooling  in Apache.   2008.   --  URL:  <http://www
+    .apachetutor.org/dev/reslist> (online: 2021-03-20 10:38:15 +0000)
+
+[1616237121]
+
+    Nick Kew.   Introduction to Buckets  and Brigades.  2008.  --  URL: <http://
+    www.apachetutor.org/dev/brigades> (online: 2021-03-20 10:45:21 +0000)
+
+[1616238747]
+
+    Nick Kew.  An architecture for smart  filtering in Apache.  -- URL: <http://
+    www.apachetutor.org/dev/smart-filter> (online: 2021-03-20 11:12:27 +0000)
+
+Embeddable Common-Lisp
+
+Inoue Seiichiro APR Tutorial
+
+[1616139849]
+
+    Inoue  Seiichiro.  libapr  (apache portable  runtime) programming  tutorial.
+    2005.     --   URL:    <http://dev.ariel-networks.com/apr/apr-tutorial/html/
+    apr-tutorial.html> (online: 2021-03-19 07:44:09 +0000)
+
+[1616174092]
+
+    Inoue Seiichiro.   sample files.  2005.  --  URL: <http://dev.ariel-networks
+    .com/apr/apr-tutorial/sample/> (online: 2021-03-19 17:14:52 +0000)
+
+[1616174201]
+
+    Inoue   Seiichiro.   sample-util   files.    2005.    --  URL:   <http://dev
+    .ariel-networks.com/apr/apr-tutorial/sample-util/>    (online:    2021-03-19
+    17:16:41 +0000)
+
+Louis Höfler's mod_ecl
+
+[1616138391]
+
+    Louis Höfler.   mod_ecl for  Apache and embeddable  common lisp.   2010.  --
+    URL: <http://mod-ecl.sourceforge.net/index.htm> (online: 2021-03-19 07:19:51
+    +0000)
+
+[1616138507]
+
+    Louis Höfler.   mod_ecl.  2010.  --  URL: <https://sourceforge.net/projects/
+    mod-ecl/> (online: 2021-03-19 07:21:47 +0000)
+
+[1616138853]
+
+    CLiki:  the common  lisp wiki.   CLiki: mod_ecl.   2010.  --  URL: <https://
+    cliki.net/mod_ecl> (online: 2021-03-19 07:27:33 +0000)
 
 ================================================================================
 
@@ -465,3 +585,14 @@ Todo
 ----
 
 * What is the file src/.debs for?
+
+* Is it  better to  use apr_file_read  / apr_file_read_full,  apr_mmap_create or
+  apr_bucket_mmap?
+
+* Functions  to get  the data  or the  request: header_in  (request), header_out
+  (response) and body.
+
+* Functions to get  the data for restful services: DELETE,  GET, PATCH, POST and
+  PUT.
+
+  see https://www.restapitutorial.com/lessons/httpmethods.html
