@@ -112,7 +112,8 @@ should show an output similar to the following:
     <!DODCTYPE html>
     <html>
         <head>
-            <meta charset="utf-8"/>        <title>RaSt mod_ecl</title>
+            <meta charset="utf-8"/>
+            <title>RaSt mod_ecl</title>
         </head>
         <body>
             Hello World!<br>
@@ -295,11 +296,15 @@ Changelog
 
 0.2.2
 
-  Add missing comment.
+    Add missing comment.
 
 0.2.3
 
-  Some Refactoring.
+    Some Refactoring.
+
+0.2.4
+
+    Fix linebreak.
 
 ================================================================================
 
