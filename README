@@ -547,6 +547,18 @@ Apache Tutor
 
 Embeddable Common-Lisp
 
+
+[1616254432]
+
+    Common-Lisp.Net.    Embeddable  Common-Lisp.    2021.   --   URL:  <https://
+    common-lisp.net/project/ecl/> (online: 2021-03-20 15:33:52 +0000)
+
+[1616254992]
+
+    Daniel Kochmański, Marius Gerbershagen.  ECL Manual 2020.  -- URL: <https://
+    common-lisp.net/project/ecl/static/manual/>  (online:   2021-03-20  15:43:12
+    +0000)
+
 Inoue Seiichiro APR Tutorial
 
 [1616139849]
@@ -583,6 +595,12 @@ Louis Höfler's mod_ecl
 
     CLiki:  the common  lisp wiki.   CLiki: mod_ecl.   2010.  --  URL: <https://
     cliki.net/mod_ecl> (online: 2021-03-19 07:27:33 +0000)
+
+[1616335928]
+
+    CLiki:  the common  lisp  wiki.  ECL  in Apache:  mod_ecl.   2010.  --  URL:
+    <https://common-lisp.net/project/ecl/posts/ECL-in-Apache-modecl.html>
+    (online: 2021-03-21 14:12:08 +0000)
 
 ================================================================================
 
