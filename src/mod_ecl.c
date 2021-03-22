@@ -1131,7 +1131,7 @@ static int ecl_handler(request_rec * request)
         {
             ap_rputs("<br>\n", request);
             ap_rputs("        ===== Begin =====<br>\n", request);
-            //ap_rprintf(request, "%s<br>\n", filecontent);
+            ap_rprintf(request, "%s<br>\n", filecontent);
             ap_rputs("        ===== END =======<br>\n", request);
         }
 
@@ -1144,7 +1144,7 @@ static int ecl_handler(request_rec * request)
         {
             ap_rputs("<br>\n", request);
             ap_rputs("        ===== Begin =====<br>\n", request);
-            //ap_rprintf(request, "%s<br>\n", result);
+            ap_rprintf(request, "%s<br>\n", result);
             ap_rputs("        ===== END =======<br>\n", request);
         }
 
