@@ -347,10 +347,10 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
  *   : the script
  *
  * @param[in,out] result
- *  : the result of the evaluation of the script
+ *   : the result of the evaluation of the script
  *
  * @return status
- *  : : on failure: APR_FAILURE / on success: APR_SUCCESS
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
  */
 
 static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** result)
