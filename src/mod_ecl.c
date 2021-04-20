@@ -1104,7 +1104,7 @@ static int ecl_handler(request_rec * request)
         ap_rputs("<!DODCTYPE html>\n", request);
         ap_rputs("<html>\n", request);
         ap_rputs("    <head>\n", request);
-        ap_rputs("        <meta charset=\"utf-8\"/>", request);
+        ap_rputs("        <meta charset=\"utf-8\"/>\n", request);
         ap_rputs("        <title>RaSt mod_ecl</title>\n", request);
         ap_rputs("    </head>\n", request);
         ap_rputs("    <body>\n", request);
