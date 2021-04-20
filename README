@@ -311,6 +311,10 @@ Changelog
 
     Fix linebreak.
 
+0.3.0
+
+    Eval ECL script and output result.
+
 ================================================================================
 
 References
