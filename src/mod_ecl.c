@@ -408,6 +408,8 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
             form = cl_read(3, stream, eof_error, eof_value);
 
+            // Check form to see if we are done.
+
             if (form == OBJNULL)
             {
                 // We reached the end of the script.
