@@ -367,7 +367,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     cl_object const eof_error = ECL_NIL;
     cl_object const eof_value = OBJNULL;
     cl_object eval = ECL_NIL;
-    cl_object const lexical_environment = ECL_NIL;
+    cl_object lexical_environment = ECL_NIL;
     cl_object const error = OBJNULL;
     unsigned int dim = 0;
     cl_index index = 0;
