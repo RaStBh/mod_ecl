@@ -67,6 +67,7 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
+#include "http_log.h"
 
 // Header files from Apache Runtime Library.
 
@@ -368,6 +369,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     cl_object const eof_value = OBJNULL;
     cl_object eval = ECL_NIL;
     cl_object lexical_environment = ECL_NIL;
+    cl_env_ptr process_environment = NULL;
     cl_object const error = OBJNULL;
     unsigned int dim = 0;
     cl_index index = 0;
@@ -386,48 +388,65 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     end = ecl_length(string);
     stream = ecl_make_string_input_stream(string, start, end);
 
-    // Evaluate the script.
+    // Get the process environment
 
-    do
-    {
-        // Parse the printed  representation of an object  from input-stream and
-        // builds such an object.
+    process_environment = ecl_process_env();
 
-        form = cl_read(3, stream, eof_error, eof_value);
 
-        if (form == OBJNULL)
+    // Create a protected region.
+    
+    ECL_CATCH_ALL_BEGIN(process_environment) {
+    
+        // Evaluate the script.
+
+        do
         {
-            // We reached the end of the script.
+            // Parse the printed  representation of an object  from input-stream and
+            // builds such an object.
 
-            status = APR_SUCCESS;
-            break;
-        }
+            form = cl_read(3, stream, eof_error, eof_value);
 
-        // Evaluate form in the lexical environment.
-
-        eval = si_safe_eval(3, form, lexical_environment, error);
-
-        // Check the eval.
-
-        if (   (eval != ECL_NIL)
-            && (eval != OBJNULL))
-        {
-            // The evaluation was successful.
-
-            // Get length of resulting string.
-
-            dim = eval->string.dim;
-
-            // Get result by each single character and join them to a string.
-
-            for (index = 0; index < dim; index++)
+            if (form == OBJNULL)
             {
-                character[0] = ecl_char(eval, index);
-                * result = apr_pstrcat(request->pool, * result, & character[0], NULL);
-            }
-        }
+                // We reached the end of the script.
 
-    } while (1);
+                status = APR_SUCCESS;
+                break;
+            }
+
+            // Evaluate form in the lexical environment.
+
+            eval = si_safe_eval(3, form, lexical_environment, error);
+
+            // Check the eval.
+
+            if (   (eval != ECL_NIL)
+                && (eval != OBJNULL))
+            {
+                // The evaluation was successful.
+
+                // Get length of resulting string.
+
+                dim = eval->string.dim;
+
+                // Get result by each single character and join them to a string.
+
+                for (index = 0; index < dim; index++)
+                {
+                    character[0] = ecl_char(eval, index);
+                    * result = apr_pstrcat(request->pool, * result, & character[0], NULL);
+                }
+            }
+
+        } while (1);
+
+    } ECL_CATCH_ALL_IF_CAUGHT {
+
+        // Write error massage to error log.
+
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "%s: %s", "mod_ecl", "Something went wrong. But I do not know what.");
+      
+    } ECL_CATCH_ALL_END;
 
     // Close the lisp environment.
 
