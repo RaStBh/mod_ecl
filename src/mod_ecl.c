@@ -394,9 +394,11 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
 
     // Create a protected region.
-    
-    ECL_CATCH_ALL_BEGIN(process_environment) {
-    
+
+    ECL_CATCH_ALL_BEGIN(process_environment)
+    {
+        // The protected code.
+
         // Evaluate the script.
 
         do
@@ -440,13 +442,18 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
         } while (1);
 
-    } ECL_CATCH_ALL_IF_CAUGHT {
+    }
+    ECL_CATCH_ALL_IF_CAUGHT
+    {
+        // If something is caught this code is is caught.
 
         // Write error massage to error log.
 
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "%s: %s", "mod_ecl", "Something went wrong. But I do not know what.");
-      
-    } ECL_CATCH_ALL_END;
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "%s: %s", "mod_ecl", "Something happened. But I do not what.");
+    }
+    ECL_CATCH_ALL_END;
+
+    // In all cases we exit the ECL_CATCH_ALL here.
 
     // Close the lisp environment.
 
