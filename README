@@ -48,6 +48,11 @@ Usage
 
 Apache HTTP Server 2.x configuration:
 
+In your virtual host configuration add  'index.ecl' to the list of the directory
+index files:
+
+    DirectoryIndex index.htm index.html index.php index.ecl
+
 Create the /etc/apache2/mods-available/ecl.load file with following content:
 
     LoadModule ecl_module /usr/lib/apache2/modules/mod_ecl.so
