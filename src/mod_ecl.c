@@ -1112,7 +1112,7 @@ static int ecl_handler(request_rec * request)
 {
     apr_status_t status = APR_SUCCESS;
     char * filename = apr_pstrdup(request->pool, "");
-    char * filecontent = apr_pstrdup(request->pool, "");;
+    char * filecontent = apr_pstrdup(request->pool, "");
     char * result = apr_pstrdup(request->pool, "");
 
     // Shall we decline to handle the request?
