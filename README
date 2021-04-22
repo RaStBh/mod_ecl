@@ -597,13 +597,16 @@ Common Lisp
 
     Guy  L. Steele.   Common Lisp  the Language.   1990.  2nd  Edition.  Digital
     Press -- ISBN:  1-55558-041-6 -- URL: https://www.cs.cmu.edu/Groups/AI/html/
-    cltl/cltl2.html (online: 2021-04-22 07:15:30 +0000)
+    cltl/cltl2.html (online:  2021-04-22 07:15:30 +0000) --  URL: https://www.cs
+    .cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/lang/lisp/doc/
+    cltl/cltl_ht.tgz (online: 2021-04-22 07:51:20 +0000)
 
 [1619075374]
 
     LispWorks Ltd.  Common Lisp  HyperSpec.  2005.  -- URL: http://www.lispworks
     .com/documentation/HyperSpec/Front/index.htm  (online:  2021-04-22  07:09:34
-    +0000)
+    +0000)   --    URL:   http://ftp.lispworks.com/pub/software_tools/reference/
+    HyperSpec-7-0.tar.gz (online: 2021-04-22 07:48:56 +0000)
 
 Louis Höfler's mod_ecl
 
