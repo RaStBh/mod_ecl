@@ -586,6 +586,25 @@ Inoue Seiichiro APR Tutorial
     .ariel-networks.com/apr/apr-tutorial/sample-util/>    (online:    2021-03-19
     17:16:41 +0000)
 
+Common Lisp
+
+[Sei05]
+
+    Peter Seibel.  Practical Common Lisp.   2005.  Apress / Springer-Verlag GmbH
+    & Co. KG -- ISBN: 1-59059-239-5
+
+[Ste90]
+
+    Guy  L. Steele.   Common Lisp  the Language.   1990.  2nd  Edition.  Digital
+    Press -- ISBN:  1-55558-041-6 -- URL: https://www.cs.cmu.edu/Groups/AI/html/
+    cltl/cltl2.html (online: 2021-04-22 07:15:30 +0000)
+
+[1619075374]
+
+    LispWorks Ltd.  Common Lisp  HyperSpec.  2005.  -- URL: http://www.lispworks
+    .com/documentation/HyperSpec/Front/index.htm  (online:  2021-04-22  07:09:34
+    +0000)
+
 Louis Höfler's mod_ecl
 
 [1616138391]
