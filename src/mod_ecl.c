@@ -74,6 +74,7 @@
 #include "apr_file_info.h"
 #include "apr_strings.h"
 #include "apr_pools.h"
+#include "apr_strmatch.h"
 
 // Header files from Embeddable Common-Lisp.
 
@@ -183,6 +184,16 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
     // Initialize the filecontent.
 
     * filecontent = apr_pstrdup(request->pool, "");
+
+    // Add a lisp constant so we can identify if we run as embedded ECL.
+
+    * filecontent = apr_pstrcat(request->pool, ";-------------------------------------------------------------------------------\n\
+; Added by mod_ecl. \n\
+\n\
+(eval-when-compile \n\
+    (defconstant *mod_ecl* \"mod_ecl\" \"We run as embedded ECL.\")\n\
+)\n\
+\n", * filecontent, NULL);
 
     // Get the filestats.
 
@@ -1115,6 +1126,11 @@ static int ecl_handler(request_rec * request)
     char * filecontent = apr_pstrdup(request->pool, "");
     char * result = apr_pstrdup(request->pool, "");
 
+const apr_strmatch_pattern * pattern_lt =  apr_strmatch_precompile(request->pool, "<", 0);
+const apr_strmatch_pattern * pattern_gt =  apr_strmatch_precompile(request->pool, ">", 0);
+const char* match_lt = NULL;
+const char* match_gt = NULL;
+
     // Shall we decline to handle the request?
 
     if (   (!request->handler)
@@ -1137,7 +1153,6 @@ static int ecl_handler(request_rec * request)
         ap_rputs("    </head>\n", request);
         ap_rputs("    <body>\n", request);
         ap_rputs("        Hello World!<br>\n", request);
-        ap_rputs("        <br>\n", request);
         ap_rputs("        This is the sample page from RaSt mod_ecl!<br>\n", request);
         ap_rputs("        <br>\n", request);
 
@@ -1153,14 +1168,17 @@ static int ecl_handler(request_rec * request)
         // Get and output the file content.
 
         ap_rputs("        <br>\n", request);
-        ap_rputs("        file content:", request);
+        ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
+
+apr_strmatch_lt = apr_strmatch(pattern_lt, filecontent, length(filecontent));
+apr_strmatch_gt = apr_strmatch(pattern_gt, filecontent, length(filecontent));
+xx xx
         if (APR_SUCCESS == status)
         {
-            ap_rputs("<br>\n", request);
-            ap_rputs("        ===== Begin =====<br>\n", request);
-            ap_rprintf(request, "%s<br>\n", filecontent);
-            ap_rputs("        ===== END =======<br>\n", request);
+            ap_rputs("        ===== Begin =====<pre>\n", request);
+            ap_rprintf(request, "%s\n", filecontent);
+            ap_rputs("        </pre>===== END =======<br>\n", request);
         }
 
         // Get result of evaluation.
