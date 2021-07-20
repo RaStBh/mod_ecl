@@ -67,12 +67,18 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
+#include "http_log.h"
 
 // Header files from Apache Runtime Library.
 
 #include "apr_file_info.h"
 #include "apr_strings.h"
 #include "apr_pools.h"
+#include "apr_strmatch.h"
+
+// Header files from Embeddable Common-Lisp.
+
+#include "ecl/ecl.h"
 
 // Header files from RaSt mod_ecl.
 
@@ -130,7 +136,7 @@ APLOG_USE_MODULE(ecl);
  * : on failure: MECL_FAILURE / on success: MECL_SUCCESS
  */
 
-static mecl_status_t getFilename(request_rec * request, char const ** filename)
+static mecl_status_t getFilename(request_rec * request, char ** filename)
 {
     apr_status_t status = APR_FAILURE;
 
@@ -165,7 +171,7 @@ static mecl_status_t getFilename(request_rec * request, char const ** filename)
  *  : on failure: HTTP_NOT_FOUND or HTTP_FORBIDDEN / on success: APR_SUCCESS
  */
 
-static apr_status_t getFilecontent(request_rec * request, char const * filename, char const ** filecontent)
+static apr_status_t getFilecontent(request_rec * request, char * filename, char ** filecontent)
 {
     apr_status_t status = APR_FAILURE;
     apr_finfo_t fileinfo = {};
@@ -177,7 +183,17 @@ static apr_status_t getFilecontent(request_rec * request, char const * filename,
 
     // Initialize the filecontent.
 
-    * filecontent = apr_pstrdup(request->pool, "");;
+    * filecontent = apr_pstrdup(request->pool, "");
+
+    // Add a lisp constant so we can identify if we run as embedded ECL.
+
+    * filecontent = apr_pstrcat(request->pool, ";-------------------------------------------------------------------------------\n\
+; Added by mod_ecl. \n\
+\n\
+(eval-when-compile \n\
+    (defconstant *mod_ecl* \"mod_ecl\" \"We run as embedded ECL.\")\n\
+)\n\
+\n", * filecontent, NULL);
 
     // Get the filestats.
 
@@ -323,6 +339,138 @@ static apr_status_t getFilecontent(request_rec * request, char const * filename,
     }
 
     // Closing the file has been successfully.
+
+    // If we reach this line we assume everything worked fina.
+
+    return status;
+}
+
+
+
+/**
+ * @brief Evaluate the script.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] script
+ *   : the script
+ *
+ * @param[in,out] result
+ *   : the result of the evaluation of the script
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** result)
+{
+    apr_status_t status = APR_FAILURE;
+    unsigned int argc = 0;
+    char * argv[0] = {};
+    cl_object string = ECL_NIL;
+    signed int const length = -1;
+    unsigned int const start = 0;
+    unsigned int end = 0;
+    cl_object stream = ECL_NIL;
+    cl_object form = ECL_NIL;
+    cl_object const eof_error = ECL_NIL;
+    cl_object const eof_value = OBJNULL;
+    cl_object eval = ECL_NIL;
+    cl_object lexical_environment = ECL_NIL;
+    cl_env_ptr process_environment = NULL;
+    cl_object const error = OBJNULL;
+    unsigned int dim = 0;
+    cl_index index = 0;
+    char * character = apr_pstrdup(request->pool, " \0");
+
+    // Setup the lisp environment.
+
+    cl_boot(argc, argv);
+
+    // Create a base string.
+
+    string = ecl_make_simple_base_string(script, length);
+
+    // Make a input string stream.
+
+    end = ecl_length(string);
+    stream = ecl_make_string_input_stream(string, start, end);
+
+    // Get the process environment
+
+    process_environment = ecl_process_env();
+
+
+    // Create a protected region.
+
+    ECL_CATCH_ALL_BEGIN(process_environment)
+    {
+        // The protected code.
+
+        // Evaluate the script.
+
+        do
+        {
+            // Parse the printed  representation of an object  from input-stream and
+            // builds such an object.
+
+            form = cl_read(3, stream, eof_error, eof_value);
+
+            // Check form to see if we are done.
+
+            if (form == OBJNULL)
+            {
+                // We reached the end of the script.
+
+                status = APR_SUCCESS;
+                break;
+            }
+
+            // Evaluate form in the lexical environment.
+
+            eval = si_safe_eval(3, form, lexical_environment, error);
+
+            // Check the eval.
+
+            if (   (eval != ECL_NIL)
+                && (eval != OBJNULL))
+            {
+                // The evaluation was successful.
+
+                // Get length of resulting string.
+
+                dim = eval->string.dim;
+
+                // Get result by each single character and join them to a string.
+
+                for (index = 0; index < dim; index++)
+                {
+                    character[0] = ecl_char(eval, index);
+                    * result = apr_pstrcat(request->pool, * result, & character[0], NULL);
+                }
+            }
+
+        } while (1);
+
+    }
+    ECL_CATCH_ALL_IF_CAUGHT
+    {
+        // If something is caught this code is is caught.
+
+        // Write error massage to error log.
+
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "%s: %s", "mod_ecl", "Something happened. But I do not what.");
+    }
+    ECL_CATCH_ALL_END;
+
+    // In all cases we exit the ECL_CATCH_ALL here.
+
+    // Close the lisp environment.
+
+    cl_shutdown();
 
     // If we reach this line we assume everything worked fina.
 
@@ -974,8 +1122,14 @@ static apr_status_t getFilecontent(request_rec * request, char const * filename,
 static int ecl_handler(request_rec * request)
 {
     apr_status_t status = APR_SUCCESS;
-    char const * filename = apr_pstrdup(request->pool, "");
-    char const * filecontent = apr_pcalloc(request->pool, 0);;
+    char * filename = apr_pstrdup(request->pool, "");
+    char * filecontent = apr_pstrdup(request->pool, "");
+    char * result = apr_pstrdup(request->pool, "");
+
+const apr_strmatch_pattern * pattern_lt =  apr_strmatch_precompile(request->pool, "<", 0);
+const apr_strmatch_pattern * pattern_gt =  apr_strmatch_precompile(request->pool, ">", 0);
+const char* match_lt = NULL;
+const char* match_gt = NULL;
 
     // Shall we decline to handle the request?
 
@@ -994,12 +1148,11 @@ static int ecl_handler(request_rec * request)
         ap_rputs("<!DODCTYPE html>\n", request);
         ap_rputs("<html>\n", request);
         ap_rputs("    <head>\n", request);
-        ap_rputs("        <meta charset=\"utf-8\"/>", request);
+        ap_rputs("        <meta charset=\"utf-8\"/>\n", request);
         ap_rputs("        <title>RaSt mod_ecl</title>\n", request);
         ap_rputs("    </head>\n", request);
         ap_rputs("    <body>\n", request);
         ap_rputs("        Hello World!<br>\n", request);
-        ap_rputs("        <br>\n", request);
         ap_rputs("        This is the sample page from RaSt mod_ecl!<br>\n", request);
         ap_rputs("        <br>\n", request);
 
@@ -1010,19 +1163,35 @@ static int ecl_handler(request_rec * request)
         if (APR_SUCCESS == status)
         {
             ap_rprintf(request, "        %s<br>\n", filename);
-            ap_rputs("        <br>\n", request);
         }
 
         // Get and output the file content.
 
-        ap_rputs("        file content:", request);
+        ap_rputs("        <br>\n", request);
+        ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
+
+apr_strmatch_lt = apr_strmatch(pattern_lt, filecontent, length(filecontent));
+apr_strmatch_gt = apr_strmatch(pattern_gt, filecontent, length(filecontent));
+xx xx
+        if (APR_SUCCESS == status)
+        {
+            ap_rputs("        ===== Begin =====<pre>\n", request);
+            ap_rprintf(request, "%s\n", filecontent);
+            ap_rputs("        </pre>===== END =======<br>\n", request);
+        }
+
+        // Get result of evaluation.
+
+        ap_rputs("        <br>\n", request);
+        ap_rputs("        script result:", request);
+        status =  evaluateByEcl(request, filecontent, & result);
         if (APR_SUCCESS == status)
         {
             ap_rputs("<br>\n", request);
             ap_rputs("        ===== Begin =====<br>\n", request);
-            ap_rprintf(request, "%s<br>\n", filecontent);
-            ap_rputs("        ===== END =======\n", request);
+            ap_rprintf(request, "%s<br>\n", result);
+            ap_rputs("        ===== END =======<br>\n", request);
         }
 
         ap_rputs("    </body>\n", request);

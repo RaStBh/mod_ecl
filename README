@@ -19,6 +19,7 @@ About
 Install
 Usage
 Development
+Lisp/ECL/ASDF
 Copying
 Changelog
 References
@@ -28,6 +29,13 @@ Todo
 
 About
 -----
+
+mod_ecl is  a module for  the Apache HTTP  Server which contains  the Embeddable
+Common-Lisp interpreter.  You can use it to run Lisp code, like you can run Perl
+code with mod_perl or PHP code with mod_php.
+
+The mod_ecl in its current state is a prototype. So it is not yet usable for the
+common user.
 
 ================================================================================
 
@@ -47,6 +55,11 @@ Usage
 -----
 
 Apache HTTP Server 2.x configuration:
+
+In your virtual host configuration add  'index.ecl' to the list of the directory
+index files:
+
+    DirectoryIndex index.htm index.html index.php index.ecl
 
 Create the /etc/apache2/mods-available/ecl.load file with following content:
 
@@ -130,6 +143,24 @@ should show an output similar to the following:
         </body>
     </html>
 
+Configure  your  system to  use  ASDF.   See  section "Lips/ECL/ASDF"  for  more
+information.  Configure ASDF  so it finds the .ecl and  .lisp files in /var/www/
+html/mod_ecl.lh.ld/  and  writes  compiled  .o and  .fas  files  to  /var/cache/
+common-lisp/.
+
+Create  a  symbolic  link  from  Apache  DocumentRoot  directory  /var/www/html/
+mod_ecl.lh.ld/ to the ecl / lisp source code directory mod_ecl/doc/ecl/.
+
+As user www-data create  the .o and .fas files for  the ASDF sytem utils-numbers
+using:
+
+    ecl> (require "asdf")
+    ecl> (asdf:load-system :utils-numbers)
+
+Inspect the output of mod_ecl and index.ecl.
+
+    bash> lynx https://mod_ecl.lh.ld/index.ecl
+
 ================================================================================
 
 Development
@@ -137,12 +168,13 @@ Development
 
 My development environment is:
 
-    Debian GNU/Linux 9.13 (stretch)
-    Apache HTTP Server 2.4.25
-    Embeddable  Common-Lisp (EXL) 15.3.7
-    Apache Portable Runtime (APR) 1.5.2
-    Apache Portable Runtime Utility Library (APR-util) 1.5.4
-    Apache HTTP Request Library 2.13
+    Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-70-generic x86_64)
+    Apache HTTP Server 2.4.41 (Ubuntu)
+    Embeddable Common-Lisp (ECL) 16.1.3
+    Embeddable Common-Lisp (ECL) 21.2.1
+    Apache Portable Runtime (APR) 1.6.5
+    Apache Portable Runtime Utility Library (APR-util) 1.6.1
+    Apache HTTP Request Library (apreq)2.13
 
 To create an example module to test your environment you can generate a template
 module by using the APache eXtenSion tool (apxs).
@@ -236,6 +268,198 @@ here.
 
 ================================================================================
 
+Lisp/ECL/ASDF
+-------------
+
+ECL lisp and fas files
+----------------------
+
+
+/usr/lib/x86_64-linux-gnu/ecl-21.2.1/asdf.fas
+
+cp -r ecl-21.2.1/contrib/ /usr/share/common-lisp/source/ecl-21.2.1/
+cp -r ecl-21.2.1/src/clos/ /usr/share/common-lisp/source/ecl-21.2.1/src/
+cp -r ecl-21.2.1/src/cmp/ /usr/share/common-lisp/source/ecl-21.2.1/src/
+cp -r ecl-21.2.1/src/lsp/ /usr/share/common-lisp/source/ecl-21.2.1/src/
+
+
+
+Directories
+-----------
+
+    ~/.cache/common-lisp/
+    ~/.config/common-lisp/
+    ~/.local/share/common-lisp/source/
+
+    /usr/share/common-lisp/source/
+    /usr/local/share/common-lisp/source/
+
+    /usr/lib/x86_64-linux-gnu/ecl-21.2.1/
+
+    /var/www/html/mod_ecl.lh.ld/
+
+
+
+ECL Quicklisp
+-------------
+
+setup
+
+    ecl> (ecl-quicklisp)
+
+~/quicklisp/
+
+
+
+Building filse with ECL
+-----------------------
+
+create single files:
+
+Portable FASL : fas  :                                  (compile-file "./zip.lisp" :output-file "./zip.fas"  :verbose t :print t :system-p nil)
+                                                        (compile-file "./zap.lisp" :output-file "./zap.fas"  :verbose t :print t :system-p nil)
+                                                        (compile-file "./zop.lisp" :output-file "./zop.fas"  :verbose t :print t :system-p nil)
+
+                       This removes the object files.
+
+Native FASL   : fasc : (ext:install-bytecodes-compiler) (compile-file "./zip.lisp" :output-file "./zip.fasc" :verbose t :print t :system-p nil) (ext:install-c-compiler)
+                       (ext:install-bytecodes-compiler) (compile-file "./zap.lisp" :output-file "./zap.fasc" :verbose t :print t :system-p nil) (ext:install-c-compiler)
+                       (ext:install-bytecodes-compiler) (compile-file "./zop.lisp" :output-file "./zop.fasc" :verbose t :print t :system-p nil) (ext:install-c-compiler)
+
+Object file   : o    :                                  (compile-file "./zip.lisp" :output-file "./zip.o"    :verbose t :print t :system-p t)
+                                                        (compile-file "./zap.lisp" :output-file "./zap.o"    :verbose t :print t :system-p t)
+                                                        (compile-file "./zop.lisp" :output-file "./zop.o"    :verbose t :print t :system-p t)
+
+create bundled file:
+
+Portable FASL : fas  : (c:build-fasl           "./zipzapzop.fas" :lisp-files '("./zip.o" "./zap.o" "./zop.o")                         )
+
+Native FASL   : fasc : ecl> (with-open-file
+                                (output "./zipzapzop.fasc"
+                                 :direction :output
+                                 ;:external-format '(:crlf :utf-8)
+                                 :if-exists :supersede
+                                 :if-does-not-exist :create
+                                )
+                                (ext:run-program
+                                 "/usr/bin/cat"
+                                 '("./zip.fasc" "./zap.fasc" "./zop.fasc")
+                                 :output output
+                                )
+                            )
+
+                       or
+
+                       bash> /usr/bin/cat ./zip.fasc ./zap.fasc ./zop.fasc > ./zipzapzop.fasc
+
+                       ECL can load zipzapzop.fasc.
+                       You can call macros from zip.fasc.
+                       You can not call macros from zap.fasc
+                       You can not call macros from zop.fasc.
+
+                       ASDF contains UIOP which contains combine-fasls.
+                       But using combine-fasls results in:
+                           Debugger received error of type: NOT-IMPLEMENTED-ERROR
+                           Not (currently) implemented on ECL: UIOP/LISP-BUILD:COMBINE-FASLS
+
+Static library: a    : (c:build-static-library "./zipzapzop.a"     :lisp-files '("./zip.o" "./zap.o" "./zop.o") :init-name "init_foobar")
+
+Shared library: so   : (c:build-shared-library "./zipzapzop.so"    :lisp-files '("./zip.o" "./zap.o" "./zop.o") :init-name "init_foobar")
+
+Executable    : bin  : (c:build-program        "./zipzapzop.bin"   :lisp-files '("./zip.o" "./zap.o" "./zop.o")                         )
+
+Image         :      : in ECL not supported
+
+
+
+Building fileswith ASDF
+-----------------------
+
+ASDF global system configuration
+
+   /etc/common-lisp/source-registry.conf
+
+   (:source-registry
+       (:tree "/var/www/html/mod_ecl.lh.ld/")
+       :inherit-configuration
+   )
+
+ASDF local per user configuration
+
+   ~/.config/common-lisp/source-registry.conf
+
+   (:source-registry
+       :inherit-configuration
+   )
+
+ASDF source registry cache for each ":tree" in global or loacal configuration.
+
+   ~/mod_ecl/doc/ecl/.cl-source-registry.cache
+
+   (:source-registry-cache
+       "utils-numbers/utils-numbers.asd"
+   )
+
+   bash> /usr/bin/ecl asdf/tools/cl-source-registry-cache.lisp
+
+ASDF global system configuration
+
+    /etc/common-lisp/asdf-output-translations.conf
+
+    (:output-translations
+        (t ("/var/cache/common-lisp/" :implementation))
+        :inherit-configuration
+    )
+
+ASDF local per user
+
+   ~/.config/common-lisp/asdf-output-translations.conf
+
+    (:output-translations
+        :inherit-configuration
+    )
+
+ASDF global sytem cache
+
+    /var/cache/common-lisp/
+
+ASDF local per user cache
+
+    ~/.cache/common-lisp/
+
+Symbolic link
+
+    /var/www/html/mod_ecl/ -> /home/vagrant/mod_ecl/doc/ecl/
+
+Portable FASL : fasb : (asdf:make-build :example :type :fasl           :move-here #P"./example.fas/")
+
+                       (asdf:operate 'asdf:compile-bundle-op :example)
+                       bash> mv /.cache/common-lisp/ecl-21.2.1-unknown-linux-x64/home/vagrant/mod_ecl/doc/ecl/example/example.fasb \
+                             ~/mod_ecl/doc/ecl/example.fasb/example.fasb
+
+                       ~/.cache/common-lisp/ecl-21.2.1-unknown-linux-x64/home/vagrant/mod_ecl/doc/ecl/example/example.fasb
+
+                       (c:build-fasl "example.fasb" :lisp-files '("example.so"))
+                       (c:build-fasl "example.fasb" :lisp-files '("example.a"))
+
+Static library: a    : (asdf:make-build :example :type :static-library :move-here #P"./libexample.a/" :monolithic nil :init-name "init_example")
+                       (asdf:make-build :example :type :static-library :move-here #P"./libexample.a/" :monolithic t   :init-name "init_example")
+
+                       ~/mod_ecl/doc/ecl/libexample.a/libexample.a
+
+Shared library: so   : (asdf:make-build :example :type :shared-library :move-here #P"./libexample.so/" :monolithic nil :init-name "init_example")
+                       (asdf:make-build :example :type :shared-library :move-here #P"./libexample.so/" :monolithic t   :init-name "init_example")
+
+                        ~/mod_ecl/doc/ecl/libexample.so/libexample.so
+
+Executable    : bin  : (asdf:make-build :example :type :program        :move-here #P"./example.bin/"                   :epilogue-code '(progn (require "asdf") (format t "~S~%" "Hello Worls!") (si:exit)))
+
+                       ~/mod_ecl/doc/ecl/libexample.bin/example.bin/example
+
+                       ~/.cache/common-lisp/ecl-21.2.1-unknown-linux-x64/home/vagrant/mod_ecl/doc/ecl/example/
+
+================================================================================
+
 Copying
 -------
 
@@ -305,6 +529,10 @@ Changelog
 0.2.4
 
     Fix linebreak.
+
+0.3.0
+
+    Eval ECL script and output result.
 
 ================================================================================
 
@@ -547,6 +775,37 @@ Apache Tutor
 
 Embeddable Common-Lisp
 
+[1616254432]
+
+    Common-Lisp.Net.    Embeddable  Common-Lisp.    2021.   --   URL:  <https://
+    common-lisp.net/project/ecl/> (online: 2021-03-20 15:33:52 +0000)
+
+[1616254992]
+
+    Daniel Kochmański, Marius Gerbershagen.  ECL Manual 2020.  -- URL: <https://
+    common-lisp.net/project/ecl/static/manual/>  (online:   2021-03-20  15:43:12
+    +0000)
+
+[1626599366]
+
+    Embeddable  Common-Lisp   main  repository.   --   URL:  https://gitlab.com/
+    embeddable-common-lisp/ecl (online: 2021-07-18 09:09:26 +0000)
+
+[1626600165]
+
+    The Distro Tracker Developers ecl -  Debian Package Tracker.  2021.  -- URL:
+    https://tracker.debian.org/pkg/ecl (online: 2021-07-18 09:22:45 +0000)
+
+[1626600301]
+
+    SPI Inc..  Debian  -- Informationen über Paket ecl in  buster.  2021 -- URL:
+    https://packages.debian.org/buster/ecl (online: 2021-07-18 09:25:01 +0000)
+
+[1626599822]
+
+    ecl   packaging.    --  URL:   https://salsa.debian.org/common-lisp-team/ecl
+    (online: 2021-07-18 09:17:02 +0000)
+
 Inoue Seiichiro APR Tutorial
 
 [1616139849]
@@ -560,11 +819,45 @@ Inoue Seiichiro APR Tutorial
     Inoue Seiichiro.   sample files.  2005.  --  URL: <http://dev.ariel-networks
     .com/apr/apr-tutorial/sample/> (online: 2021-03-19 17:14:52 +0000)
 
+[1619079595]
+
+   The Common Lisp Cookbook Project.  The  Common Lisp Cookbook.  2007.  -- URL:
+   http://cl-cookbook.sourceforge.net/ (online: 2021-04-22 08:19:55 +0000)
+
 [1616174201]
 
     Inoue   Seiichiro.   sample-util   files.    2005.    --  URL:   <http://dev
     .ariel-networks.com/apr/apr-tutorial/sample-util/>    (online:    2021-03-19
     17:16:41 +0000)
+
+Common Lisp
+
+[Sei05]
+
+    Peter Seibel.  Practical Common Lisp.   2005.  Apress / Springer-Verlag GmbH
+    & Co. KG -- ISBN: 1-59059-239-5
+
+[Ste90]
+
+    Guy  L. Steele.   Common Lisp  the Language.   1990.  2nd  Edition.  Digital
+    Press -- ISBN:  1-55558-041-6 -- URL: https://www.cs.cmu.edu/Groups/AI/html/
+    cltl/cltl2.html (online:  2021-04-22 07:15:30 +0000) --  URL: https://www.cs
+    .cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/lang/lisp/doc/
+    cltl/cltl_ht.tgz (online: 2021-04-22 07:51:20 +0000)
+
+[1619075374]
+
+    LispWorks Ltd.  Common Lisp  HyperSpec.  2005.  -- URL: http://www.lispworks
+    .com/documentation/HyperSpec/Front/index.htm  (online:  2021-04-22  07:09:34
+    +0000)   --    URL:   http://ftp.lispworks.com/pub/software_tools/reference/
+    HyperSpec-7-0.tar.gz (online: 2021-04-22 07:48:56 +0000)
+
+ASDF
+
+[1626594915]
+
+    Robert P.  Goldman, Francois-Rene  Rideau.  ASDF Manual.   2001 -  2019.  --
+    URL: https://common-lisp.net/project/asdf/asdf/ (2021-07-18 07:55:15 +0000)
 
 Louis Höfler's mod_ecl
 
@@ -584,10 +877,18 @@ Louis Höfler's mod_ecl
     CLiki:  the common  lisp wiki.   CLiki: mod_ecl.   2010.  --  URL: <https://
     cliki.net/mod_ecl> (online: 2021-03-19 07:27:33 +0000)
 
+[1616335928]
+
+    CLiki:  the common  lisp  wiki.  ECL  in Apache:  mod_ecl.   2010.  --  URL:
+    <https://common-lisp.net/project/ecl/posts/ECL-in-Apache-modecl.html>
+    (online: 2021-03-21 14:12:08 +0000)
+
 ================================================================================
 
 Todo
 ----
+
+* Check the spelling in all files (README; *.c, *.ecl, *.lisp, ...).
 
 * What is the file src/.debs for?
 
