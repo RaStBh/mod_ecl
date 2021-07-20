@@ -1126,11 +1126,6 @@ static int ecl_handler(request_rec * request)
     char * filecontent = apr_pstrdup(request->pool, "");
     char * result = apr_pstrdup(request->pool, "");
 
-const apr_strmatch_pattern * pattern_lt =  apr_strmatch_precompile(request->pool, "<", 0);
-const apr_strmatch_pattern * pattern_gt =  apr_strmatch_precompile(request->pool, ">", 0);
-const char* match_lt = NULL;
-const char* match_gt = NULL;
-
     // Shall we decline to handle the request?
 
     if (   (!request->handler)
@@ -1171,9 +1166,6 @@ const char* match_gt = NULL;
         ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
 
-apr_strmatch_lt = apr_strmatch(pattern_lt, filecontent, length(filecontent));
-apr_strmatch_gt = apr_strmatch(pattern_gt, filecontent, length(filecontent));
-xx xx
         if (APR_SUCCESS == status)
         {
             ap_rputs("        ===== Begin =====<pre>\n", request);
