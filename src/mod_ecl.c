@@ -239,29 +239,6 @@ for (b = APR_BRIGADE_FIRST(mybb); b != APR_BRIGADE_SENTINEL(mybb); b = APR_BUCKE
 
 
 /**
- * @brief Identifier to see if we run the ECL script inside ECL embedded
- *   interpreter.
- *
- * @details
- *
- * @param[in] request
- *   : the request data
- *
- * @param[in] mod_ecl_identifier
- *   : lisp code to identify the mod_ecl
- *
- * @return mod_ecl_identifier
- *   : lisp code to identify mod_ecl
- */
-
-static char * printModEclIdentifier(request_rec * request, char * mod_ecl_identifier)
-{
-    return mod_ecl_identifier;
-}
-
-
-
-/**
  * @brief The filename on disk corresponding to this response.
  *
  * @details
