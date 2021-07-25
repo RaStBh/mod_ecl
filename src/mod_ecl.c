@@ -105,14 +105,6 @@
 
 
 /**
- * @brief Datatype for mod_ecl status codes.
- */
-
-typedef int mecl_status_t;
-
-
-
-/**
  * @brief Mark this file to belong to this module.
  *
  * @details This macro is  used choose which module a file  belongs to.  This is
