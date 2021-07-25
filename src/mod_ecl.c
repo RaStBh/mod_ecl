@@ -240,39 +240,6 @@ for (b = APR_BRIGADE_FIRST(mybb); b != APR_BRIGADE_SENTINEL(mybb); b = APR_BUCKE
 
 /**
  * @brief Identifier to see if we run the ECL script inside ECL embedded
- * interpreter.
- *
- * @details
- *
- * @param[in] request
- *   : the request data
- *
- * @param[in,out]
- *   : lisp code to identify the mod_ecl
- *
- * @return status
- *   : on failure: APR_FAILURE / on success: APR_SUCCESS
- */
-
-static apr_status_t getModEclIdentifier(request_rec * request, char ** mod_ecl_identifier)
-{
-    apr_status_t status = APR_FAILURE;
-
-    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "; Identifier to see if we run the ECL script inside ECL embedded interpreter.\n", NULL);
-    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "\n", NULL);
-    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "(eval-when-compile\n", NULL);
-    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "    (defconstant *mod_ecl* \"mod_ecl\" \"We run as embedded ECL.\")\n", NULL);
-    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, ")\n", NULL);
-
-    status = APR_SUCCESS;
-    
-    return status;
-}
-
-
-
-/**
- * @brief Identifier to see if we run the ECL script inside ECL embedded
  *   interpreter.
  *
  * @details
@@ -282,7 +249,7 @@ static apr_status_t getModEclIdentifier(request_rec * request, char ** mod_ecl_i
  *
  * @param[in] mod_ecl_identifier
  *   : lisp code to identify the mod_ecl
- * 
+ *
  * @return mod_ecl_identifier
  *   : lisp code to identify mod_ecl
  */
@@ -415,19 +382,19 @@ char * printApRHeadersIn(request_rec * request, apr_table_t * headers_in)
     char * result = "";
 
     // Get the elements from the table.
-    
+
     fields = apr_table_elts(headers_in);
 
     // The elements in the array.
-    
+
     elements = (apr_table_entry_t *) fields->elts;
 
     // Check if we have elements in the array.
-    
+
     if (0 == fields->nelts)
     {
         // We have no data to build a string.
-      
+
         string = apr_pstrcat(request->pool, "", NULL);
     }
     else
@@ -435,20 +402,20 @@ char * printApRHeadersIn(request_rec * request, apr_table_t * headers_in)
         // We have elementws in the array. So we build the string.
 
         // We build a lisp lisp code.
-      
+
         string = apr_pstrcat(request->pool, string, "; MIME header environment from the request.\n", NULL);
-	string = apr_pstrcat(request->pool, string, "\n", NULL);
-	string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+        string = apr_pstrcat(request->pool, string, "\n", NULL);
+        string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
         string = apr_pstrcat(request->pool, string, "    (defparameter *header-in* (make-hash-table :test 'equal))\n", NULL);
 
         // For each element get the key and the value.
-	
+
         for(index = 0; index < fields->nelts; index++)
         {
             search_and_replace(request, elements[index].val, "\"", "\\\"", 0, & result);
             string = apr_pstrcat(request->pool, string, "    (setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
         }
-	string = apr_pstrcat(request->pool, string, ")\n", NULL);
+        string = apr_pstrcat(request->pool, string, ")\n", NULL);
     }
 
   return string;
@@ -484,22 +451,17 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
     apr_pool_t * buffer_pool = NULL;
     char * buffer = NULL;
     apr_table_t * headers_in = NULL;
-    char * mod_ecl_identifier = NULL; 
+    char * mod_ecl_identifier = NULL;
 
     // Initialize the filecontent.
 
     * filecontent = apr_pstrdup(request->pool, "");
 
     // Begin of mod_ecl data.
-    
+
     * filecontent = apr_pstrcat(request->pool, * filecontent, ";-------------------------------------------------------------------------------\n", NULL);
     * filecontent = apr_pstrcat(request->pool, * filecontent, "; Data from mod_ecl.\n", NULL);
     * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
-
-    // Add a lisp constant so we can identify if we run as embedded ECL.
-
-    status = getModEclIdentifier(request, & mod_ecl_identifier);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, printModEclIdentifier(request, mod_ecl_identifier), "\n", NULL);
 
     // MIME header environment from the request.
 
@@ -507,7 +469,7 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
     * filecontent = apr_pstrcat(request->pool, * filecontent, printApRHeadersIn(request, headers_in), "\n", NULL);
 
     // End of mod_ecl data.
-    
+
     * filecontent = apr_pstrcat(request->pool, * filecontent, ";\n", NULL);
     * filecontent = apr_pstrcat(request->pool, * filecontent, ";-------------------------------------------------------------------------------\n", NULL);
     * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
@@ -748,9 +710,8 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
                 break;
             }
 
-
             // Add a lisp constant so we can identify if we run as embedded ECL.
-	    
+
             eval = si_safe_eval(3, ecl_read_from_cstring("(defconstant *mod_ecl* \"mod_ecl\")"), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
@@ -1440,7 +1401,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
  * @param[in] request
  *   : the request data
  *
- * @return 
+ * @return
  *   : on success: OK / on failure: DECLINED
  */
 
