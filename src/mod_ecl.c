@@ -349,7 +349,7 @@ static apr_status_t getHeadersIn(request_rec * request, apr_table_t ** headers_i
  *   lisp code to access the request data
  */
 
-char * printApRHeadersIn(request_rec * request, apr_table_t * headers_in)
+char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
 {
     char * string =  apr_pstrcat(request->pool, NULL);
     const apr_array_header_t * fields = NULL;
@@ -427,31 +427,10 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
     apr_size_t bytes_read = MECL_READ_BYTES;
     apr_pool_t * buffer_pool = NULL;
     char * buffer = NULL;
-    apr_table_t * headers_in = NULL;
-    char * mod_ecl_identifier = NULL;
 
     // Initialize the filecontent.
 
     * filecontent = apr_pstrdup(request->pool, "");
-
-    // Begin of mod_ecl data.
-
-    * filecontent = apr_pstrcat(request->pool, * filecontent, ";-------------------------------------------------------------------------------\n", NULL);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, "; Data from mod_ecl.\n", NULL);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
-
-    // MIME header environment from the request.
-
-    status = getHeadersIn(request, & headers_in);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, printApRHeadersIn(request, headers_in), "\n", NULL);
-
-    // End of mod_ecl data.
-
-    * filecontent = apr_pstrcat(request->pool, * filecontent, ";\n", NULL);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, ";-------------------------------------------------------------------------------\n", NULL);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
-    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
 
     // Get the filestats.
 
@@ -643,6 +622,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     unsigned int dim = 0;
     cl_index index = 0;
     char * character = apr_pstrdup(request->pool, " \0");
+    apr_table_t * headers_in = NULL;
 
     // Setup the lisp environment.
 
@@ -690,6 +670,11 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
             // Add a lisp constant so we can identify if we run as embedded ECL.
 
             eval = si_safe_eval(3, ecl_read_from_cstring("(defconstant *mod_ecl* \"mod_ecl\")"), lexical_environment, error);
+
+            // Add a hash table for MIME header environment from the request.
+
+            status = getHeadersIn(request, & headers_in);
+            eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersIn(request, headers_in)), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
 
