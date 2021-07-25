@@ -75,6 +75,8 @@
 #include "apr_strings.h"
 #include "apr_pools.h"
 #include "apr_strmatch.h"
+#include "apr_buckets.h"
+#include "util_varbuf.h"
 
 // Header files from Embeddable Common-Lisp.
 
@@ -121,34 +123,335 @@ APLOG_USE_MODULE(ecl);
 
 
 
+
+/* todo:
+   write comment
+   refactore */
+
+// @return status: APR_FAILURE APRSUCCESS APR_ENOMEM
+
+static apr_status_t search_and_replace(request_rec * request, char * string, char * from, char * to, int case_sensitive, char ** result)
+{
+    apr_status_t status = APR_FAILURE;
+    const char * repl = NULL;
+    const char * buffer = NULL;
+    apr_size_t bytes = 0;
+    const apr_strmatch_pattern * pattern = NULL;
+    apr_size_t len = 0;
+    apr_size_t space_left = (1024 * 1024);
+    apr_size_t patlen = 0;
+    apr_size_t tolen = 0;
+    apr_size_t repl_len = 0;
+    apr_bucket_brigade * mybb = NULL;
+    apr_bucket_alloc_t * bucket_alloc_xxx = NULL;
+    apr_bucket * b = NULL;
+    apr_bucket * tmp_b = NULL;
+    apr_bucket * tmp_b_x = NULL;
+    apr_bucket * tmp_b_bak = NULL;
+    char * copy = NULL;
+    struct ap_varbuf vb;
+
+
+
+    ap_varbuf_init(request->pool, & vb, 0);
+
+    bucket_alloc_xxx = apr_bucket_alloc_create(request->pool);
+
+    mybb = apr_brigade_create(request->pool, bucket_alloc_xxx);
+
+    b = apr_bucket_transient_create(string, strlen(string), bucket_alloc_xxx);
+    APR_BRIGADE_INSERT_HEAD(mybb, b);
+
+    pattern = apr_strmatch_precompile(request->pool, from, case_sensitive);
+
+    buffer = string;
+    bytes = strlen(string);
+    patlen = strlen(from);
+    tolen = strlen(to);
+
+    while (repl = apr_strmatch(pattern, buffer, bytes))
+    {
+      repl_len = strlen(repl);
+      len = (apr_size_t) (repl - buffer);
+      if (space_left < (len + repl_len))
+      {
+        return APR_ENOMEM;
+      }
+      space_left -= len + repl_len;
+
+      //
+        apr_bucket_split(b, len);
+        tmp_b = APR_BUCKET_NEXT(b);
+        apr_bucket_split(tmp_b, patlen);
+        b = APR_BUCKET_NEXT(tmp_b);
+        apr_bucket_delete(tmp_b);
+      //
+
+      tmp_b = apr_bucket_transient_create(to, tolen, bucket_alloc_xxx);
+      if (tmp_b) {      APR_BUCKET_INSERT_BEFORE(b, tmp_b); }
+
+      //
+        copy = ap_varbuf_pdup(request->pool, & vb, NULL, 0, buffer, (strlen(buffer) - strlen(repl)), & len);
+        tmp_b_x = apr_bucket_transient_create(copy, 7, bucket_alloc_xxx);
+        if (strlen(copy)) { APR_BUCKET_INSERT_BEFORE(tmp_b, tmp_b_x); }
+      //
+
+      len += patlen;
+      bytes -= len;
+      buffer += len;
+
+      if (tmp_b_bak)
+      {
+        apr_bucket_delete(tmp_b_bak);
+      }
+
+      tmp_b_bak = b;
+    }
+
+    ap_varbuf_free(& vb);
+
+
+    if (tmp_b) {
+tmp_b = APR_BRIGADE_FIRST(mybb);
+apr_bucket_delete(tmp_b);
+    }
+
+
+* result = apr_psprintf(request->pool, "%s", "");
+buffer = apr_psprintf(request->pool, "%s", "");
+bytes = 0;
+
+for (b = APR_BRIGADE_FIRST(mybb); b != APR_BRIGADE_SENTINEL(mybb); b = APR_BUCKET_NEXT(b))
+{
+  if (APR_BUCKET_IS_METADATA(b))
+  {
+    continue;
+  }
+  if (apr_bucket_read(b, & buffer, & bytes, APR_BLOCK_READ) == APR_SUCCESS)
+  {
+    * result =  apr_pstrcat(request->pool, * result, buffer, NULL);
+  }
+}
+
+  return status;
+}
+
+
+
 /**
- * @brief Function to get the file name from the request data.
+ * @brief Identifier to see if we run the ECL script inside ECL embedded
+ * interpreter.
  *
  * @details
  *
  * @param[in] request
- * : the request data
+ *   : the request data
  *
- * @param[in,out] filename
- * : the filename
+ * @param[in,out]
+ *   : lisp code to identify the mod_ecl
  *
- * @return mecl_status
- * : on failure: MECL_FAILURE / on success: MECL_SUCCESS
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
  */
 
-static mecl_status_t getFilename(request_rec * request, char ** filename)
+static apr_status_t getModEclIdentifier(request_rec * request, char ** mod_ecl_identifier)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "; Identifier to see if we run the ECL script inside ECL embedded interpreter.\n", NULL);
+    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "\n", NULL);
+    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "(eval-when-compile\n", NULL);
+    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, "    (defconstant *mod_ecl* \"mod_ecl\" \"We run as embedded ECL.\")\n", NULL);
+    * mod_ecl_identifier = apr_pstrcat(request->pool, * mod_ecl_identifier, ")\n", NULL);
+
+    status = APR_SUCCESS;
+    
+    return status;
+}
+
+
+
+/**
+ * @brief Identifier to see if we run the ECL script inside ECL embedded
+ *   interpreter.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] mod_ecl_identifier
+ *   : lisp code to identify the mod_ecl
+ * 
+ * @return mod_ecl_identifier
+ *   : lisp code to identify mod_ecl
+ */
+
+static char * printModEclIdentifier(request_rec * request, char * mod_ecl_identifier)
+{
+    return mod_ecl_identifier;
+}
+
+
+
+/**
+ * @brief The filename on disk corresponding to this response.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] filename
+ *   : the filename
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getFilename(request_rec * request, char ** filename)
 {
     apr_status_t status = APR_FAILURE;
 
     * filename = NULL;
-    if (   request
-        && request->filename)
+    if (request)
     {
         * filename = apr_pstrdup(request->pool, request->filename);
         status = APR_SUCCESS;
     }
 
     return status;
+}
+
+
+
+/**
+ * @brief The true filename stored in the  filesystem, as in the true alpha case
+ *   and alias correction, e.g. "Image.jpeg"  not "IMAGE$1.JPE" on Windows.  The
+ *   core map_to_storage canonicalizes r->filename when they mismatch.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] canonical_filename
+ *   : the canonical filename
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getCanonicalFilename(request_rec * request, char ** canonical_filename)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * canonical_filename = NULL;
+    if (request)
+    {
+        * canonical_filename = apr_pstrdup(request->pool, request->canonical_filename);
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief MIME header environment from the request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] headers_in
+ *   : the header
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getHeadersIn(request_rec * request, apr_table_t ** headers_in)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * headers_in = NULL;
+    if (request)
+    {
+        * headers_in = request->headers_in;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the MIME header environment from the
+ *   request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] headers_in
+ *   : MIME header environment from the request.
+ *
+ * @return string
+ *   lisp code to access the request data
+ */
+
+char * printApRHeadersIn(request_rec * request, apr_table_t * headers_in)
+{
+    char * string =  apr_pstrcat(request->pool, NULL);
+    const apr_array_header_t * fields = NULL;
+    apr_table_entry_t * elements = NULL;
+    int index = 0;
+    int first = 1;
+    char * result = "";
+
+    // Get the elements from the table.
+    
+    fields = apr_table_elts(headers_in);
+
+    // The elements in the array.
+    
+    elements = (apr_table_entry_t *) fields->elts;
+
+    // Check if we have elements in the array.
+    
+    if (0 == fields->nelts)
+    {
+        // We have no data to build a string.
+      
+        string = apr_pstrcat(request->pool, "", NULL);
+    }
+    else
+    {
+        // We have elementws in the array. So we build the string.
+
+        // We build a lisp lisp code.
+      
+        string = apr_pstrcat(request->pool, string, "; MIME header environment from the request.\n", NULL);
+	string = apr_pstrcat(request->pool, string, "\n", NULL);
+	string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+        string = apr_pstrcat(request->pool, string, "    (defparameter *header-in* (make-hash-table :test 'equal))\n", NULL);
+
+        // For each element get the key and the value.
+	
+        for(index = 0; index < fields->nelts; index++)
+        {
+            search_and_replace(request, elements[index].val, "\"", "\\\"", 0, & result);
+            string = apr_pstrcat(request->pool, string, "    (setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
+        }
+	string = apr_pstrcat(request->pool, string, ")\n", NULL);
+    }
+
+  return string;
 }
 
 
@@ -167,7 +470,7 @@ static mecl_status_t getFilename(request_rec * request, char ** filename)
  * @param[in,out] filecontent
  *   : the file content
  *
- * @return apr_status
+ * @return status
  *  : on failure: HTTP_NOT_FOUND or HTTP_FORBIDDEN / on success: APR_SUCCESS
  */
 
@@ -180,10 +483,36 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
     apr_size_t bytes_read = MECL_READ_BYTES;
     apr_pool_t * buffer_pool = NULL;
     char * buffer = NULL;
+    apr_table_t * headers_in = NULL;
+    char * mod_ecl_identifier = NULL; 
 
     // Initialize the filecontent.
 
     * filecontent = apr_pstrdup(request->pool, "");
+
+    // Begin of mod_ecl data.
+    
+    * filecontent = apr_pstrcat(request->pool, * filecontent, ";-------------------------------------------------------------------------------\n", NULL);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, "; Data from mod_ecl.\n", NULL);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
+
+    // Add a lisp constant so we can identify if we run as embedded ECL.
+
+    status = getModEclIdentifier(request, & mod_ecl_identifier);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, printModEclIdentifier(request, mod_ecl_identifier), "\n", NULL);
+
+    // MIME header environment from the request.
+
+    status = getHeadersIn(request, & headers_in);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, printApRHeadersIn(request, headers_in), "\n", NULL);
+
+    // End of mod_ecl data.
+    
+    * filecontent = apr_pstrcat(request->pool, * filecontent, ";\n", NULL);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, ";-------------------------------------------------------------------------------\n", NULL);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
+    * filecontent = apr_pstrcat(request->pool, * filecontent, "\n", NULL);
 
     // Get the filestats.
 
@@ -1109,9 +1438,10 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
  * @see httpd-2.4.25/include/httpd.h
  *
  * @param[in] request
- * : the request data
+ *   : the request data
  *
- * @return OK
+ * @return 
+ *   : on success: OK / on failure: DECLINED
  */
 
 static int ecl_handler(request_rec * request)
