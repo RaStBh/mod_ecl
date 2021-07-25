@@ -138,7 +138,7 @@ static apr_status_t search_and_replace(request_rec * request, char * string, cha
     apr_size_t bytes = 0;
     const apr_strmatch_pattern * pattern = NULL;
     apr_size_t len = 0;
-    apr_size_t space_left = (1024 * 1024);
+    apr_size_t space_left = (8 * 1024); // apache: max characters in header is 8k
     apr_size_t patlen = 0;
     apr_size_t tolen = 0;
     apr_size_t repl_len = 0;
