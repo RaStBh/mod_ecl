@@ -380,18 +380,17 @@ char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
 
         // We build a lisp lisp code.
 
-        string = apr_pstrcat(request->pool, string, "; MIME header environment from the request.\n", NULL);
-        string = apr_pstrcat(request->pool, string, "\n", NULL);
         string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
-        string = apr_pstrcat(request->pool, string, "    (defparameter *header-in* (make-hash-table :test 'equal))\n", NULL);
+        string = apr_pstrcat(request->pool, string, "(defparameter *header-in* (make-hash-table :test 'equal))\n", NULL);
 
         // For each element get the key and the value.
 
         for(index = 0; index < fields->nelts; index++)
         {
             search_and_replace(request, elements[index].val, "\"", "\\\"", 0, & result);
-            string = apr_pstrcat(request->pool, string, "    (setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
         }
+
         string = apr_pstrcat(request->pool, string, ")\n", NULL);
     }
 
@@ -669,7 +668,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
             // Add a lisp constant so we can identify if we run as embedded ECL.
 
-            eval = si_safe_eval(3, ecl_read_from_cstring("(defconstant *mod_ecl* \"mod_ecl\")"), lexical_environment, error);
+            eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defconstant *mod_ecl* \"mod_ecl\"))"), lexical_environment, error);
 
             // Add a hash table for MIME header environment from the request.
 
