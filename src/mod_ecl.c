@@ -185,16 +185,6 @@ static apr_status_t getFilecontent(request_rec * request, char * filename, char 
 
     * filecontent = apr_pstrdup(request->pool, "");
 
-    // Add a lisp constant so we can identify if we run as embedded ECL.
-
-    * filecontent = apr_pstrcat(request->pool, ";-------------------------------------------------------------------------------\n\
-; Added by mod_ecl. \n\
-\n\
-(eval-when-compile \n\
-    (defconstant *mod_ecl* \"mod_ecl\" \"We run as embedded ECL.\")\n\
-)\n\
-\n", * filecontent, NULL);
-
     // Get the filestats.
 
     status = apr_stat(& fileinfo, filename, APR_FINFO_MIN, request->pool);
@@ -428,6 +418,11 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
                 status = APR_SUCCESS;
                 break;
             }
+
+
+            // Add a lisp constant so we can identify if we run as embedded ECL.
+	    
+            eval = si_safe_eval(3, ecl_read_from_cstring("(defconstant *mod_ecl* \"mod_ecl\")"), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
 
@@ -1171,9 +1166,6 @@ const char* match_gt = NULL;
         ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
 
-apr_strmatch_lt = apr_strmatch(pattern_lt, filecontent, length(filecontent));
-apr_strmatch_gt = apr_strmatch(pattern_gt, filecontent, length(filecontent));
-xx xx
         if (APR_SUCCESS == status)
         {
             ap_rputs("        ===== Begin =====<pre>\n", request);
