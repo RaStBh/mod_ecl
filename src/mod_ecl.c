@@ -130,7 +130,7 @@ APLOG_USE_MODULE(ecl);
 
 // @return status: APR_FAILURE APRSUCCESS APR_ENOMEM
 
-static apr_status_t search_and_replace(request_rec * request, char * string, char * from, char * to, int case_sensitive, char ** result)
+static apr_status_t replace_string(request_rec * request, char * string, char * from, char * to, int case_sensitive, char ** result)
 {
     apr_status_t status = APR_FAILURE;
     const char * repl = NULL;
@@ -387,7 +387,7 @@ char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
 
         for(index = 0; index < fields->nelts; index++)
         {
-            search_and_replace(request, elements[index].val, "\"", "\\\"", 0, & result);
+            replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
             string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
         }
 
