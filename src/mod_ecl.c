@@ -122,110 +122,133 @@ APLOG_USE_MODULE(ecl);
 
 // @return status: APR_FAILURE APRSUCCESS APR_ENOMEM
 
-static apr_status_t replace_string(request_rec * request, char * string, char * from, char * to, int case_sensitive, char ** result)
+static apr_status_t replace_string(request_rec * request, char * original_string, char * search_string, char * replace_string, int case_sensitive, char ** result)
 {
+    // The status code.
+
     apr_status_t status = APR_FAILURE;
-    const char * repl = NULL;
-    const char * buffer = NULL;
-    apr_size_t bytes = 0;
-    const apr_strmatch_pattern * pattern = NULL;
-    apr_size_t len = 0;
-    apr_size_t space_left = (8 * 1024); // apache: max characters in header is 8k
-    apr_size_t patlen = 0;
-    apr_size_t tolen = 0;
-    apr_size_t repl_len = 0;
-    apr_bucket_brigade * mybb = NULL;
-    apr_bucket_alloc_t * bucket_alloc_xxx = NULL;
-    apr_bucket * b = NULL;
-    apr_bucket * tmp_b = NULL;
-    apr_bucket * tmp_b_x = NULL;
-    apr_bucket * tmp_b_bak = NULL;
-    char * copy = NULL;
-    struct ap_varbuf vb;
 
+    // Get length of strings.
 
+    apr_size_t original_length = strlen(original_string);
+    apr_size_t search_length = strlen(search_string);
+    apr_size_t replace_length = strlen(replace_string);
 
-    ap_varbuf_init(request->pool, & vb, 0);
+    // Compile the pattern.
 
-    bucket_alloc_xxx = apr_bucket_alloc_create(request->pool);
+    const apr_strmatch_pattern * pattern = apr_strmatch_precompile(request->pool, search_string, case_sensitive);
 
-    mybb = apr_brigade_create(request->pool, bucket_alloc_xxx);
+    // Create the bucket allocator.
 
-    b = apr_bucket_transient_create(string, strlen(string), bucket_alloc_xxx);
-    APR_BRIGADE_INSERT_HEAD(mybb, b);
+    apr_bucket_alloc_t * bucket_allocator = apr_bucket_alloc_create(request->pool);
 
-    pattern = apr_strmatch_precompile(request->pool, from, case_sensitive);
+    // Create the brigade.
 
-    buffer = string;
-    bytes = strlen(string);
-    patlen = strlen(from);
-    tolen = strlen(to);
+    apr_bucket_brigade * brigade = apr_brigade_create(request->pool, bucket_allocator);
 
-    while (repl = apr_strmatch(pattern, buffer, bytes))
+    // Fill brigade with first bucket.
+
+    apr_bucket * first_bucket = apr_bucket_transient_create(original_string, original_length, bucket_allocator);
+    APR_BRIGADE_INSERT_HEAD(brigade, first_bucket);
+
+    // Search for the pattern in the string.
+
+    const char * match = NULL;
+    const char * match_string = original_string;
+    apr_size_t match_length = original_length;
+    const char * after_string = NULL;
+    apr_size_t after_length = 0;
+    const char * before_string = NULL;
+    apr_size_t before_length = 0;
+    int has_match = 0;
+    apr_bucket * next_bucket = first_bucket;
+    apr_bucket * replacement_bucket = NULL;
+    apr_bucket * before_bucket = NULL;
+    while (match = apr_strmatch(pattern, match_string, match_length))
     {
-      repl_len = strlen(repl);
-      len = (apr_size_t) (repl - buffer);
-      if (space_left < (len + repl_len))
-      {
-        return APR_ENOMEM;
-      }
-      space_left -= len + repl_len;
+        // Do we have a match?
 
-      //
-        apr_bucket_split(b, len);
-        tmp_b = APR_BUCKET_NEXT(b);
-        apr_bucket_split(tmp_b, patlen);
-        b = APR_BUCKET_NEXT(tmp_b);
-        apr_bucket_delete(tmp_b);
-      //
+        has_match = 1;
 
-      tmp_b = apr_bucket_transient_create(to, tolen, bucket_alloc_xxx);
-      if (tmp_b) {      APR_BUCKET_INSERT_BEFORE(b, tmp_b); }
+        // Get the string after the match (with the string we search for).
 
-      //
-        copy = ap_varbuf_pdup(request->pool, & vb, NULL, 0, buffer, (strlen(buffer) - strlen(repl)), & len);
-        tmp_b_x = apr_bucket_transient_create(copy, 7, bucket_alloc_xxx);
-        if (strlen(copy)) { APR_BUCKET_INSERT_BEFORE(tmp_b, tmp_b_x); }
-      //
+        after_string = (char *) (match);
+        after_length = strlen(after_string);
 
-      len += patlen;
-      bytes -= len;
-      buffer += len;
+        // Get the string before the match (without the string we search for).
 
-      if (tmp_b_bak)
-      {
-        apr_bucket_delete(tmp_b_bak);
-      }
+        before_length = match_length - after_length;
+        before_string = (char *) apr_pstrmemdup(request->pool, match_string, before_length);
 
-      tmp_b_bak = b;
+        // The next substring to search.
+
+        match_string = (char * ) (match + search_length);
+        match_length = strlen(match_string);
+
+        // Split the bucket after the match.
+
+        apr_bucket_split(next_bucket, before_length + search_length);
+
+        // Insert the replacment.
+
+        replacement_bucket = apr_bucket_transient_create(replace_string, replace_length, bucket_allocator);
+        APR_BUCKET_INSERT_AFTER(next_bucket, replacement_bucket);
+
+        // Insert string before match.
+
+        before_bucket = apr_bucket_transient_create(before_string, before_length, bucket_allocator);
+        APR_BUCKET_INSERT_BEFORE(replacement_bucket, before_bucket);
+
+        // Delete bucket.
+        apr_bucket_delete(next_bucket);
+
+        // Get the next bucket.
+        next_bucket = APR_BRIGADE_LAST(brigade);
     }
 
-    ap_varbuf_free(& vb);
+    // If we have no match we return the original string.
 
-
-    if (tmp_b) {
-tmp_b = APR_BRIGADE_FIRST(mybb);
-apr_bucket_delete(tmp_b);
+    if (!has_match)
+    {
+      * result = original_string;
+      status = APR_SUCCESS;
     }
 
+    // Check if we have a bucket.
 
-* result = apr_psprintf(request->pool, "%s", "");
-buffer = apr_psprintf(request->pool, "%s", "");
-bytes = 0;
+    apr_bucket * read_bucket = NULL;
+    const char * read_buffer = NULL;
+    apr_size_t read_bytes = 0;
+    * result = apr_pstrcat(request->pool, "", NULL);
+    if (APR_BRIGADE_EMPTY(brigade))
+    {
+        // We have no bucket.
 
-for (b = APR_BRIGADE_FIRST(mybb); b != APR_BRIGADE_SENTINEL(mybb); b = APR_BUCKET_NEXT(b))
-{
-  if (APR_BUCKET_IS_METADATA(b))
-  {
-    continue;
-  }
-  if (apr_bucket_read(b, & buffer, & bytes, APR_BLOCK_READ) == APR_SUCCESS)
-  {
-    * result =  apr_pstrcat(request->pool, * result, buffer, NULL);
-  }
-}
+        * result = original_string;
+        status = APR_SUCCESS;
+    }
+    else
+    {
+        // We have a bucket.
 
-  return status;
+        for (read_bucket = APR_BRIGADE_FIRST(brigade); read_bucket != APR_BRIGADE_SENTINEL(brigade); read_bucket = APR_BUCKET_NEXT(read_bucket))
+        {
+            if (APR_BUCKET_IS_METADATA(read_bucket))
+            {
+                continue;
+            }
+            if (apr_bucket_read(read_bucket, & read_buffer, & read_bytes, APR_BLOCK_READ) == APR_SUCCESS)
+            {
+              * result = apr_pstrcat(request->pool, * result, read_buffer, NULL);
+            }
+        }
+        status = APR_SUCCESS;
+    }
+
+    // Return status code.
+
+    return status;
+
 }
 
 
