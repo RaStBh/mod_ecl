@@ -115,12 +115,30 @@ APLOG_USE_MODULE(ecl);
 
 
 
-
-/* todo:
-   write comment
-   refactore */
-
-// @return status: APR_FAILURE APRSUCCESS APR_ENOMEM
+/**
+ * @brief Search for string and replace string by replacemant string.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] original_string
+ *   : the string to search in
+ *
+ * @param[in] search_string
+ *   : the string to search for
+ *
+ * @param[in] replace_string
+ *   : the replacemant string
+ *
+ * @param[in] case_sensitive
+ *   : 0: case insensitive search / 1: case sensitive search
+ *
+ * @return result
+ *   : no match: return the original string / with one or more match: return
+ *   string with replacements
+ */
 
 static apr_status_t replace_string(request_rec * request, char * original_string, char * search_string, char * replace_string, int case_sensitive, char ** result)
 {
