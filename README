@@ -583,6 +583,10 @@ Changelog
 
     * Functions to searech and replace by string and regex.
 
+0.4.1
+
+    rebase development_of_0.4.0
+
 ================================================================================
 
 References
