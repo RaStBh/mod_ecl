@@ -68,6 +68,7 @@
 #include "http_config.h"
 #include "http_protocol.h"
 #include "http_log.h"
+#include "ap_regex.h"
 
 // Header files from Apache Runtime Library.
 
@@ -205,7 +206,7 @@ static apr_status_t replace_string(request_rec * request, char * original_string
 
         // Split the bucket after the match.
 
-        apr_bucket_split(next_bucket, before_length + search_length);
+        apr_bucket_split(next_bucket, (before_length + search_length));
 
         // Insert the replacment.
 
@@ -267,6 +268,235 @@ static apr_status_t replace_string(request_rec * request, char * original_string
 
     return status;
 
+}
+
+
+
+/**
+ * @brief Search for regular expression and replace string by replacemant
+ *   string.
+ *
+ * @details
+ *
+ *   s/search_string/replace_string/cflags
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] original_string
+ *   : the string to search in
+ *
+ * @param[in] search_string
+ *   : the string to search for
+ *
+ * @param[in] replace_string
+ *   : the replacemant string
+ *
+ * @param[in] cflags
+ *   : flags for compiling the regular expression
+ *
+ *   AP_REG_ICASE          use a case-insensitive match                   ap_pregcomp
+ *   AP_REG_NEWLINE        don't match newlines against '.' etc           ap_pregcomp
+ *   AP_REG_NOTBOL         ^ will not match against start-of-string       ap_regexec_len
+ *   AP_REG_NOTEOL         $ will not match against end-of-string         ap_regexec_len
+ *   AP_REG_EXTENDED       unused                                         ap_pregcomp
+ *   AP_REG_NOSUB          unused                                         ap_pregcomp
+ *   AP_REG_MULTI          perl's /g
+ *   AP_REG_NOMEM          nomem in our code
+ *   AP_REG_DOTALL         perl's /s flag
+ *   AP_REG_DOLLAR_ENDONLY $ matches at end of subject string only
+ *   AP_REG_NO_DEFAULT     Don't implicitely add AP_REG_DEFAULT options
+ *
+ * @param[in] eflags
+ *   : flags for compiling the regular expression
+ *
+ * @param[in] case_sensitive
+ *   : 0: case insensitive search / 1: case sensitive search
+ *
+ * @return result
+ *   : no match: return the original string / with one or more match: return
+ *   string with replacements
+ */
+
+static apr_status_t replace_regex(request_rec * request, char * original_string, char * search_string, char * replace_string, int cflags, int eflags, char ** result)
+{
+    // The status code.
+
+    apr_status_t status = APR_FAILURE;
+
+    // Get length of strings.
+
+    apr_size_t original_length = strlen(original_string);
+    apr_size_t search_length = strlen(search_string);
+    apr_size_t replace_length = strlen(replace_string);
+
+    // Compile the pattern.
+    ap_regex_t * regex = ap_pregcomp(request->pool, search_string, cflags);
+
+    // Create the bucket allocator.
+
+    apr_bucket_alloc_t * bucket_allocator = apr_bucket_alloc_create(request->pool);
+
+    // Create the brigade.
+
+    apr_bucket_brigade * brigade = apr_brigade_create(request->pool, bucket_allocator);
+
+    // Fill brigade with first bucket.
+
+    apr_bucket * first_bucket = apr_bucket_transient_create(original_string, original_length, bucket_allocator);
+    APR_BRIGADE_INSERT_HEAD(brigade, first_bucket);
+
+    // Search for the pattern in the string.
+
+    char * match = NULL;
+    apr_size_t length = 0;
+    apr_size_t nmatch = AP_MAX_REG_MATCH;
+    ap_regmatch_t pmatch[nmatch];
+    const char * match_string = original_string;
+    apr_size_t match_length = original_length;
+    int has_match = 0;
+    int maxlen = 0;
+    apr_bucket * next_bucket = first_bucket;
+    apr_bucket * last_bucket = NULL;
+    char * before_string = NULL;
+    apr_size_t before_length = 0;
+    apr_bucket * before_bucket = NULL;
+    apr_bucket * replacement_bucket = NULL;
+    char * after_string = NULL;
+    apr_size_t after_length = 0;
+    apr_bucket * after_bucket = NULL;
+
+    while (!ap_regexec_len(regex, match_string, match_length, nmatch, pmatch, eflags))
+    {
+        // Do we have a match?
+
+        has_match = 1;
+
+        // Perform a series of string substitution.
+
+        status = ap_pregsub_ex(request->pool, & match, replace_string, match_string, nmatch, pmatch, maxlen);
+        if (status != APR_SUCCESS)
+        {
+            return status;
+        }
+        length = strlen(match);
+
+        // Get the string after the match (with the string we search for).
+
+        after_string = (char *) (match_string + pmatch[0].rm_eo);
+        after_length = strlen(after_string);
+
+        // Get the string before the match (without the string we search for).
+
+        before_string = (char *) apr_pstrmemdup(request->pool, match_string, pmatch[0].rm_so);
+        before_length = strlen(before_string);
+
+        // The next substring to search.
+
+        match_string = (char *) (match_string + pmatch[0].rm_eo);
+        match_length = strlen(match_string);
+
+        // Split the bucket after the match.
+
+        apr_bucket_split(next_bucket, (before_length + (pmatch[0].rm_eo - pmatch[0].rm_so)));
+
+        // Insert the replacment.
+
+        replacement_bucket = apr_bucket_transient_create(match, length, bucket_allocator);
+        APR_BUCKET_INSERT_AFTER(next_bucket, replacement_bucket);
+
+        // Insert string before match.
+
+        before_bucket = apr_bucket_transient_create(before_string, before_length, bucket_allocator);
+        APR_BUCKET_INSERT_BEFORE(replacement_bucket, before_bucket);
+
+        // Delete bucket.
+
+        apr_bucket_delete(next_bucket);
+
+        // Get the next bucket.
+        next_bucket = APR_BRIGADE_LAST(brigade);
+    }
+
+    // If we have no match we return the original string.
+
+    if (!has_match)
+    {
+      * result = original_string;
+      status = APR_SUCCESS;
+    }
+
+    // Check if we have a bucket.
+
+    apr_bucket * read_bucket = NULL;
+    const char * read_buffer = NULL;
+    apr_size_t read_bytes = 0;
+    * result = apr_pstrcat(request->pool, "", NULL);
+    if (APR_BRIGADE_EMPTY(brigade))
+    {
+        // We have no bucket.
+
+        * result = original_string;
+        status = APR_SUCCESS;
+    }
+    else
+    {
+        // We have a bucket.
+
+        for (read_bucket = APR_BRIGADE_FIRST(brigade); read_bucket != APR_BRIGADE_SENTINEL(brigade); read_bucket = APR_BUCKET_NEXT(read_bucket))
+        {
+            if (APR_BUCKET_IS_METADATA(read_bucket))
+            {
+                continue;
+            }
+            if (apr_bucket_read(read_bucket, & read_buffer, & read_bytes, APR_BLOCK_READ) == APR_SUCCESS)
+            {
+              * result = apr_pstrcat(request->pool, * result, "(", read_buffer, ")", NULL);
+            }
+        }
+        status = APR_SUCCESS;
+    }
+
+    // Return status code.
+
+    return status;
+}
+
+
+
+/**
+ * @brief Replace certain characters by there HTML character encoding.
+ *
+ * @details
+ *
+ *   &  &amp;    &#38;
+ *   <  &lt;     &#60;
+ *   >  &gt;     &#62;
+ *   "  &quote;  &#34;
+ *   '  &apos;   &#39;
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] string
+ *   : the string in whitch we make the replacement
+ *
+ * @retunr status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+char * escape_html(request_rec * request, char * string_unescaped)
+{
+    int case_sensitive = 0;
+    char * string_escaped = string_unescaped;
+    
+    replace_string(request, string_escaped, "&", "&#38;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "<", "&#60;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, ">", "&#62;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "\"", "&#34;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "'", "&#39;", case_sensitive, & string_escaped);
+    
+    return string_escaped;
 }
 
 
@@ -384,12 +614,12 @@ static apr_status_t getHeadersIn(request_rec * request, apr_table_t ** headers_i
 
 char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
 {
-    char * string =  apr_pstrcat(request->pool, NULL);
+    char * string =  apr_pstrcat(request->pool, "", NULL);
     const apr_array_header_t * fields = NULL;
     apr_table_entry_t * elements = NULL;
     int index = 0;
     int first = 1;
-    char * result = "";
+    char * result = apr_pstrcat(request->pool, "", NULL);
 
     // Get the elements from the table.
 
@@ -1437,7 +1667,7 @@ static int ecl_handler(request_rec * request)
         status = getFilename(request, & filename);
         if (APR_SUCCESS == status)
         {
-            ap_rprintf(request, "        %s<br>\n", filename);
+	  ap_rprintf(request, "        %s<br>\n", filename);
         }
 
         // Get and output the file content.
@@ -1445,11 +1675,10 @@ static int ecl_handler(request_rec * request)
         ap_rputs("        <br>\n", request);
         ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
-
         if (APR_SUCCESS == status)
         {
             ap_rputs("        ===== Begin =====<pre>\n", request);
-            ap_rprintf(request, "%s\n", filecontent);
+            ap_rprintf(request, "%s\n", escape_html(request, filecontent));
             ap_rputs("        </pre>===== END =======<br>\n", request);
         }
 
