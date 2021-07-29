@@ -478,11 +478,11 @@ static apr_status_t replace_regex(request_rec * request, char * original_string,
  * @param[in] request
  *   : the request data
  *
- * @param[in,out] string
+ * @param[in] string_unescaped
  *   : the string in whitch we make the replacement
  *
- * @retunr status
- *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ * @retunr string_escaped
+ *   : the string with the characters replaced
  */
 
 char * escape_html(request_rec * request, char * string_unescaped)
