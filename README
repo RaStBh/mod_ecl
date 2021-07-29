@@ -579,7 +579,9 @@ Changelog
 
 0.4.0
 
-    Get MIME header environment from the request.
+    * header-in: Get MIME header environment from the request.
+
+    * Functions to searech and replace by string and regex.
 
 ================================================================================
 
