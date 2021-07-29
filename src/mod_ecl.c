@@ -489,13 +489,13 @@ char * escape_html(request_rec * request, char * string_unescaped)
 {
     int case_sensitive = 0;
     char * string_escaped = string_unescaped;
-    
+
     replace_string(request, string_escaped, "&", "&#38;", case_sensitive, & string_escaped);
     replace_string(request, string_escaped, "<", "&#60;", case_sensitive, & string_escaped);
     replace_string(request, string_escaped, ">", "&#62;", case_sensitive, & string_escaped);
     replace_string(request, string_escaped, "\"", "&#34;", case_sensitive, & string_escaped);
     replace_string(request, string_escaped, "'", "&#39;", case_sensitive, & string_escaped);
-    
+
     return string_escaped;
 }
 
@@ -597,6 +597,37 @@ static apr_status_t getHeadersIn(request_rec * request, apr_table_t ** headers_i
 
 
 /**
+ * @brief MIME header environment from the response.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] headers_out
+ *   : the header
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getHeadersOut(request_rec * request, apr_table_t ** headers_out)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * headers_out = NULL;
+    if (request)
+    {
+        * headers_out = request->headers_out;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
  * @brief Build lisp code to access the MIME header environment from the
  *   request.
  *
@@ -652,6 +683,72 @@ char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
         {
             replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
             string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
+        }
+
+        string = apr_pstrcat(request->pool, string, ")\n", NULL);
+    }
+
+  return string;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the MIME header environment from the
+ *   response.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] headers_out
+ *   : MIME header environment from the response.
+ *
+ * @return string
+ *   lisp code to access the request data
+ */
+
+char * printHeadersOut(request_rec * request, apr_table_t * headers_out)
+{
+    char * string =  apr_pstrcat(request->pool, "", NULL);
+    const apr_array_header_t * fields = NULL;
+    apr_table_entry_t * elements = NULL;
+    int index = 0;
+    int first = 1;
+    char * result = apr_pstrcat(request->pool, "", NULL);
+
+    // Get the elements from the table.
+
+    fields = apr_table_elts(headers_out);
+
+    // The elements in the array.
+
+    elements = (apr_table_entry_t *) fields->elts;
+
+    // Check if we have elements in the array.
+
+    if (0 == fields->nelts)
+    {
+        // We have no data to build a string.
+
+        string = apr_pstrcat(request->pool, "", NULL);
+    }
+    else
+    {
+        // We have elementws in the array. So we build the string.
+
+        // We build a lisp lisp code.
+
+        string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+        string = apr_pstrcat(request->pool, string, "(defparameter *header-out* (make-hash-table :test 'equal))\n", NULL);
+
+        // For each element get the key and the value.
+
+        for(index = 0; index < fields->nelts; index++)
+        {
+            replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-out*) \"", result , "\")\n", NULL);
         }
 
         string = apr_pstrcat(request->pool, string, ")\n", NULL);
@@ -885,6 +982,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     cl_index index = 0;
     char * character = apr_pstrdup(request->pool, " \0");
     apr_table_t * headers_in = NULL;
+    apr_table_t * headers_out = NULL;
 
     // Setup the lisp environment.
 
@@ -937,6 +1035,12 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
             status = getHeadersIn(request, & headers_in);
             eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersIn(request, headers_in)), lexical_environment, error);
+
+
+            // Add a hash table for MIME header environment from the request.
+
+            status = getHeadersOut(request, & headers_out);
+            eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersOut(request, headers_out)), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
 
@@ -1667,7 +1771,7 @@ static int ecl_handler(request_rec * request)
         status = getFilename(request, & filename);
         if (APR_SUCCESS == status)
         {
-	  ap_rprintf(request, "        %s<br>\n", filename);
+            ap_rprintf(request, "        %s<br>\n", filename);
         }
 
         // Get and output the file content.

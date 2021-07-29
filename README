@@ -587,6 +587,10 @@ Changelog
 
     rebase development_of_0.4.0
 
+0.4.2
+
+    header-out: Get MIME header environment from the response.
+
 ================================================================================
 
 References
