@@ -352,7 +352,6 @@ static apr_status_t replace_regex(request_rec * request, char * original_string,
     apr_size_t length = 0;
     apr_size_t nmatch = AP_MAX_REG_MATCH;
     ap_regmatch_t pmatch[nmatch];
-//int eflags = cflags;
     const char * match_string = original_string;
     apr_size_t match_length = original_length;
     int has_match = 0;
@@ -461,6 +460,43 @@ static apr_status_t replace_regex(request_rec * request, char * original_string,
     // Return status code.
 
     return status;
+}
+
+
+
+/**
+ * @brief Replace certain characters by there HTML character encoding.
+ *
+ * @details
+ *
+ *   &  &amp;    &#38;
+ *   <  &lt;     &#60;
+ *   >  &gt;     &#62;
+ *   "  &quote;  &#34;
+ *   '  &apos;   &#39;
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] string
+ *   : the string in whitch we make the replacement
+ *
+ * @retunr status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+char * escape_html(request_rec * request, char * string_unescaped)
+{
+    int case_sensitive = 0;
+    char * string_escaped = string_unescaped;
+    
+    replace_string(request, string_escaped, "&", "&#38;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "<", "&#60;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, ">", "&#62;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "\"", "&#34;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "'", "&#39;", case_sensitive, & string_escaped);
+    
+    return string_escaped;
 }
 
 
@@ -1631,7 +1667,7 @@ static int ecl_handler(request_rec * request)
         status = getFilename(request, & filename);
         if (APR_SUCCESS == status)
         {
-            ap_rprintf(request, "        %s<br>\n", filename);
+	  ap_rprintf(request, "        %s<br>\n", filename);
         }
 
         // Get and output the file content.
@@ -1639,11 +1675,10 @@ static int ecl_handler(request_rec * request)
         ap_rputs("        <br>\n", request);
         ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
-
         if (APR_SUCCESS == status)
         {
             ap_rputs("        ===== Begin =====<pre>\n", request);
-            ap_rprintf(request, "%s\n", filecontent);
+            ap_rprintf(request, "%s\n", escape_html(request, filecontent));
             ap_rputs("        </pre>===== END =======<br>\n", request);
         }
 
