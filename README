@@ -590,6 +590,10 @@ Changelog
 
     header-out: Get MIME header environment from the response.
 
+0.4.3
+
+    Functions to get the HTTP method name and number.
+
 ================================================================================
 
 References
