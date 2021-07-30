@@ -162,6 +162,16 @@ Inspect the output of mod_ecl and index.ecl.
 
     bash> lynx https://mod_ecl.lh.ld/index.ecl
 
+mod_ecl introduce the following variables in ECL:
+
+    *header-in*          | hash    | MIME header environment from the request
+
+    *header-out          | hash    | MIME header environment for the response
+
+    *http-method-name*   | string  | Request method (eg. GET, POST, etc.)
+
+    *http-method-number* | integer | Request number (eg. M_GET, M_POST, etc.)
+
 ================================================================================
 
 Development
