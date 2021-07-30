@@ -68,6 +68,7 @@
 #include "http_config.h"
 #include "http_protocol.h"
 #include "http_log.h"
+#include "ap_regex.h"
 
 // Header files from Apache Runtime Library.
 
@@ -75,6 +76,8 @@
 #include "apr_strings.h"
 #include "apr_pools.h"
 #include "apr_strmatch.h"
+#include "apr_buckets.h"
+#include "util_varbuf.h"
 
 // Header files from Embeddable Common-Lisp.
 
@@ -103,14 +106,6 @@
 
 
 /**
- * @brief Datatype for mod_ecl status codes.
- */
-
-typedef int mecl_status_t;
-
-
-
-/**
  * @brief Mark this file to belong to this module.
  *
  * @details This macro is  used choose which module a file  belongs to.  This is
@@ -122,33 +117,644 @@ APLOG_USE_MODULE(ecl);
 
 
 /**
- * @brief Function to get the file name from the request data.
+ * @brief Search for string and replace string by replacemant string.
  *
  * @details
  *
  * @param[in] request
- * : the request data
+ *   : the request data
  *
- * @param[in,out] filename
- * : the filename
+ * @param[in] original_string
+ *   : the string to search in
  *
- * @return mecl_status
- * : on failure: MECL_FAILURE / on success: MECL_SUCCESS
+ * @param[in] search_string
+ *   : the string to search for
+ *
+ * @param[in] replace_string
+ *   : the replacemant string
+ *
+ * @param[in] case_sensitive
+ *   : 0: case insensitive search / 1: case sensitive search
+ *
+ * @return result
+ *   : no match: return the original string / with one or more match: return
+ *   string with replacements
  */
 
-static mecl_status_t getFilename(request_rec * request, char ** filename)
+static apr_status_t replace_string(request_rec * request, char * original_string, char * search_string, char * replace_string, int case_sensitive, char ** result)
+{
+    // The status code.
+
+    apr_status_t status = APR_FAILURE;
+
+    // Get length of strings.
+
+    apr_size_t original_length = strlen(original_string);
+    apr_size_t search_length = strlen(search_string);
+    apr_size_t replace_length = strlen(replace_string);
+
+    // Compile the pattern.
+
+    const apr_strmatch_pattern * pattern = apr_strmatch_precompile(request->pool, search_string, case_sensitive);
+
+    // Create the bucket allocator.
+
+    apr_bucket_alloc_t * bucket_allocator = apr_bucket_alloc_create(request->pool);
+
+    // Create the brigade.
+
+    apr_bucket_brigade * brigade = apr_brigade_create(request->pool, bucket_allocator);
+
+    // Fill brigade with first bucket.
+
+    apr_bucket * first_bucket = apr_bucket_transient_create(original_string, original_length, bucket_allocator);
+    APR_BRIGADE_INSERT_HEAD(brigade, first_bucket);
+
+    // Search for the pattern in the string.
+
+    const char * match = NULL;
+    const char * match_string = original_string;
+    apr_size_t match_length = original_length;
+    const char * after_string = NULL;
+    apr_size_t after_length = 0;
+    const char * before_string = NULL;
+    apr_size_t before_length = 0;
+    int has_match = 0;
+    apr_bucket * next_bucket = first_bucket;
+    apr_bucket * replacement_bucket = NULL;
+    apr_bucket * before_bucket = NULL;
+    while (match = apr_strmatch(pattern, match_string, match_length))
+    {
+        // Do we have a match?
+
+        has_match = 1;
+
+        // Get the string after the match (with the string we search for).
+
+        after_string = (char *) (match);
+        after_length = strlen(after_string);
+
+        // Get the string before the match (without the string we search for).
+
+        before_length = match_length - after_length;
+        before_string = (char *) apr_pstrmemdup(request->pool, match_string, before_length);
+
+        // The next substring to search.
+
+        match_string = (char * ) (match + search_length);
+        match_length = strlen(match_string);
+
+        // Split the bucket after the match.
+
+        apr_bucket_split(next_bucket, (before_length + search_length));
+
+        // Insert the replacment.
+
+        replacement_bucket = apr_bucket_transient_create(replace_string, replace_length, bucket_allocator);
+        APR_BUCKET_INSERT_AFTER(next_bucket, replacement_bucket);
+
+        // Insert string before match.
+
+        before_bucket = apr_bucket_transient_create(before_string, before_length, bucket_allocator);
+        APR_BUCKET_INSERT_BEFORE(replacement_bucket, before_bucket);
+
+        // Delete bucket.
+        apr_bucket_delete(next_bucket);
+
+        // Get the next bucket.
+        next_bucket = APR_BRIGADE_LAST(brigade);
+    }
+
+    // If we have no match we return the original string.
+
+    if (!has_match)
+    {
+      * result = original_string;
+      status = APR_SUCCESS;
+    }
+
+    // Check if we have a bucket.
+
+    apr_bucket * read_bucket = NULL;
+    const char * read_buffer = NULL;
+    apr_size_t read_bytes = 0;
+    * result = apr_pstrcat(request->pool, "", NULL);
+    if (APR_BRIGADE_EMPTY(brigade))
+    {
+        // We have no bucket.
+
+        * result = original_string;
+        status = APR_SUCCESS;
+    }
+    else
+    {
+        // We have a bucket.
+
+        for (read_bucket = APR_BRIGADE_FIRST(brigade); read_bucket != APR_BRIGADE_SENTINEL(brigade); read_bucket = APR_BUCKET_NEXT(read_bucket))
+        {
+            if (APR_BUCKET_IS_METADATA(read_bucket))
+            {
+                continue;
+            }
+            if (apr_bucket_read(read_bucket, & read_buffer, & read_bytes, APR_BLOCK_READ) == APR_SUCCESS)
+            {
+              * result = apr_pstrcat(request->pool, * result, read_buffer, NULL);
+            }
+        }
+        status = APR_SUCCESS;
+    }
+
+    // Return status code.
+
+    return status;
+
+}
+
+
+
+/**
+ * @brief Search for regular expression and replace string by replacemant
+ *   string.
+ *
+ * @details
+ *
+ *   s/search_string/replace_string/cflags
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] original_string
+ *   : the string to search in
+ *
+ * @param[in] search_string
+ *   : the string to search for
+ *
+ * @param[in] replace_string
+ *   : the replacemant string
+ *
+ * @param[in] cflags
+ *   : flags for compiling the regular expression
+ *
+ *   AP_REG_ICASE          use a case-insensitive match                   ap_pregcomp
+ *   AP_REG_NEWLINE        don't match newlines against '.' etc           ap_pregcomp
+ *   AP_REG_NOTBOL         ^ will not match against start-of-string       ap_regexec_len
+ *   AP_REG_NOTEOL         $ will not match against end-of-string         ap_regexec_len
+ *   AP_REG_EXTENDED       unused                                         ap_pregcomp
+ *   AP_REG_NOSUB          unused                                         ap_pregcomp
+ *   AP_REG_MULTI          perl's /g
+ *   AP_REG_NOMEM          nomem in our code
+ *   AP_REG_DOTALL         perl's /s flag
+ *   AP_REG_DOLLAR_ENDONLY $ matches at end of subject string only
+ *   AP_REG_NO_DEFAULT     Don't implicitely add AP_REG_DEFAULT options
+ *
+ * @param[in] eflags
+ *   : flags for compiling the regular expression
+ *
+ * @param[in] case_sensitive
+ *   : 0: case insensitive search / 1: case sensitive search
+ *
+ * @return result
+ *   : no match: return the original string / with one or more match: return
+ *   string with replacements
+ */
+
+static apr_status_t replace_regex(request_rec * request, char * original_string, char * search_string, char * replace_string, int cflags, int eflags, char ** result)
+{
+    // The status code.
+
+    apr_status_t status = APR_FAILURE;
+
+    // Get length of strings.
+
+    apr_size_t original_length = strlen(original_string);
+    apr_size_t search_length = strlen(search_string);
+    apr_size_t replace_length = strlen(replace_string);
+
+    // Compile the pattern.
+    ap_regex_t * regex = ap_pregcomp(request->pool, search_string, cflags);
+
+    // Create the bucket allocator.
+
+    apr_bucket_alloc_t * bucket_allocator = apr_bucket_alloc_create(request->pool);
+
+    // Create the brigade.
+
+    apr_bucket_brigade * brigade = apr_brigade_create(request->pool, bucket_allocator);
+
+    // Fill brigade with first bucket.
+
+    apr_bucket * first_bucket = apr_bucket_transient_create(original_string, original_length, bucket_allocator);
+    APR_BRIGADE_INSERT_HEAD(brigade, first_bucket);
+
+    // Search for the pattern in the string.
+
+    char * match = NULL;
+    apr_size_t length = 0;
+    apr_size_t nmatch = AP_MAX_REG_MATCH;
+    ap_regmatch_t pmatch[nmatch];
+    const char * match_string = original_string;
+    apr_size_t match_length = original_length;
+    int has_match = 0;
+    int maxlen = 0;
+    apr_bucket * next_bucket = first_bucket;
+    apr_bucket * last_bucket = NULL;
+    char * before_string = NULL;
+    apr_size_t before_length = 0;
+    apr_bucket * before_bucket = NULL;
+    apr_bucket * replacement_bucket = NULL;
+    char * after_string = NULL;
+    apr_size_t after_length = 0;
+    apr_bucket * after_bucket = NULL;
+
+    while (!ap_regexec_len(regex, match_string, match_length, nmatch, pmatch, eflags))
+    {
+        // Do we have a match?
+
+        has_match = 1;
+
+        // Perform a series of string substitution.
+
+        status = ap_pregsub_ex(request->pool, & match, replace_string, match_string, nmatch, pmatch, maxlen);
+        if (status != APR_SUCCESS)
+        {
+            return status;
+        }
+        length = strlen(match);
+
+        // Get the string after the match (with the string we search for).
+
+        after_string = (char *) (match_string + pmatch[0].rm_eo);
+        after_length = strlen(after_string);
+
+        // Get the string before the match (without the string we search for).
+
+        before_string = (char *) apr_pstrmemdup(request->pool, match_string, pmatch[0].rm_so);
+        before_length = strlen(before_string);
+
+        // The next substring to search.
+
+        match_string = (char *) (match_string + pmatch[0].rm_eo);
+        match_length = strlen(match_string);
+
+        // Split the bucket after the match.
+
+        apr_bucket_split(next_bucket, (before_length + (pmatch[0].rm_eo - pmatch[0].rm_so)));
+
+        // Insert the replacment.
+
+        replacement_bucket = apr_bucket_transient_create(match, length, bucket_allocator);
+        APR_BUCKET_INSERT_AFTER(next_bucket, replacement_bucket);
+
+        // Insert string before match.
+
+        before_bucket = apr_bucket_transient_create(before_string, before_length, bucket_allocator);
+        APR_BUCKET_INSERT_BEFORE(replacement_bucket, before_bucket);
+
+        // Delete bucket.
+
+        apr_bucket_delete(next_bucket);
+
+        // Get the next bucket.
+        next_bucket = APR_BRIGADE_LAST(brigade);
+    }
+
+    // If we have no match we return the original string.
+
+    if (!has_match)
+    {
+      * result = original_string;
+      status = APR_SUCCESS;
+    }
+
+    // Check if we have a bucket.
+
+    apr_bucket * read_bucket = NULL;
+    const char * read_buffer = NULL;
+    apr_size_t read_bytes = 0;
+    * result = apr_pstrcat(request->pool, "", NULL);
+    if (APR_BRIGADE_EMPTY(brigade))
+    {
+        // We have no bucket.
+
+        * result = original_string;
+        status = APR_SUCCESS;
+    }
+    else
+    {
+        // We have a bucket.
+
+        for (read_bucket = APR_BRIGADE_FIRST(brigade); read_bucket != APR_BRIGADE_SENTINEL(brigade); read_bucket = APR_BUCKET_NEXT(read_bucket))
+        {
+            if (APR_BUCKET_IS_METADATA(read_bucket))
+            {
+                continue;
+            }
+            if (apr_bucket_read(read_bucket, & read_buffer, & read_bytes, APR_BLOCK_READ) == APR_SUCCESS)
+            {
+              * result = apr_pstrcat(request->pool, * result, "(", read_buffer, ")", NULL);
+            }
+        }
+        status = APR_SUCCESS;
+    }
+
+    // Return status code.
+
+    return status;
+}
+
+
+
+/**
+ * @brief Replace certain characters by there HTML character encoding.
+ *
+ * @details
+ *
+ *   &  &amp;    &#38;
+ *   <  &lt;     &#60;
+ *   >  &gt;     &#62;
+ *   "  &quote;  &#34;
+ *   '  &apos;   &#39;
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] string_unescaped
+ *   : the string in whitch we make the replacement
+ *
+ * @retunr string_escaped
+ *   : the string with the characters replaced
+ */
+
+char * escape_html(request_rec * request, char * string_unescaped)
+{
+    int case_sensitive = 0;
+    char * string_escaped = string_unescaped;
+
+    replace_string(request, string_escaped, "&", "&#38;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "<", "&#60;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, ">", "&#62;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "\"", "&#34;", case_sensitive, & string_escaped);
+    replace_string(request, string_escaped, "'", "&#39;", case_sensitive, & string_escaped);
+
+    return string_escaped;
+}
+
+
+
+/**
+ * @brief The filename on disk corresponding to this response.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] filename
+ *   : the filename
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getFilename(request_rec * request, char ** filename)
 {
     apr_status_t status = APR_FAILURE;
 
     * filename = NULL;
-    if (   request
-        && request->filename)
+    if (request)
     {
         * filename = apr_pstrdup(request->pool, request->filename);
         status = APR_SUCCESS;
     }
 
     return status;
+}
+
+
+
+/**
+ * @brief The true filename stored in the  filesystem, as in the true alpha case
+ *   and alias correction, e.g. "Image.jpeg"  not "IMAGE$1.JPE" on Windows.  The
+ *   core map_to_storage canonicalizes r->filename when they mismatch.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] canonical_filename
+ *   : the canonical filename
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getCanonicalFilename(request_rec * request, char ** canonical_filename)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * canonical_filename = NULL;
+    if (request)
+    {
+        * canonical_filename = apr_pstrdup(request->pool, request->canonical_filename);
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief MIME header environment from the request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] headers_in
+ *   : the header
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getHeadersIn(request_rec * request, apr_table_t ** headers_in)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * headers_in = NULL;
+    if (request)
+    {
+        * headers_in = request->headers_in;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief MIME header environment from the response.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] headers_out
+ *   : the header
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getHeadersOut(request_rec * request, apr_table_t ** headers_out)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * headers_out = NULL;
+    if (request)
+    {
+        * headers_out = request->headers_out;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the MIME header environment from the
+ *   request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] headers_in
+ *   : MIME header environment from the request.
+ *
+ * @return string
+ *   lisp code to access the request data
+ */
+
+char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
+{
+    char * string =  apr_pstrcat(request->pool, "", NULL);
+    const apr_array_header_t * fields = NULL;
+    apr_table_entry_t * elements = NULL;
+    int index = 0;
+    int first = 1;
+    char * result = apr_pstrcat(request->pool, "", NULL);
+
+    // Get the elements from the table.
+
+    fields = apr_table_elts(headers_in);
+
+    // The elements in the array.
+
+    elements = (apr_table_entry_t *) fields->elts;
+
+    // Check if we have elements in the array.
+
+    if (0 == fields->nelts)
+    {
+        // We have no data to build a string.
+
+        string = apr_pstrcat(request->pool, "", NULL);
+    }
+    else
+    {
+        // We have elementws in the array. So we build the string.
+
+        // We build a lisp lisp code.
+
+        string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+        string = apr_pstrcat(request->pool, string, "(defparameter *header-in* (make-hash-table :test 'equal))\n", NULL);
+
+        // For each element get the key and the value.
+
+        for(index = 0; index < fields->nelts; index++)
+        {
+            replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
+        }
+
+        string = apr_pstrcat(request->pool, string, ")\n", NULL);
+    }
+
+  return string;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the MIME header environment from the
+ *   response.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] headers_out
+ *   : MIME header environment from the response.
+ *
+ * @return string
+ *   lisp code to access the request data
+ */
+
+char * printHeadersOut(request_rec * request, apr_table_t * headers_out)
+{
+    char * string =  apr_pstrcat(request->pool, "", NULL);
+    const apr_array_header_t * fields = NULL;
+    apr_table_entry_t * elements = NULL;
+    int index = 0;
+    int first = 1;
+    char * result = apr_pstrcat(request->pool, "", NULL);
+
+    // Get the elements from the table.
+
+    fields = apr_table_elts(headers_out);
+
+    // The elements in the array.
+
+    elements = (apr_table_entry_t *) fields->elts;
+
+    // Check if we have elements in the array.
+
+    if (0 == fields->nelts)
+    {
+        // We have no data to build a string.
+
+        string = apr_pstrcat(request->pool, "", NULL);
+    }
+    else
+    {
+        // We have elementws in the array. So we build the string.
+
+        // We build a lisp lisp code.
+
+        string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+        string = apr_pstrcat(request->pool, string, "(defparameter *header-out* (make-hash-table :test 'equal))\n", NULL);
+
+        // For each element get the key and the value.
+
+        for(index = 0; index < fields->nelts; index++)
+        {
+            replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-out*) \"", result , "\")\n", NULL);
+        }
+
+        string = apr_pstrcat(request->pool, string, ")\n", NULL);
+    }
+
+  return string;
 }
 
 
@@ -167,7 +773,7 @@ static mecl_status_t getFilename(request_rec * request, char ** filename)
  * @param[in,out] filecontent
  *   : the file content
  *
- * @return apr_status
+ * @return status
  *  : on failure: HTTP_NOT_FOUND or HTTP_FORBIDDEN / on success: APR_SUCCESS
  */
 
@@ -375,6 +981,8 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     unsigned int dim = 0;
     cl_index index = 0;
     char * character = apr_pstrdup(request->pool, " \0");
+    apr_table_t * headers_in = NULL;
+    apr_table_t * headers_out = NULL;
 
     // Setup the lisp environment.
 
@@ -419,10 +1027,20 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
                 break;
             }
 
-
             // Add a lisp constant so we can identify if we run as embedded ECL.
-	    
-            eval = si_safe_eval(3, ecl_read_from_cstring("(defconstant *mod_ecl* \"mod_ecl\")"), lexical_environment, error);
+
+            eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defconstant *mod_ecl* \"mod_ecl\"))"), lexical_environment, error);
+
+            // Add a hash table for MIME header environment from the request.
+
+            status = getHeadersIn(request, & headers_in);
+            eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersIn(request, headers_in)), lexical_environment, error);
+
+
+            // Add a hash table for MIME header environment from the request.
+
+            status = getHeadersOut(request, & headers_out);
+            eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersOut(request, headers_out)), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
 
@@ -1109,9 +1727,10 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
  * @see httpd-2.4.25/include/httpd.h
  *
  * @param[in] request
- * : the request data
+ *   : the request data
  *
- * @return OK
+ * @return
+ *   : on success: OK / on failure: DECLINED
  */
 
 static int ecl_handler(request_rec * request)
@@ -1120,11 +1739,6 @@ static int ecl_handler(request_rec * request)
     char * filename = apr_pstrdup(request->pool, "");
     char * filecontent = apr_pstrdup(request->pool, "");
     char * result = apr_pstrdup(request->pool, "");
-
-const apr_strmatch_pattern * pattern_lt =  apr_strmatch_precompile(request->pool, "<", 0);
-const apr_strmatch_pattern * pattern_gt =  apr_strmatch_precompile(request->pool, ">", 0);
-const char* match_lt = NULL;
-const char* match_gt = NULL;
 
     // Shall we decline to handle the request?
 
@@ -1165,11 +1779,10 @@ const char* match_gt = NULL;
         ap_rputs("        <br>\n", request);
         ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
-
         if (APR_SUCCESS == status)
         {
             ap_rputs("        ===== Begin =====<pre>\n", request);
-            ap_rprintf(request, "%s\n", filecontent);
+            ap_rprintf(request, "%s\n", escape_html(request, filecontent));
             ap_rputs("        </pre>===== END =======<br>\n", request);
         }
 

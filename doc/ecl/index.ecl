@@ -556,6 +556,68 @@
     )
 
     ;-------------------------------------------------------------------------------
+    ; MIME header environment from the request.
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "MIME header environment from the request."
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    (WITH-HASH-TABLE-ITERATOR (next-item *header-in*)
+        (let ((index 0))
+            (loop
+                (multiple-value-bind (more key value) (next-item)
+                    (unless more (return nil))
+                    (defparameter message
+                        (concatenate 'string
+                            message
+                            (format nil "~D: ~D = \"~D\"" index key value)
+                            "<br>"
+                            (format nil "~%")
+                        )
+                    )
+                )
+                (setq index (+ index 1))
+            )
+        )
+    )
+
+    ;-------------------------------------------------------------------------------
+    ; MIME header environment from the response.
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "MIME header environment from the response."
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    (WITH-HASH-TABLE-ITERATOR (next-item *header-out*)
+        (let ((index 0))
+            (loop
+                (multiple-value-bind (more key value) (next-item)
+                    (unless more (return nil))
+                    (defparameter message
+                        (concatenate 'string
+                            message
+                            (format nil "~D: ~D = \"~D\"" index key value)
+                            "<br>"
+                            (format nil "~%")
+                        )
+                    )
+                )
+                (setq index (+ index 1))
+            )
+        )
+    )
+
+    ;-------------------------------------------------------------------------------
     ; We output all the messages at the end of the script.
 
     (princ message)

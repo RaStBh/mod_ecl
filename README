@@ -20,6 +20,7 @@ Install
 Usage
 Development
 Lisp/ECL/ASDF
+HTTP verbs and enctype
 Copying
 Changelog
 References
@@ -460,6 +461,48 @@ Executable    : bin  : (asdf:make-build :example :type :program        :move-her
 
 ================================================================================
 
+HTTP verbs and enctype
+----------------------
+
+HTTP verbs:
+
+from [1626788793]:
+
+    +---------+-------------------------------------------------+-------+
+    | Method  | Description                                     | Sec.  |
+    +---------+-------------------------------------------------+-------+
+    | GET     | Transfer a current representation of the target | 4.3.1 |
+    |         | resource.                                       |       |
+    | HEAD    | Same as GET, but only transfer the status line  | 4.3.2 |
+    |         | and header section.                             |       |
+    | POST    | Perform resource-specific processing on the     | 4.3.3 |
+    |         | request payload.                                |       |
+    | PUT     | Replace all current representations of the      | 4.3.4 |
+    |         | target resource with the request payload.       |       |
+    | DELETE  | Remove all current representations of the       | 4.3.5 |
+    |         | target resource.                                |       |
+    | CONNECT | Establish a tunnel to the server identified by  | 4.3.6 |
+    |         | the target resource.                            |       |
+    | OPTIONS | Describe the communication options for the      | 4.3.7 |
+    |         | target resource.                                |       |
+    | TRACE   | Perform a message loop-back test along the path | 4.3.8 |
+    |         | to the target resource.                         |       |
+    +---------+-------------------------------------------------+-------+
+
+from: [1626789081]
+
+                The PATCH method requests that a set of changes
+		described in the request entity be applied to
+		the resource identified by the Request-URI.
+
+enctype:
+
+    application/x-www-form-urlencoded
+
+    mutlipart/form-data
+
+================================================================================
+
 Copying
 -------
 
@@ -533,6 +576,20 @@ Changelog
 0.3.0
 
     Eval ECL script and output result.
+
+0.4.0
+
+    * header-in: Get MIME header environment from the request.
+
+    * Functions to searech and replace by string and regex.
+
+0.4.1
+
+    rebase development_of_0.4.0
+
+0.4.2
+
+    header-out: Get MIME header environment from the response.
 
 ================================================================================
 
@@ -883,6 +940,27 @@ Louis Höfler's mod_ecl
     <https://common-lisp.net/project/ecl/posts/ECL-in-Apache-modecl.html>
     (online: 2021-03-21 14:12:08 +0000)
 
+RFCs / HTTP Request Methods / RESTful Services
+
+[1626788793]
+
+    R. Fielding, J. Reschke.   Hypertext Transfer Protocol (HTTP/1.1): Semantics
+    and  Content.  June  2014.  --  URL: https://www.rfc-editor.org/info/rfc7231
+    (online:  2021-07-20 13:46:33  +0000) --  URL: https://datatracker.ietf.org/
+    doc/html/rfc7231 (online: 2021-07-20 13:47:59 +0000)
+
+[1626789081]
+
+    L.  Dusseault,  J.  Snell.   PATCH Method  for HTTP.   March 2010.   -- URL:
+    https://www.rfc-editor.org/info/rfc5789 (online:  2021-07-20 13:51:21 +0000)
+    -- URL:  https://datatracker.ietf.org/doc/html/rfc5789  (online:  2021-07-20
+    13:49:56 +0000)
+
+[1626790959]
+
+    Todd   Fredrich.    REST   API   Tutorial.   2021.    --   URL   https://www
+    .restapitutorial.com/ (online: 2021-07-20 14:22:39 0.71825500 +0000)
+
 ================================================================================
 
 Todo
@@ -895,10 +973,25 @@ Todo
 * Is it  better to  use apr_file_read  / apr_file_read_full,  apr_mmap_create or
   apr_bucket_mmap?
 
-* Functions  to get  the data  or the  request: header_in  (request), header_out
-  (response) and body.
+* Implement functions to get the data of/for
 
-* Functions to get  the data for restful services: DELETE,  GET, PATCH, POST and
-  PUT.
+  URL,
+  header,
+      request header_in
+      response header_out
+  body,
+  HTTP  verbs/methods
+      GET,
+      HEAD,
+      POST,
+      PUT,
+      DELETE,
+      CONNECT,
+      OPTIONS,
+      TRACE,
+      PATCH
+  enctype
+      application/x-www-form-urlencoded
+      mutlipart/form-data
 
   see https://www.restapitutorial.com/lessons/httpmethods.html
