@@ -618,6 +618,61 @@
     )
 
     ;-------------------------------------------------------------------------------
+    ; HTTP verb
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "HTTP verb name: "
+            (format nil "~S" *http-method-name*)
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "HTTP verb number: "
+            (format nil "~S ~S"
+	        *http-method-number*
+                (case *http-method-number*
+                    ( 0 (string "M_GET"))
+                    ( 1 (string "M_PUT"))
+                    ( 2 (string "M_POST"))
+                    ( 3 (string "M_DELETE"))
+                    ( 4 (string "M_CONNECT"))
+                    ( 5 (string "M_OPTIONS"))
+                    ( 6 (string "M_TRACE"))
+                    ( 7 (string "M_PATCH"))
+                    ( 8 (string "M_PROPFIND"))
+                    ( 9 (string "M_PROPPATCH"))
+                    (10 (string "M_MKCOL"))
+                    (11 (string "M_COPY"))
+                    (12 (string "M_MOVE"))
+                    (13 (string "M_LOCK"))
+                    (14 (string "M_UNLOCK"))
+                    (15 (string "M_VERSION_CONTROL"))
+                    (16 (string "M_CHECKOUT"))
+                    (17 (string "M_UNCHECKOUT"))
+                    (18 (string "M_CHECKIN"))
+                    (19 (string "M_UPDATE"))
+                    (20 (string "M_LABEL"))
+                    (21 (string "M_REPORT"))
+                    (22 (string "M_MKWORKSPACE"))
+                    (23 (string "M_MKACTIVITY"))
+                    (24 (string "M_BASELINE_CONTROL"))
+                    (25 (string "M_MERGE"))
+                    (26 (string "M_INVALID"))
+		    (otherwise (string "unknown"))
+                )
+            )
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    ;-------------------------------------------------------------------------------
     ; We output all the messages at the end of the script.
 
     (princ message)

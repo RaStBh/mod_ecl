@@ -628,6 +628,124 @@ static apr_status_t getHeadersOut(request_rec * request, apr_table_t ** headers_
 
 
 /**
+ * @brief Get the HTTP verb name.
+ *
+ * @details
+ *
+ *     GET
+ *     PUT
+ *     POST
+ *     DELETE
+ *     CONNECT
+ *     OPTIONS
+ *     TRACE
+ *     PATCH
+ *     PROPFIND
+ *     PROPPATCH
+ *     MKCOL
+ *     COPY
+ *     MOVE
+ *     LOCK
+ *     UNLOCK
+ *     VERSION_CONTROL
+ *     CHECKOUT
+ *     UNCHECKOUT
+ *     CHECKIN
+ *     UPDATE
+ *     LABEL
+ *     REPORT
+ *     MKWORKSPACE
+ *     MKACTIVITY
+ *     BASELINE_CONTROL
+ *     MERGE
+ *     INVALID
+ *
+ * @param[in] request
+ *   : the request data111
+ *
+ * @param[in,out] method
+ *   : request method (eg. GET, POST, etc.)
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getMethod(request_rec * request, const char ** method)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * method = NULL;
+    if (request)
+    {
+        * method = request->method;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief Get the HTTP verb number.
+ *
+ * @details
+ *
+ *     M_GET
+ *     M_PUT
+ *     M_POST
+ *     M_DELETE
+ *     M_CONNECT
+ *     M_OPTIONS
+ *     M_TRACE
+ *     M_PATCH
+ *     M_PROPFIND
+ *     M_PROPPATCH
+ *     M_MKCOL
+ *     M_COPY
+ *     M_MOVE
+ *     M_LOCK
+ *     M_UNLOCK
+ *     M_VERSION_CONTROL
+ *     M_CHECKOUT
+ *     M_UNCHECKOUT
+ *     M_CHECKIN
+ *     M_UPDATE
+ *     M_LABEL
+ *     M_REPORT
+ *     M_MKWORKSPACE
+ *     M_MKACTIVITY
+ *     M_BASELINE_CONTROL
+ *     M_MERGE
+ *     M_INVALID
+ *
+ * @param[in] request
+ *   : the request data111
+ *
+ * @param[in,out] method_number
+ *   : request number (eg. M_GET, M_POST, etc.)
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getMethodNumber(request_rec * request, int * method_number)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * method_number = M_INVALID;
+    if (request)
+    {
+      * method_number = request->method_number;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
  * @brief Build lisp code to access the MIME header environment from the
  *   request.
  *
@@ -711,7 +829,7 @@ char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
 
 char * printHeadersOut(request_rec * request, apr_table_t * headers_out)
 {
-    char * string =  apr_pstrcat(request->pool, "", NULL);
+    char * string = apr_pstrcat(request->pool, "", NULL);
     const apr_array_header_t * fields = NULL;
     apr_table_entry_t * elements = NULL;
     int index = 0;
@@ -755,6 +873,58 @@ char * printHeadersOut(request_rec * request, apr_table_t * headers_out)
     }
 
   return string;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the HTTP request verb name.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] method
+ *   : the request method (eg. GET, POST, etc.)
+ *
+ * @return string
+ *  : lisp code to access the HTTP request verb name
+ */
+
+char * printMethodName(request_rec * request, const char * method)
+{
+    char * string = apr_pstrcat(request->pool, "", NULL);
+
+    string = apr_pstrcat(request->pool, string, "(defparameter *http-method-name* \"", method, "\")", NULL);
+
+    return string;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the HTTP request verb number.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] method_number
+ *   : the request method (eg. M_GET, M_POST, etc.)
+ *
+ * @return string
+ *  : lisp code to access the HTTP request verb number
+ */
+
+char * printMethodNumber(request_rec * request, int method_number)
+{
+    char * string = apr_pstrcat(request->pool, "", NULL);
+
+    string = apr_pstrcat(request->pool, string, "(defparameter *http-method-number* ", apr_psprintf(request->pool, "%u", method_number), ")", NULL);
+
+    return string;
 }
 
 
@@ -983,6 +1153,8 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     char * character = apr_pstrdup(request->pool, " \0");
     apr_table_t * headers_in = NULL;
     apr_table_t * headers_out = NULL;
+    const char * method_name = NULL;
+    int method_number = M_INVALID;
 
     // Setup the lisp environment.
 
@@ -1041,6 +1213,14 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
             status = getHeadersOut(request, & headers_out);
             eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersOut(request, headers_out)), lexical_environment, error);
+
+	    // Add a string for the HTTP method name.
+	    status = getMethod(request, & method_name);
+	    eval = si_safe_eval(3, ecl_read_from_cstring(printMethodName(request, method_name)), lexical_environment, error);
+
+	    // Add a string for the HTTP method number.
+	    status = getMethodNumber(request, & method_number);
+	    eval = si_safe_eval(3, ecl_read_from_cstring(printMethodNumber(request, method_number)), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
 
