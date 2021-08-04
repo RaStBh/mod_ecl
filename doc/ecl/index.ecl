@@ -561,27 +561,37 @@
     (defparameter message
         (concatenate 'string
             message
-            "MIME header environment from the request."
+            "MIME header environment from the request:"
             "<br>"
             (format nil "~%")
         )
     )
 
-    (WITH-HASH-TABLE-ITERATOR (next-item *header-in*)
-        (let ((index 0))
-            (loop
-                (multiple-value-bind (more key value) (next-item)
-                    (unless more (return nil))
-                    (defparameter message
-                        (concatenate 'string
-                            message
-                            (format nil "~D: ~D = \"~D\"" index key value)
-                            "<br>"
-                            (format nil "~%")
+    (if (> (hash-table-count *_header-in_*) 0)
+        (WITH-HASH-TABLE-ITERATOR (next-item *_header-in_*)
+            (let ((index 0))
+                (loop
+                    (multiple-value-bind (more key value) (next-item)
+                        (unless more (return nil))
+                        (defparameter message
+                            (concatenate 'string
+                                message
+                                (format nil "~D: ~D = \"~D\"" index key value)
+                                "<br>"
+                                (format nil "~%")
+                            )
                         )
                     )
+                    (setq index (+ index 1))
                 )
-                (setq index (+ index 1))
+            )
+        )
+        (defparameter message
+            (concatenate 'string
+                message
+                (format nil "~D" "*_header-in_* is empty")
+                "<br>"
+                (format nil "~%")
             )
         )
     )
@@ -592,27 +602,37 @@
     (defparameter message
         (concatenate 'string
             message
-            "MIME header environment from the response."
+            "MIME header environment from the response:"
             "<br>"
             (format nil "~%")
         )
     )
 
-    (WITH-HASH-TABLE-ITERATOR (next-item *header-out*)
-        (let ((index 0))
-            (loop
-                (multiple-value-bind (more key value) (next-item)
-                    (unless more (return nil))
-                    (defparameter message
-                        (concatenate 'string
-                            message
-                            (format nil "~D: ~D = \"~D\"" index key value)
-                            "<br>"
-                            (format nil "~%")
+    (if (> (hash-table-count *_header-out_*) 0)
+        (WITH-HASH-TABLE-ITERATOR (next-item *_header-out_*)
+            (let ((index 0))
+                (loop
+                    (multiple-value-bind (more key value) (next-item)
+                        (unless more (return nil))
+                        (defparameter message
+                            (concatenate 'string
+                                message
+                                (format nil "~D: ~D = \"~D\"" index key value)
+                                "<br>"
+                                (format nil "~%")
+                            )
                         )
                     )
+                    (setq index (+ index 1))
                 )
-                (setq index (+ index 1))
+            )
+        )
+        (defparameter message
+            (concatenate 'string
+                message
+                (format nil "~D" "*_header-out_* is empty")
+                "<br>"
+                (format nil "~%")
             )
         )
     )
@@ -624,7 +644,7 @@
         (concatenate 'string
             message
             "HTTP verb name: "
-            (format nil "~S" *http-method-name*)
+            (format nil "~S" *_http-method-name_*)
             "<br>"
             (format nil "~%")
         )
@@ -635,8 +655,8 @@
             message
             "HTTP verb number: "
             (format nil "~S ~S"
-	        *http-method-number*
-                (case *http-method-number*
+                *_http-method-number_*
+                (case *_http-method-number_*
                     ( 0 (string "M_GET"))
                     ( 1 (string "M_PUT"))
                     ( 2 (string "M_POST"))
@@ -664,11 +684,113 @@
                     (24 (string "M_BASELINE_CONTROL"))
                     (25 (string "M_MERGE"))
                     (26 (string "M_INVALID"))
-		    (otherwise (string "unknown"))
+                    (otherwise (string "unknown"))
                 )
             )
             "<br>"
             (format nil "~%")
+        )
+    )
+
+    ;-------------------------------------------------------------------------------
+    ; Request data from GET request.
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "Request data from GET request:"
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    (if (hash-table-p *_get_*)
+        (if (> (hash-table-count *_get_*) 0)
+            (with-hash-table-iterator (next-item *_get_*)
+                (let ((index 0))
+                    (loop
+                        (multiple-value-bind (more key value) (next-item)
+                            (unless more (return nil))
+                            (defparameter message
+                                (concatenate 'string
+                                    message
+                                    (format nil "~D: ~D = \"~D\"" index key value)
+                                    "<br>"
+                                    (format nil "~%")
+                                )
+                            )
+                        )
+                        (setq index (+ index 1))
+                    )
+                )
+            )
+            (defparameter message
+                (concatenate 'string
+                    message
+                    (format nil "~D" "*_get_* is empty")
+                    "<br>"
+                    (format nil "~%")
+                )
+            )
+        )
+        (defparameter message
+            (concatenate 'string
+                message
+                (format nil "~D" "there is no *_get_* hash")
+                "<br>"
+                (format nil "~%")
+            )
+        )
+    )
+
+    ;-------------------------------------------------------------------------------
+    ; Request data from POST request.
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "Request data from POST request:"
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    (if (hash-table-p *_post_*)
+        (if (> (hash-table-count *_post_*) 0)
+            (with-hash-table-iterator (next-item *_post_*)
+                (let ((index 0))
+                    (loop
+                        (multiple-value-bind (more key value) (next-item)
+                            (unless more (return nil))
+                            (defparameter message
+                                (concatenate 'string
+                                    message
+                                    (format nil "~D: ~D = \"~D\"" index key value)
+                                    "<br>"
+                                    (format nil "~%")
+                                )
+                            )
+                        )
+                        (setq index (+ index 1))
+                    )
+                )
+            )
+            (defparameter message
+                (concatenate 'string
+                    message
+                    (format nil "~D" "*_post_* is empty")
+                    "<br>"
+                    (format nil "~%")
+                )
+           )
+        )
+        (defparameter message
+            (concatenate 'string
+                message
+                (format nil "~D" "there is no *_post_* hash")
+                "<br>"
+                (format nil "~%")
+            )
         )
     )
 
