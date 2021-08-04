@@ -64,11 +64,13 @@
 // Header files from Apache HTTP Server.
 
 #include "ap_config.h"
+#include "ap_regex.h"
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
 #include "http_log.h"
-#include "ap_regex.h"
+#include "util_varbuf.h"
+#include "util_script.h"
 
 // Header files from Apache Runtime Library.
 
@@ -77,7 +79,7 @@
 #include "apr_pools.h"
 #include "apr_strmatch.h"
 #include "apr_buckets.h"
-#include "util_varbuf.h"
+#include "apr_errno.h"
 
 // Header files from Embeddable Common-Lisp.
 
@@ -661,7 +663,7 @@ static apr_status_t getHeadersOut(request_rec * request, apr_table_t ** headers_
  *     INVALID
  *
  * @param[in] request
- *   : the request data111
+ *   : the request data
  *
  * @param[in,out] method
  *   : request method (eg. GET, POST, etc.)
@@ -720,7 +722,7 @@ static apr_status_t getMethod(request_rec * request, const char ** method)
  *     M_INVALID
  *
  * @param[in] request
- *   : the request data111
+ *   : the request data
  *
  * @param[in,out] method_number
  *   : request number (eg. M_GET, M_POST, etc.)
@@ -746,6 +748,68 @@ static apr_status_t getMethodNumber(request_rec * request, int * method_number)
 
 
 /**
+ * @brief Get request data from GET request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] get_data
+ *   : the request data from GET request
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getGetData(request_rec * request, apr_table_t ** get_data)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * get_data = NULL;
+    if (request)
+    {
+        ap_args_to_table(request, & * get_data);
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief Get request data from POST request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] post_data
+ *   : the request data from POST request
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getPostData(request_rec * request, apr_array_header_t ** post_data)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * post_data = NULL;
+    if (request)
+    {
+        status = ap_parse_form_data(request, NULL, post_data, -1, HUGE_STRING_LEN);
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
  * @brief Build lisp code to access the MIME header environment from the
  *   request.
  *
@@ -755,7 +819,7 @@ static apr_status_t getMethodNumber(request_rec * request, int * method_number)
  *   : the request data
  *
  * @param[in] headers_in
- *   : MIME header environment from the request.
+ *   : MIME header environment from the request
  *
  * @return string
  *   lisp code to access the request data
@@ -778,33 +842,29 @@ char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
 
     elements = (apr_table_entry_t *) fields->elts;
 
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+    string = apr_pstrcat(request->pool, string, "(defparameter *_header-in_* (make-hash-table :test 'equal))\n", NULL);
+
     // Check if we have elements in the array.
 
-    if (0 == fields->nelts)
-    {
-        // We have no data to build a string.
-
-        string = apr_pstrcat(request->pool, "", NULL);
-    }
-    else
+    if (0 != fields->nelts)
     {
         // We have elementws in the array. So we build the string.
-
-        // We build a lisp lisp code.
-
-        string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
-        string = apr_pstrcat(request->pool, string, "(defparameter *header-in* (make-hash-table :test 'equal))\n", NULL);
 
         // For each element get the key and the value.
 
         for(index = 0; index < fields->nelts; index++)
         {
             replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
-            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-in*) \"", result , "\")\n", NULL);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *_header-in_*) \"", result , "\")\n", NULL);
         }
-
-        string = apr_pstrcat(request->pool, string, ")\n", NULL);
     }
+
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, ")\n", NULL);
 
   return string;
 }
@@ -821,7 +881,7 @@ char * printHeadersIn(request_rec * request, apr_table_t * headers_in)
  *   : the request data
  *
  * @param[in] headers_out
- *   : MIME header environment from the response.
+ *   : MIME header environment from the response
  *
  * @return string
  *   lisp code to access the request data
@@ -844,35 +904,166 @@ char * printHeadersOut(request_rec * request, apr_table_t * headers_out)
 
     elements = (apr_table_entry_t *) fields->elts;
 
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+    string = apr_pstrcat(request->pool, string, "(defparameter *_header-out_* (make-hash-table :test 'equal))\n", NULL);
+
     // Check if we have elements in the array.
 
-    if (0 == fields->nelts)
-    {
-        // We have no data to build a string.
-
-        string = apr_pstrcat(request->pool, "", NULL);
-    }
-    else
+    if (0 != fields->nelts)
     {
         // We have elementws in the array. So we build the string.
-
-        // We build a lisp lisp code.
-
-        string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
-        string = apr_pstrcat(request->pool, string, "(defparameter *header-out* (make-hash-table :test 'equal))\n", NULL);
 
         // For each element get the key and the value.
 
         for(index = 0; index < fields->nelts; index++)
         {
             replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
-            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *header-out*) \"", result , "\")\n", NULL);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *_header-out_*) \"", result , "\")\n", NULL);
         }
-
-        string = apr_pstrcat(request->pool, string, ")\n", NULL);
     }
 
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, ")\n", NULL);
+
   return string;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the request data from the GET request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] get_data
+ *   : the request data from GET request
+ *
+ * @return string
+ *   lisp code to access the request data from GET request
+ */
+
+char * printGetData(request_rec * request, apr_table_t * get_data)
+{
+    char * string = apr_pstrcat(request->pool, "", NULL);
+    const apr_array_header_t * fields = NULL;
+    apr_table_entry_t * elements = NULL;
+    int index = 0;
+    int first = 1;
+    char * result = apr_pstrcat(request->pool, "", NULL);
+
+    // Get the elements from the table.
+
+    fields = apr_table_elts(get_data);
+
+    // The elements in the array.
+
+    elements = (apr_table_entry_t *) fields->elts;
+
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+    string = apr_pstrcat(request->pool, string, "(defparameter *_get_* (make-hash-table :test 'equal))\n", NULL);
+
+    // Check if we have elements in the array.
+
+    if (0 != fields->nelts)
+    {
+        // We have elementws in the array. So we build the string.
+
+        // For each element get the key and the value.
+
+        for(index = 0; index < fields->nelts; index++)
+        {
+            replace_string(request, elements[index].val, "\"", "\\\"", 0, & result);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", elements[index].key, "\" *_get_*) \"", result , "\")\n", NULL);
+        }
+    }
+
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, ")\n", NULL);
+
+  return string;
+}
+
+
+
+/**
+ * @brief Build lisp code to access the request data from the POST request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] get_data
+ *   : the request data from GET request
+ *
+ * @return string
+ *   lisp code to access the request data from GET request
+ */
+
+char * printPostData(request_rec * request, apr_array_header_t * post_data)
+{
+    char * string = apr_pstrcat(request->pool, "", NULL);
+    apr_off_t value_length = 0;
+    apr_size_t size = 0;
+    int res = 0;
+    int i = 0;
+    const char * key = NULL;
+    char * value = NULL;
+    ap_form_pair_t * key_value = NULL;
+    char * result = apr_pstrcat(request->pool, "", NULL);
+
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, "(eval-when-compile\n", NULL);
+    string = apr_pstrcat(request->pool, string, "(defparameter *_post_* (make-hash-table :test 'equal))\n", NULL);
+
+    // Check if we have elements in the array.
+
+    if (0 != post_data->nelts)
+    {
+        // We have elementws in the array. So we build the string.
+
+        // For each element get the key and the value.
+
+        while (post_data && !apr_is_empty_array(post_data))
+        {
+            // Get key and value.
+
+            key_value = (ap_form_pair_t *) apr_array_pop(post_data);
+
+            // Get key.
+
+            key = key_value->name;
+
+            // Get value.
+
+            apr_brigade_length(key_value->value, 1, & value_length);
+            size = (apr_size_t) value_length + 1;
+            value = apr_palloc(request->pool, size);
+            apr_brigade_flatten(key_value->value, value, & size);
+            value[value_length] = 0;
+
+            // Add to hash.
+
+            replace_string(request, value, "\"", "\\\"", 0, & result);
+            string = apr_pstrcat(request->pool, string, "(setf (gethash \"", key, "\" *_post_*) \"", result, "\")\n", NULL);
+        }
+    }
+
+    // We build a lisp lisp code.
+
+    string = apr_pstrcat(request->pool, string, ")\n", NULL);
+
+    return string;
 }
 
 
@@ -896,7 +1087,7 @@ char * printMethodName(request_rec * request, const char * method)
 {
     char * string = apr_pstrcat(request->pool, "", NULL);
 
-    string = apr_pstrcat(request->pool, string, "(defparameter *http-method-name* \"", method, "\")", NULL);
+    string = apr_pstrcat(request->pool, string, "(defparameter *_http-method-name_* \"", method, "\")", NULL);
 
     return string;
 }
@@ -922,7 +1113,7 @@ char * printMethodNumber(request_rec * request, int method_number)
 {
     char * string = apr_pstrcat(request->pool, "", NULL);
 
-    string = apr_pstrcat(request->pool, string, "(defparameter *http-method-number* ", apr_psprintf(request->pool, "%u", method_number), ")", NULL);
+    string = apr_pstrcat(request->pool, string, "(defparameter *_http-method-number_* ", apr_psprintf(request->pool, "%u", method_number), ")", NULL);
 
     return string;
 }
@@ -1155,6 +1346,12 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     apr_table_t * headers_out = NULL;
     const char * method_name = NULL;
     int method_number = M_INVALID;
+    apr_table_t * get_data = NULL;
+    apr_array_header_t * post_data = NULL;
+
+    // Get the method number.
+
+    status = getMethodNumber(request, & method_number);
 
     // Setup the lisp environment.
 
@@ -1173,11 +1370,58 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
     process_environment = ecl_process_env();
 
-
     // Create a protected region.
 
     ECL_CATCH_ALL_BEGIN(process_environment)
     {
+        // Add a lisp constant so we can identify if we run as embedded ECL.
+
+        eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defconstant *mod_ecl* \"mod_ecl\"))"), lexical_environment, error);
+
+        // Add a hash table for MIME header environment from the request.
+
+        status = getHeadersIn(request, & headers_in);
+        eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersIn(request, headers_in)), lexical_environment, error);
+
+        // Add a hash table for MIME header environment from the request.
+
+        status = getHeadersOut(request, & headers_out);
+        eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersOut(request, headers_out)), lexical_environment, error);
+
+        // Add a string for the HTTP method name.
+
+        status = getMethod(request, & method_name);
+        eval = si_safe_eval(3, ecl_read_from_cstring(printMethodName(request, method_name)), lexical_environment, error);
+
+        // Add a string for the HTTP method number.
+
+        status = getMethodNumber(request, & method_number);
+        eval = si_safe_eval(3, ecl_read_from_cstring(printMethodNumber(request, method_number)), lexical_environment, error);
+
+        // Add s string for the request data from the GET request.
+
+        if (method_number == M_GET)
+        {
+            status = getGetData(request, & get_data);
+            eval = si_safe_eval(3, ecl_read_from_cstring(printGetData(request, get_data)), lexical_environment, error);
+        }
+        else
+        {
+            eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defparameter *_get_* (make-hash-table :test 'equal)))\n"), lexical_environment, error);
+        }
+
+        // Add s string for the request data from the POST request.
+
+        if (method_number == M_POST)
+        {
+            status = getPostData(request, & post_data);
+            eval = si_safe_eval(3, ecl_read_from_cstring(printPostData(request, post_data)), lexical_environment, error);
+        }
+        else
+        {
+            eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defparameter *_post_* (make-hash-table :test 'equal)))\n"), lexical_environment, error);
+        }
+
         // The protected code.
 
         // Evaluate the script.
@@ -1198,29 +1442,6 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
                 status = APR_SUCCESS;
                 break;
             }
-
-            // Add a lisp constant so we can identify if we run as embedded ECL.
-
-            eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defconstant *mod_ecl* \"mod_ecl\"))"), lexical_environment, error);
-
-            // Add a hash table for MIME header environment from the request.
-
-            status = getHeadersIn(request, & headers_in);
-            eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersIn(request, headers_in)), lexical_environment, error);
-
-
-            // Add a hash table for MIME header environment from the request.
-
-            status = getHeadersOut(request, & headers_out);
-            eval = si_safe_eval(3, ecl_read_from_cstring(printHeadersOut(request, headers_out)), lexical_environment, error);
-
-	    // Add a string for the HTTP method name.
-	    status = getMethod(request, & method_name);
-	    eval = si_safe_eval(3, ecl_read_from_cstring(printMethodName(request, method_name)), lexical_environment, error);
-
-	    // Add a string for the HTTP method number.
-	    status = getMethodNumber(request, & method_number);
-	    eval = si_safe_eval(3, ecl_read_from_cstring(printMethodNumber(request, method_number)), lexical_environment, error);
 
             // Evaluate form in the lexical environment.
 
@@ -2622,16 +2843,16 @@ static void register_hooks(apr_pool_t * pool)
  *    functions to  register an interest  in a  specific step in  processing the
  *    current request.
  *
- * @remark  \c httpd-2.4.25/include/http_config.h:  \c  typedef  \c struct  \c
+ * @remark  \c  httpd-2.4.25/include/http_config.h:  \c  typedef  \c  struct  \c
  * module_struct  \c  module;:  Module  structure.   Just  about  everything  is
  * dispatched through  these, directly  or indirectly  (through the  command and
  * handler tables).
  *
- * @remark    \c    httpd-2.4.25/include/http_config.h:   \c    \#define    \c
+ * @remark    \c    httpd-2.4.25/include/http_config.h:     \c    \#define    \c
  * AP_DECLARE_MODULE(foo): This is  a convenience macro that combines  a call of
  * \c %APLOG_USE_MODULE with the definition of the module symbol.
  *
- * @remark    \c    httpd-2.4.25/include/http_config.h:   \c    \#define    \c
+ * @remark    \c    httpd-2.4.25/include/http_config.h:     \c    \#define    \c
  * APLOG_USE_MODULE(foo): This macro is used  choose which module a file belongs
  * to.  This is necessary to allow per-module loglevel configuration.
  */

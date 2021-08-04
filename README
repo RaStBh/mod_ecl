@@ -164,13 +164,19 @@ Inspect the output of mod_ecl and index.ecl.
 
 mod_ecl introduce the following variables in ECL:
 
-    *header-in*          | hash    | MIME header environment from the request
-
-    *header-out          | hash    | MIME header environment for the response
-
-    *http-method-name*   | string  | Request method (eg. GET, POST, etc.)
-
-    *http-method-number* | integer | Request number (eg. M_GET, M_POST, etc.)
+    +-----------------------+---------+-----------------------------------------+
+    |*_header-in_*          | hash    | MIME header environment from the request|
+    +-----------------------+---------+-----------------------------------------+
+    |*_header-out_*         | hash    | MIME header environment for the response|
+    +-----------------------+---------+-----------------------------------------+
+    |*_http-method-name_*   | string  | Request method (eg. GET, POST, etc.)    |
+    +-----------------------+---------+-----------------------------------------+
+    |*_http-method-number_* | integer | Request number (eg. M_GET, M_POST, etc.)|
+    +-----------------------+---------+-----------------------------------------+
+    |*_get_*                | hash    | Request data from GET request           |
+    +-----------------------+---------+-----------------------------------------+
+    |*_post_*               | hash    | Request data from POST request          |
+    +-----------------------+---------+-----------------------------------------+
 
 ================================================================================
 
@@ -604,6 +610,10 @@ Changelog
 
     Functions to get the HTTP method name and number.
 
+0.4.4
+
+    * get/post: Get request data from get/post request
+
 ================================================================================
 
 References
@@ -986,25 +996,6 @@ Todo
 * Is it  better to  use apr_file_read  / apr_file_read_full,  apr_mmap_create or
   apr_bucket_mmap?
 
-* Implement functions to get the data of/for
-
-  URL,
-  header,
-      request header_in
-      response header_out
-  body,
-  HTTP  verbs/methods
-      GET,
-      HEAD,
-      POST,
-      PUT,
-      DELETE,
-      CONNECT,
-      OPTIONS,
-      TRACE,
-      PATCH
-  enctype
-      application/x-www-form-urlencoded
-      mutlipart/form-data
+* Implement functions to get the data of the HTTP verbs
 
   see https://www.restapitutorial.com/lessons/httpmethods.html
