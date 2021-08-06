@@ -164,19 +164,23 @@ Inspect the output of mod_ecl and index.ecl.
 
 mod_ecl introduce the following variables in ECL:
 
-    +-----------------------+---------+-----------------------------------------+
-    |*_header-in_*          | hash    | MIME header environment from the request|
-    +-----------------------+---------+-----------------------------------------+
-    |*_header-out_*         | hash    | MIME header environment for the response|
-    +-----------------------+---------+-----------------------------------------+
-    |*_http-method-name_*   | string  | Request method (eg. GET, POST, etc.)    |
-    +-----------------------+---------+-----------------------------------------+
-    |*_http-method-number_* | integer | Request number (eg. M_GET, M_POST, etc.)|
-    +-----------------------+---------+-----------------------------------------+
-    |*_get_*                | hash    | Request data from GET request           |
-    +-----------------------+---------+-----------------------------------------+
-    |*_post_*               | hash    | Request data from POST request          |
-    +-----------------------+---------+-----------------------------------------+
+    +----------------------+-------+----------------------------------------+
+    |*mod_ecl*             |string |identifier if we run in the embedded ECL|
+    +----------------------+-------+----------------------------------------+
+    |+_content_type_+      |string |to get and set the content type         |
+    +----------------------+-------+----------------------------------------+
+    |*_header-in_*         |hash   |MIME header environment from the request|
+    +----------------------+-------+----------------------------------------+
+    |*_header-out_*        |hash   |MIME header environment for the response|
+    +----------------------+-------+----------------------------------------+
+    |*_http-method-name_*  |string |request method (eg. GET, POST, etc.)    |
+    +----------------------+-------+----------------------------------------+
+    |*_http-method-number_*|integer|request number (eg. M_GET, M_POST, etc.)|
+    +----------------------+-------+----------------------------------------+
+    |*_get_*               |hash   |request data from GET request           |
+    +----------------------+-------+----------------------------------------+
+    |*_post_*              |hash   |request data from POST request          |
+    +----------------------+-------+----------------------------------------+
 
 ================================================================================
 
@@ -612,7 +616,11 @@ Changelog
 
 0.4.4
 
-    * get/post: Get request data from get/post request
+    get/post: Get request data from get/post request
+
+0.4.5
+
+    set content type from ECL script
 
 ================================================================================
 

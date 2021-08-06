@@ -504,6 +504,67 @@ char * escape_html(request_rec * request, char * string_unescaped)
 
 
 /**
+ * @brief Get the content-type for the current request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in,out] content_type
+ *   : the content type
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t getContentType(request_rec * request, char ** content_type)
+{
+    apr_status_t status = APR_FAILURE;
+
+    * content_type = NULL;
+    if (request)
+    {
+        * content_type = apr_pstrdup(request->pool, request->content_type);
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
+ * @brief Set the content-type for the current request.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   : the request data
+ *
+ * @param[in] content_type
+ *   : the content type
+ *
+ * @return status
+ *   : on failure: APR_FAILURE / on success: APR_SUCCESS
+ */
+
+static apr_status_t setContentType(request_rec * request, char * content_type)
+{
+    apr_status_t status = APR_FAILURE;
+
+    if (request)
+    {
+        request->content_type = content_type;
+        status = APR_SUCCESS;
+    }
+
+    return status;
+}
+
+
+
+/**
  * @brief The filename on disk corresponding to this response.
  *
  * @details
@@ -1348,6 +1409,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     int method_number = M_INVALID;
     apr_table_t * get_data = NULL;
     apr_array_header_t * post_data = NULL;
+    char * content_type = NULL;
 
     // Get the method number.
 
@@ -1377,6 +1439,24 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
         // Add a lisp constant so we can identify if we run as embedded ECL.
 
         eval = si_safe_eval(3, ecl_read_from_cstring("(eval-when-compile (defconstant *mod_ecl* \"mod_ecl\"))"), lexical_environment, error);
+
+        // Ass a lisp variable so we can set the content type from the script.
+
+        status = getContentType(request, & content_type);
+        eval = si_safe_eval(
+            3,
+            ecl_read_from_cstring(
+                apr_pstrcat(
+                    request->pool,
+                    "(eval-when-compile (defparameter +_content_type_+ \"",
+                    content_type,
+                    "\"))",
+                    NULL
+                )
+            ),
+            lexical_environment,
+            error
+        );
 
         // Add a hash table for MIME header environment from the request.
 
@@ -1469,6 +1549,31 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
         } while (1);
 
+        // Get and set the content type
+
+        eval = si_safe_eval(3, ecl_read_from_cstring("(princ +_content_type_+)"), lexical_environment, error);
+        if (   (eval != ECL_NIL)
+            && (eval != OBJNULL))
+        {
+            // The evaluation was successful.
+
+            // Get length of resulting string.
+
+            dim = eval->string.dim;
+
+            // Get result by each single character and join them to a string.
+
+            content_type = "";
+            for (index = 0; index < dim; index++)
+            {
+                character[0] = ecl_char(eval, index);
+                content_type = apr_pstrcat(request->pool, content_type, & character[0], NULL);
+            }
+
+            // Set the content type.
+
+            status = setContentType(request, content_type);
+        }
     }
     ECL_CATCH_ALL_IF_CAUGHT
     {
@@ -1476,7 +1581,7 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
         // Write error massage to error log.
 
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "%s: %s", "mod_ecl", "Something happened. But I do not what.");
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "%s: %s", "mod_ecl", "Something happened. There is something wront with the ECL scirpt.");
     }
     ECL_CATCH_ALL_END;
 
@@ -1485,6 +1590,8 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
     // Close the lisp environment.
 
     cl_shutdown();
+
+//ap_set_content_type(request, "text/html");
 
     // If we reach this line we assume everything worked fina.
 
