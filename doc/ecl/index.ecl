@@ -568,7 +568,7 @@
         )
     )
 
-    (defparameter +_content_type_+ "text/html")
+    (defparameter +_content_type_+ "text/plain")
 
     (defparameter message
         (concatenate 'string
