@@ -556,6 +556,31 @@
     )
 
     ;-------------------------------------------------------------------------------
+    ; Get and set the content type.
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "content type: "
+            (format nil "~S" +_content_type_+)
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    (defparameter +_content_type_+ "text/html")
+
+    (defparameter message
+        (concatenate 'string
+            message
+            "content type: "
+            (format nil "~S" +_content_type_+)
+            "<br>"
+            (format nil "~%")
+        )
+    )
+
+    ;-------------------------------------------------------------------------------
     ; MIME header environment from the request.
 
     (defparameter message
