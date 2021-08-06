@@ -1569,11 +1569,8 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
                 character[0] = ecl_char(eval, index);
                 content_type = apr_pstrcat(request->pool, content_type, & character[0], NULL);
             }
-
-            // Set the content type.
-
-            status = setContentType(request, content_type);
         }
+
     }
     ECL_CATCH_ALL_IF_CAUGHT
     {
@@ -1591,7 +1588,9 @@ static apr_status_t evaluateByEcl(request_rec * request, char * script, char ** 
 
     cl_shutdown();
 
-//ap_set_content_type(request, "text/html");
+    // Set the content type.
+
+    ap_set_content_type(request, content_type);
 
     // If we reach this line we assume everything worked fina.
 
@@ -2256,10 +2255,14 @@ static int ecl_handler(request_rec * request)
         return DECLINED;
     }
 
-    // The output.   First we set the  content type for this  request.  Then for
-    // the current request we output our message als html code.
+    // The output.  For the current request we output our message als html code.
+
+    // Set the content type.
 
     ap_set_content_type(request, "text/html");
+
+    // Output for development.
+
     if (!request->header_only)
     {
         ap_rputs("<!DODCTYPE html>\n", request);
