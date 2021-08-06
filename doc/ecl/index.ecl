@@ -127,6 +127,20 @@
         "The message we output at the end of the script."
     )
 
+    ; Begin of HTML
+
+    (defparameter message
+        (concatenate 'string
+            message
+            (format nil "~D~%" "<!doctype html>")
+            (format nil "~D~%" "<html>")
+            (format nil "~D~%" "<head>")
+            (format nil "~D~%" "<title>mod_ecl example</title>")
+            (format nil "~D~%" "</head>")
+            (format nil "~D~%" "<body>")
+        )
+    )
+
     ;-------------------------------------------------------------------------------
     ; We show version of ASDF.
     ; We show the loaded systems of ASDF.
@@ -821,6 +835,15 @@
 
     ;-------------------------------------------------------------------------------
     ; We output all the messages at the end of the script.
+
+    ; End of HTML
+
+    (defparameter message
+        (concatenate 'string
+            message
+            (format nil "~D~%" "</body>")
+        )
+    )
 
     (princ message)
 
