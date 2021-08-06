@@ -2265,53 +2265,35 @@ static int ecl_handler(request_rec * request)
 
     if (!request->header_only)
     {
-        ap_rputs("<!DODCTYPE html>\n", request);
-        ap_rputs("<html>\n", request);
-        ap_rputs("    <head>\n", request);
-        ap_rputs("        <meta charset=\"utf-8\"/>\n", request);
-        ap_rputs("        <title>RaSt mod_ecl</title>\n", request);
-        ap_rputs("    </head>\n", request);
-        ap_rputs("    <body>\n", request);
-        ap_rputs("        Hello World!<br>\n", request);
-        ap_rputs("        This is the sample page from RaSt mod_ecl!<br>\n", request);
-        ap_rputs("        <br>\n", request);
+        //
 
         // Get and output file name.
 
-        ap_rputs("        file name:<br>\n", request);
         status = getFilename(request, & filename);
-        if (APR_SUCCESS == status)
+        if (APR_SUCCESS != status)
         {
-            ap_rprintf(request, "        %s<br>\n", filename);
+            return status;
         }
 
         // Get and output the file content.
 
-        ap_rputs("        <br>\n", request);
-        ap_rputs("        file content:<br>\n", request);
         status = getFilecontent(request, filename, & filecontent);
-        if (APR_SUCCESS == status)
+        if (APR_SUCCESS != status)
         {
-            ap_rputs("        ===== Begin =====<pre>\n", request);
-            ap_rprintf(request, "%s\n", escape_html(request, filecontent));
-            ap_rputs("        </pre>===== END =======<br>\n", request);
+            return status;
         }
 
         // Get result of evaluation.
 
-        ap_rputs("        <br>\n", request);
-        ap_rputs("        script result:", request);
         status =  evaluateByEcl(request, filecontent, & result);
         if (APR_SUCCESS == status)
         {
-            ap_rputs("<br>\n", request);
-            ap_rputs("        ===== Begin =====<br>\n", request);
-            ap_rprintf(request, "%s<br>\n", result);
-            ap_rputs("        ===== END =======<br>\n", request);
+            ap_rprintf(request, "%s", result);
         }
-
-        ap_rputs("    </body>\n", request);
-        ap_rputs("</html>\n", request);
+        else
+        {
+            return status;
+        }
     }
 
     // We have successfully handeled the requet.
