@@ -35,9 +35,6 @@ mod_ecl is  a module for  the Apache HTTP  Server which contains  the Embeddable
 Common-Lisp interpreter.  You can use it to run Lisp code, like you can run Perl
 code with mod_perl or PHP code with mod_php.
 
-The mod_ecl in its current state is a prototype. So it is not yet usable for the
-common user.
-
 ================================================================================
 
 Install
@@ -629,6 +626,12 @@ Changelog
 0.4.7
 
     Remove development test output.
+
+1.0.0
+
+    Nothing new. It is like 0.4.7.
+
+    The first usable version for the common user.
 
 ================================================================================
 
