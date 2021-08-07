@@ -16,6 +16,7 @@ Contents
 --------
 
 Copying
+Changelog
 References
 
 ================================================================================
@@ -42,6 +43,57 @@ Copying
 // You should have received a copy of  the GNU General Public License along with
 // RaSt     mod_ecl     in     the     file    COPYING.      If     not,     see
 // <https://www.gnu.org/licenses/>.
+
+================================================================================
+
+Changelog
+=========
+
+0.0.0 Nothing special here.
+
+0.1.0 This  version is a basic  Apache HTTP Server extension  which does nothing
+  more than to output the string "Hello World".
+
+0.1.1  Introducing doxygen  for documentation.   Adding proper  comments.  Small
+  changes to the code.  And other changes.
+
+0.1.2 Add notes about usage.
+
+0.1.3 Add missing comment.
+
+0.2.0 Read file and output its content. And other changes.
+
+0.2.1 Fix whitespace and spelling.
+
+0.2.2 Add missing comment.
+
+0.2.3 Some Refactoring.
+
+0.2.4 Fix line break.
+
+0.3.0 Evaluate ECL script and output result.
+
+0.4.0 Get  MIME header environment  from the  request.  Functions to  search and
+  replace by string and regex.
+
+0.4.1 Rebase development_of_0.4.0.
+
+0.4.2 Get MIME header environment from the response.
+
+0.4.3 Functions to get the HTTP method name and number.
+
+0.4.4 get/post: Get request data from get/post request
+
+0.4.5 Set content type from ECL script.
+
+0.4.6 Something went wrong with 0.4.5.
+
+0.4.7 Remove development test output.
+
+1.0.0 Nothing new.  It  is like 0.4.7.  The first usable  version for the common
+  user.
+
+2.0.0 Start of major rewrite.  Fix spelling.
 
 ================================================================================
 
