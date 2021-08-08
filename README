@@ -15,11 +15,230 @@ notice are preserved.  This file is offered as-is, without any warranty.
 Contents
 --------
 
+Lisp / ECL / ASDF
 HTTP request methods
 HTML <form> enctype Attribute
 Copying
 Changelog
 References
+
+================================================================================
+
+Lisp / ECL / ASDF
+-----------------
+
+
+
+Directories
+-----------
+
+ASDF system wide directories:
+
+  /usr/share/common-lisp/source/
+  /usr/local/share/common-lisp/source/
+
+ASDF per user directories:
+
+  ~/.cache/common-lisp/
+  ~/.config/common-lisp/
+  ~/.config/common-lisp/source-registry.conf.d/
+  ~/.local/share/common-lisp/source/
+  ~/common-lisp/
+  ~/common-lisp/asdf/
+
+ECL directory:
+
+/usr/lib/x86_64-linux-gnu/ecl-21.2.1/
+
+Apache HTTP server document root:
+
+  /var/www/html/mod_ecl.lh.ld/
+
+
+
+ECL Quicklisp
+-------------
+
+setup quicklisp:
+
+  ecl> (ecl-quicklisp)
+
+per user quicklisp directory:
+
+  ~/quicklisp/
+
+
+
+Building files with ECL
+-----------------------
+
+Create single files:
+
++-------------------+--------------------------------------------------------------------------------------------+
+|Portable FASL (fas)|ecl> (compile-file "./zip.lisp" :output-file "./zip.fas" :verbose t :print t :system-p nil) |
+|                   |                                                                                            |
+|                   |ecl> (compile-file "./zap.lisp" :output-file "./zap.fas" :verbose t :print t :system-p nil) |
+|                   |                                                                                            |
+|                   |ecl> (compile-file "./zop.lisp" :output-file "./zop.fas" :verbose t :print t :system-p nil) |
+|                   +--------------------------------------------------------------------------------------------+
+|                   |Problem:                                                                                    |
+|                   |                                                                                            |
+|                   |This removes the object files.                                                              |
++-------------------+--------------------------------------------------------------------------------------------+
+|Native FASL (fasc) |ecl> (ext:install-bytecodes-compiler)                                                       |
+|                   |     (compile-file "./zip.lisp" :output-file "./zip.fasc" :verbose t :print t :system-p nil)|
+|                   |     (ext:install-c-compiler)                                                               |
+|                   |                                                                                            |
+|                   |ecl> (ext:install-bytecodes-compiler)                                                       |
+|                   |     (compile-file "./zap.lisp" :output-file "./zap.fasc" :verbose t :print t :system-p nil)|
+|                   |     (ext:install-c-compiler)                                                               |
+|                   |                                                                                            |
+|                   |ecl> (ext:install-bytecodes-compiler)                                                       |
+|                   |     (compile-file "./zop.lisp" :output-file "./zop.fasc" :verbose t :print t :system-p nil)|
+|                   |     (ext:install-c-compiler)                                                               |
++-------------------+--------------------------------------------------------------------------------------------+
+|Object file (o)    |ecl> (compile-file "./zip.lisp" :output-file "./zip.o" :verbose t :print t :system-p t)     |
+|                   |                                                                                            |
+|                   |ecl> (compile-file "./zap.lisp" :output-file "./zap.o" :verbose t :print t :system-p t)     |
+|                   |                                                                                            |
+|                   |ecl> (compile-file "./zop.lisp" :output-file "./zop.o" :verbose t :print t :system-p t)     |
++-------------------+--------------------------------------------------------------------------------------------+
+
+Create bundled file:
+
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+|Portable FASL (fas)|ecl> (c:build-fasl "./zipzapzop.fas" :lisp-files '("./zip.o" "./zap.o" "./zop.o"))                                  |
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+|Native FASL (fasc) |ecl> (with-open-file                                                                                                |
+|                   |         (output "./zipzapzop.fasc"                                                                                 |
+|                   |             :direction :output                                                                                     |
+|                   |             ;:external-format '(:crlf :utf-8)                                                                      |
+|                   |             :if-exists :supersede                                                                                  |
+|                   |             :if-does-not-exist :create                                                                             |
+|                   |         )                                                                                                          |
+|                   |         (ext:run-program                                                                                           |
+|                   |             "/usr/bin/cat"                                                                                         |
+|                   |             '("./zip.fasc" "./zap.fasc" "./zop.fasc")                                                              |
+|                   |             :output output                                                                                         |
+|                   |         )                                                                                                          |
+|                   |     )                                                                                                              |
+|                   |                                                                                                                    |
+|                   |or                                                                                                                  |
+|                   |                                                                                                                    |
+|                   |bash> /usr/bin/cat ./zip.fasc ./zap.fasc ./zop.fasc > ./zipzapzop.fasc                                              |
+|                   +--------------------------------------------------------------------------------------------------------------------+
+|                   |Problem:                                                                                                            |
+|                   |                                                                                                                    |
+|                   |ECL can load zipzapzop.fasc.                                                                                        |
+|                   |You can call macros from zip.fasc.                                                                                  |
+|                   |You can not call macros from zap.fasc.                                                                              |
+|                   |You can not call macros from zop.fasc.                                                                              |
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+|Static library (a) |ecl> (c:build-static-library "./zipzapzop.a" :lisp-files '("./zip.o" "./zap.o" "./zop.o") :init-name "init_foobar") |
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+|Shared library (so)|ecl> (c:build-shared-library "./zipzapzop.so" :lisp-files '("./zip.o" "./zap.o" "./zop.o") :init-name "init_foobar")|
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+|Executable (bin)   |ecl> (c:build-program "./zipzapzop.bin" :lisp-files '("./zip.o" "./zap.o" "./zop.o"))                               |
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+|Image              |in ECL not supported                                                                                                |
++-------------------+--------------------------------------------------------------------------------------------------------------------+
+
+
+Building files with ASDF
+------------------------
+
+ASDF global system configuration </etc/common-lisp/source-registry.conf>:
+
+   (:source-registry
+       (:tree "/var/www/html/mod_ecl.lh.ld/")
+       :inherit-configuration
+   )
+
+ASDF local per user  (for user "www-data") configuration <~/.config/common-lisp/
+source-registry.conf>:
+
+   (:source-registry
+       :inherit-configuration
+   )
+
+ASDF source registry  cache (for user "www-data") for each  ":tree" in global or
+local configuration <~/mod_ecl/doc/ecl/.cl-source-registry.cache>:
+
+   (:source-registry-cache
+       "utils-numbers/utils-numbers.asd"
+   )
+
+   bash> /usr/bin/ecl asdf/tools/cl-source-registry-cache.lisp
+
+ASDF  global   system  configuration  </etc/common-lisp/asdf-output-translations
+.conf>:
+
+    (:output-translations
+        (t ("/var/cache/common-lisp/" :implementation))
+        :inherit-configuration
+    )
+
+ASDF local per user <~/.config/common-lisp/asdf-output-translations.conf>:
+
+    (:output-translations
+        :inherit-configuration
+    )
+
+ASDF global system cache:
+
+    /var/cache/common-lisp/
+
+ASDF local per user cache:
+
+    ~/.cache/common-lisp/
+
+Symbolic link:
+
+    /var/www/html/mod_ecl/ -> /home/vagrant/mod_ecl/doc/ecl/
+
++--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|Portable FASL (fasb)|ecl> (asdf:make-build :example :type :fasl :move-here #P"./example.fas/")                                                                                        |
+|                    |                                                                                                                                                                 |
+|                    |or                                                                                                                                                               |
+|                    |                                                                                                                                                                 |
+|                    |ecl> (asdf:operate 'asdf:compile-bundle-op :example)                                                                                                             |
+|                    |                                                                                                                                                                 |
+|                    |file example.fasb is then in |<~/.cache/common-lisp/ecl-21.2.1-unknown-linux-x64/home/vagrant/mod_ecl/doc/ecl/example/>                                          |
+|                    |                                                                                                                                                                 |
+|                    |or                                                                                                                                                               |
+|                    |                                                                                                                                                                 |
+|                    |ecl> (c:build-fasl "example.fasb" :lisp-files '("example.so"))                                                                                                   |
+|                    |                                                                                                                                                                 |
+|                    |or                                                                                                                                                               |
+|                    |                                                                                                                                                                 |
+|                    |ecl> (c:build-fasl "example.fasb" :lisp-files '("example.a"))                                                                                                    |
++--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|Static library (a)  |ecl> (asdf:make-build :example :type :static-library :move-here #P"./libexample.a/" :monolithic nil :init-name "init_example")                                   |
+|                    |                                                                                                                                                                 |
+|                    |or                                                                                                                                                               |
+|                    |                                                                                                                                                                 |
+|                    |ecl> (asdf:make-build :example :type :static-library :move-here #P"./libexample.a/" :monolithic t :init-name "init_example")                                     |
++--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|Shared library (so) |ecl> (asdf:make-build :example :type :shared-library :move-here #P"./libexample.so/" :monolithic nil :init-name "init_example")                                  |
+|                    |                                                                                                                                                                 |
+|                    |or                                                                                                                                                               |
+|                    |                                                                                                                                                                 |
+|                    |ecl> (asdf:make-build :example :type :shared-library :move-here #P"./libexample.so/" :monolithic t :init-name "init_example")                                    |
++--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|Executable (bin)    |ecl> (asdf:make-build :example :type :program :move-here #P"./example.bin/" :epilogue-code '(progn (require "asdf") (format t "~S~%" "Hello Worlds!") (si:exit)))|
++--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+
+ECL lisp and fas files
+----------------------
+
+/usr/lib/x86_64-linux-gnu/ecl-21.2.1/asdf.fas
+
+cp -r ecl-21.2.1/contrib/ /usr/share/common-lisp/source/ecl-21.2.1/
+cp -r ecl-21.2.1/src/clos/ /usr/share/common-lisp/source/ecl-21.2.1/src/
+cp -r ecl-21.2.1/src/cmp/ /usr/share/common-lisp/source/ecl-21.2.1/src/
+cp -r ecl-21.2.1/src/lsp/ /usr/share/common-lisp/source/ecl-21.2.1/src/
 
 ================================================================================
 
