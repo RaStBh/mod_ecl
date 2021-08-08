@@ -16,9 +16,9 @@ Contents
 --------
 
 About
-Apache onfiguration
+Apache Configuration
 Lisp / ECL / ASDF
-HTTP request methods
+HTTP Request Methods
 HTML <form> enctype Attribute
 Copying
 Changelog
@@ -35,8 +35,8 @@ code with mod_perl or PHP code with mod_php.
 
 ================================================================================
 
-Apache onfiguration
--------------------
+Apache Configuration
+--------------------
 
 In your virtual host configuration add  "index.ecl" to the list of the directory
 index files:
@@ -97,7 +97,7 @@ You should see something like:
   Connection: close
   Content-Type: text/html
 
-Then display the
+Then display the output of "test.ecl" with your browser (e.g. lynx).
 
   bash$> lynx http://localhost/test.ecl
 
@@ -325,7 +325,7 @@ cp -r ecl-21.2.1/src/lsp/ /usr/share/common-lisp/source/ecl-21.2.1/src/
 
 ================================================================================
 
-HTTP request methods
+HTTP Request Methods
 --------------------
 
 These are the HTTP methods recognized by the Apache HTTP Server.  Sometimes they
