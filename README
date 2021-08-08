@@ -15,12 +15,85 @@ notice are preserved.  This file is offered as-is, without any warranty.
 Contents
 --------
 
+Apache onfiguration
 Lisp / ECL / ASDF
 HTTP request methods
 HTML <form> enctype Attribute
 Copying
 Changelog
 References
+
+================================================================================
+
+Apache onfiguration
+-------------------
+
+In your virtual host configuration add  "index.ecl" to the list of the directory
+index files:
+
+  DirectoryIndex index.htm index.html index.php index.ecl
+
+Create the </etc/apache2/mods-available/ecl.load> file with following content:
+
+  # Load mod_ecl.
+
+  LoadModule ecl_module /usr/lib/apache2/modules/mod_ecl.so
+
+Create the </etc/apache2/mods-available/ecl.conf> file with following content:
+
+  # Handle all files with file xtension .ecl by the mod_ecl module.
+
+  <FilesMatch ".+\.ecl$">
+    SetHandler application/x-httpd-ecl
+  </FilesMatch>
+
+  # Deny access to files without filename (e.g. ".ecl").
+
+  <FilesMatch "^\.ecl$">
+    Require all denied
+  </FilesMatch>
+
+Enable the extension  module using the a2enmod command.  You  might require root
+privileges to do this.
+
+  bash> a2enmod ecl
+
+Restart the Apache  HTTP Server using the apachectl command.   You might require
+root privileges to do this.
+
+  bash$> apachectl restart
+
+Create a file (e.g. "test.ecl")  in </var/www/html/> containing some Lisp source
+code.
+
+  bash> echo "(eval-when (:execute)
+                (defun test ()
+                  (string \"I am test.ecl.\")
+                )
+                (princ (test))
+              )" > /var/www/html/test.ecl
+
+The  use your  browser (e.g.  lynx)  to display  the  header of  the request  ob
+test.ecl.
+
+  bash$> lynx -mime_header http://localhost/test.ecl
+
+You should see something like:
+
+  HTTP/1.1 200 OK
+  Date: Sun, 08 Aug 2021 08:25:01 GMT
+  Server: Apache/2.4.41 (Ubuntu)
+  Content-Length: 0
+  Connection: close
+  Content-Type: text/html
+
+Then display the
+
+  bash$> lynx http://localhost/test.ecl
+
+You should see something like:
+
+  I am test.ecl.
 
 ================================================================================
 
