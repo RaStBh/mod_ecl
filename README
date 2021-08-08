@@ -16,7 +16,7 @@ Contents
 --------
 
 About
-Apache Configuration
+Apache HTTP Server Configuration
 Lisp / ECL / ASDF
 HTTP Request Methods
 HTML <form> enctype Attribute
@@ -35,8 +35,8 @@ code with mod_perl or PHP code with mod_php.
 
 ================================================================================
 
-Apache Configuration
---------------------
+Apache HTTP Server Configuration
+--------------------------------
 
 In your virtual host configuration add  "index.ecl" to the list of the directory
 index files:
