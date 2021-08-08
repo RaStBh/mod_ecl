@@ -15,6 +15,7 @@ notice are preserved.  This file is offered as-is, without any warranty.
 Contents
 --------
 
+About
 Apache onfiguration
 Lisp / ECL / ASDF
 HTTP request methods
@@ -22,6 +23,15 @@ HTML <form> enctype Attribute
 Copying
 Changelog
 References
+
+================================================================================
+
+About
+-----
+
+mod_ecl is  a module for  the Apache HTTP  Server which contains  the Embeddable
+Common-Lisp interpreter.  You can use it to run Lisp code, like you can run Perl
+code with mod_perl or PHP code with mod_php.
 
 ================================================================================
 
