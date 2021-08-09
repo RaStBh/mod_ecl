@@ -150,7 +150,7 @@ Alternativly you can use (you might require root privileges to do this):
   or
 
   bash> /etc/init.d/apache restart
-  
+
 ================================================================================
 
 ASDF Configuration for Apache HTTP Server
