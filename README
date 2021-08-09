@@ -16,6 +16,7 @@ Contents
 --------
 
 About
+Apache HTTP Server Module Development
 Apache HTTP Server Configuration
 Lisp / ECL / ASDF
 HTTP Request Methods
@@ -32,6 +33,58 @@ About
 mod_ecl is  a module for  the Apache HTTP  Server which contains  the Embeddable
 Common-Lisp interpreter.  You can use it to run Lisp code, like you can run Perl
 code with mod_perl or PHP code with mod_php.
+
+================================================================================
+
+Apache HTTP Server Module Development
+-------------------------------------
+
+My development environment is:
+
+  Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-70-generic x86_64)
+  Apache HTTP Server 2.4.41 (Ubuntu)
+  Embeddable Common-Lisp (ECL) 16.1.3
+  Embeddable Common-Lisp (ECL) 21.2.1
+  Apache Portable Runtime (APR) 1.6.5
+  Apache Portable Runtime Utility Library (APR-util) 1.6.1
+  Apache HTTP Request Library (apreq) 2.13
+
+To create an example module to test your environment and to use it as a starting
+point for your own module you can generate a template module by using the APache
+eXtenSion tool (apxs).
+
+  bash$> apxs -g -n ecl
+
+This creates the ecl/ directory and within the template files.
+
+  ecl/.deps
+  ecl/Makefile
+  ecl/mod_ecl.c
+  ecl/modules.mk
+
+For mod_ecl these files are in <~/mod_ecl/src/>.
+
+In <~/mod_ecl/src/mod_ecl.c> change
+
+ if (strcmp(r->handler, "ecl"))
+ {
+   return DECLINED;
+ }
+
+to
+
+ if (strcmp(r->handler, "application/x-httpd-ecl"))
+ {
+   return DECLINED;
+ }
+
+Using the example module the browser (e.g. lynx)
+
+  bash> lynx https://localhost/test.ecl
+
+should displays:
+
+  The sample page from mod_ecl.c
 
 ================================================================================
 
