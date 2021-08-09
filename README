@@ -17,6 +17,7 @@ Contents
 
 About
 Apache HTTP Server Module Development
+mod_ecl Compilation and Installation
 Apache HTTP Server Configuration
 Lisp / ECL / ASDF
 HTTP Request Methods
@@ -85,6 +86,72 @@ Using the example module the browser (e.g. lynx)
 should displays:
 
   The sample page from mod_ecl.c
+
+================================================================================
+
+mod_ecl Compilation and Installation
+------------------------------------
+
+mod_ecl Compilation and Installation
+------------------------------------
+
+You can download the source code from:
+
+  https://github.com/RaStBh/mod_ecl
+  https://gitlab.com/RaStBh/mod_ecl
+
+Compile mod_ecl:
+
+  bash> cd mod_ecl/src/
+  bash> make
+
+This is like compiling with the apsx tool:
+
+  bash> apxs -c ./mod_ecl.c
+
+Install mod_ecl (you might require root privileges to do this):
+
+  bash> cd mod_ecl/src/
+  bash> make install
+
+This is like installing with the apsx tool (you might require root privileges to
+do this):
+
+  bash> apxs -i ./mod_ecl.la
+
+The   extension   module   (the   mod_ecl.so   file)   is   installed   in   the
+</usr/lib/apache2/modules/> directory.
+
+To stop, sart  or reload the Apache  HTTP Server you can use  (you might require
+root privileges to do this):
+
+  bash> cd mod_ecl/src/
+  bash> make stop
+  bash> make start
+
+  or
+
+  bash> cd mod_ecl/src/
+  bash> make restart
+
+This is like using  the apachectl tool (you might require  root privileges to do
+this):
+
+  bash> apachectl stop
+  bash> apachectl start
+
+  or
+
+  bash> apachectl restart
+
+Alternativly you can use (you might require root privileges to do this):
+
+  bash> /etc/init.d/apache stop
+  bash> /etc/init.d/apache start
+
+  or
+
+  bash> /etc/init.d/apache restart
 
 ================================================================================
 
