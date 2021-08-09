@@ -18,6 +18,7 @@ Contents
 About
 Apache HTTP Server Module Development
 mod_ecl Compilation and Installation
+ASDF Configuration for Apache HTTP Server
 Apache HTTP Server Configuration
 Lisp / ECL / ASDF
 HTTP Request Methods
@@ -149,6 +150,27 @@ Alternativly you can use (you might require root privileges to do this):
   or
 
   bash> /etc/init.d/apache restart
+  
+================================================================================
+
+ASDF Configuration for Apache HTTP Server
+-----------------------------------------
+
+Configure your system  to use ASDF so  it finds the .ecl- and  .lisp-files in </
+var/www/html/mod_ecl.lh.ld/>   and  writes   compiled   files  to   </var/cache/
+common-lisp/>.
+
+See section "Lisp / ECL / ASDF" for more information.
+
+Create a symbolic  link from Apache HTTP Server DocumentRoot  directory (e.g. </
+var/www/html/mod_ecl/>  to the  ecl and  lisp source  code directory  (e.g.  <~/
+mod_ecl/doc/ecl/>).
+
+As user www-data  create the compiled .o- and .-fas*-files  for the example ASDF
+sytem utils-numbers (<mod_ecl/doc/ecl/utils-numbers/>) using:
+
+  ecl> (require "asdf")
+  ecl> (asdf:load-system :utils-numbers)
 
 ================================================================================
 
