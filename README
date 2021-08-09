@@ -210,7 +210,12 @@ privileges to do this.
 Restart the Apache  HTTP Server using the apachectl command.   You might require
 root privileges to do this.
 
-  bash$> apachectl restart
+  bash> apachectl restart
+
+  or
+
+  bash> /etc/init.d/apache stop
+  bash> /etc/init.d/apache start
 
 Create a file (e.g. "test.ecl")  in </var/www/html/> containing some Lisp source
 code.
@@ -236,9 +241,11 @@ You should see something like:
   Connection: close
   Content-Type: text/html
 
+  I am test.ecl.
+
 Then display the output of "test.ecl" with your browser (e.g. lynx).
 
-  bash$> lynx http://localhost/test.ecl
+  bash$> lynx https://localhost/test.ecl
 
 You should see something like:
 
