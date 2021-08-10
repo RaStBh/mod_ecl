@@ -124,8 +124,171 @@ static int ecl_handler(request_rec *r)
     return OK;
 }
 
-/* Register hooks */
-static void register_hooks(apr_pool_t *p)
+
+
+/**
+ * @brief Register hooks
+ *
+ * @details
+ *
+ * A hook to allow  modules to hook other points in  the request processing.  In
+ * this function, modules  should call the ap_hook_*() functions  to register an
+ * interest in a specific step in processing the current request.
+ *
+ * Available hooks functions:
+ *
+ * * ap_hook_access_checker
+ *
+ * * ap_hook_access_checker_ex
+ *
+ * * ap_hook_auth_checker
+ *
+ * * ap_hook_check_config
+ *
+ * * ap_hook_check_user_id
+ *
+ * * ap_hook_child_init
+ *
+ * * ap_hook_child_status
+ *
+ * * ap_hook_create_connection
+ *
+ * * ap_hook_create_request
+ *
+ * * ap_hook_default_port
+ *
+ * * ap_hook_dirwalk_stat
+ *
+ * * ap_hook_drop_privileges
+ *
+ * * ap_hook_end_generation
+ *
+ * * ap_hook_error_log
+ *
+ * * ap_hook_expr_lookup
+ *
+ * * ap_hook_fatal_exception
+ *
+ * * ap_hook_fixups
+ *
+ * * ap_hook_force_authn
+ *
+ * * ap_hook_generate_log_id
+ *
+ * * ap_hook_get_mgmt_items
+ *
+ * * ap_hook_get_suexec_identity
+ *
+ * * ap_hook_handler
+ *
+ * * ap_hook_header_parser
+ *
+ * * ap_hook_http_scheme
+ *
+ * * ap_hook_insert_error_filter
+ *
+ * * ap_hook_insert_filter
+ *
+ * * ap_hook_insert_network_bucket
+ *
+ * * ap_hook_log_transaction
+ *
+ * * ap_hook_map_to_storage
+ *
+ * * ap_hook_monitor
+ *
+ * * ap_hook_mpm
+ *
+ * * ap_hook_mpm_get_name
+ *
+ * * ap_hook_mpm_query
+ *
+ * * ap_hook_mpm_register_timed_callback
+ *
+ * * ap_hook_note_auth_failure
+ *
+ * * ap_hook_open_htaccess
+ *
+ * * ap_hook_open_logs
+ *
+ * * ap_hook_optional_fn_retrieve
+ *
+ * * ap_hook_optional_hook_test
+ *
+ * * ap_hook_post_config
+ *
+ * * ap_hook_post_perdir_config
+ *
+ * * ap_hook_post_read_request
+ *
+ * * ap_hook_pre_close_connectio
+ *
+ * * ap_hook_pre_config
+ *
+ * * ap_hook_pre_connection
+ *
+ * * ap_hook_pre_mpm
+ *
+ * * ap_hook_pre_read_request
+ *
+ * * ap_hook_process_connection
+ *
+ * * ap_hook_protocol_get
+ *
+ * * ap_hook_protocol_propose
+ *
+ * * ap_hook_protocol_switch
+ *
+ * * ap_hook_quick_handler
+ *
+ * * ap_hook_resume_connection
+ *
+ * * ap_hook_ssl_add_cert_files
+ *
+ * * ap_hook_ssl_add_fallback_cert_files
+ *
+ * * ap_hook_ssl_answer_challenge
+ *
+ * * ap_hook_ssl_conn_is_ssl
+ *
+ * * ap_hook_ssl_ocsp_get_resp_hook
+ *
+ * * ap_hook_ssl_ocsp_prime_hook
+ *
+ * * ap_hook_ssl_var_lookup
+ *
+ * * ap_hook_suspend_connection
+ *
+ * * ap_hook_test_config
+ *
+ * * ap_hook_translate_name
+ *
+ * * ap_hook_type_checker
+ *
+ * @see [Apache HTTP Server --- Core routines --- Apache Hooks](https://ci.apache.org/projects/httpd/trunk/doxygen/group__hooks.html)
+ *
+ * @see [ap_expr.h](httpd-2.4.48\include\ap_expr.h)
+ * @see [ap_hooks.h](httpd-2.4.48\include\ap_hooks.h)
+ * @see [ap_mpm.h](httpd-2.4.48\include\ap_mpm.h)
+ * @see [http_config.h](httpd-2.4.48\include\http_config.h)
+ * @see [http_connection.h](httpd-2.4.48\include\http_connection.h)
+ * @see [http_core.h](httpd-2.4.48\include\http_core.h)
+ * @see [http_log.h](httpd-2.4.48\include\http_log.h)
+ * @see [http_protocol.h](httpd-2.4.48\include\http_protocol.h)
+ * @see [http_request.h](httpd-2.4.48\include\http_request.h)
+ * @see [http_ssl.h](httpd-2.4.48\include\http_ssl.h)
+ * @see [mpm_common.h](httpd-2.4.48\include\mpm_common.h)
+ * @see [scoreboard.h](httpd-2.4.48\include\scoreboard.h)
+ * @see [mod_optional_hook_export](httpd-2.4.48\modules\test\mod_optional_hook_export.h)
+ * @see [unixd.h](httpd-2.4.48\os\unix\unixd.h)
+ *
+ * @param[in] pool
+ *   This is the pool to use for all allocations.
+ *
+ * @return void
+ */
+
+static void register_hooks(apr_pool_t * pool)
 {
     ap_hook_handler(ecl_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }

@@ -35,6 +35,7 @@
 #ifndef MOD_ECL_H
 #define MOD_ECL_H
 
+static void register_hooks(apr_pool_t * pool);
 extern module AP_MODULE_DECLARE_DATA ecl_module;
 
 #endif
