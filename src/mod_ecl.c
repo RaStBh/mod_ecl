@@ -133,8 +133,6 @@ static void register_hooks(apr_pool_t *p)
 
 
 /**
- * @var ecl_module
- *
  * @brief Register mod_ecl as Apache HTTP Server module.
  *
  * @details
