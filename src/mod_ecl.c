@@ -127,7 +127,7 @@ static int ecl_handler(request_rec *r)
 
 
 /**
- * @brief Register hooks
+ * @brief Register hooks. / Our hook registering function.
  *
  * @details
  *
