@@ -22,6 +22,16 @@
 
 
 
+/**
+ * @file mod_ecl.h
+ *
+ * @brief
+ *
+ * @details
+ */
+
+
+
 #ifndef MOD_ECL_H
 #define MOD_ECL_H
 
