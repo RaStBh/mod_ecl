@@ -19,3 +19,10 @@
 // You should have received a copy of  the GNU General Public License along with
 // RaSt     mod_ecl     in     the     file    COPYING.      If     not,     see
 // <https://www.gnu.org/licenses/>.
+
+
+
+#ifndef MOD_ECL_H
+#define MOD_ECL_H
+
+#endif
