@@ -136,15 +136,16 @@ static int ecl_handler(request_rec *r)
  * Register directives with:
  *
  * * [AP_TAKE_ARGV](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaeafa400a7c6388b13a38d469f6cbca4a)
- *   This configuration directive will handle its own parsing of arguments.
+ *   --- This configuration directive will handle its own parsing of arguments.
  *
  * * [AP_TAKE1](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#ga1f074abcaa85b893817adee6ea2dc816)
- *   This configuration directive takes 1 argument.
+ *   --- This configuration directive takes 1 argument.
  *
  * * [AP_TAKE2](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gab5ae54825b0b4b414b21bbd619e6c092)
- *   This configuration directive takes 2 argument.
+ *   --- This configuration directive takes 2 argument.
  *
  * * [AP_TAKE3](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaacf930c9d842396ad08f860e3f25b9ec)
+ *
  *   This configuration directive takes 3 argument.
  *
  * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
@@ -298,20 +299,47 @@ static const command_rec config_file_commands[] =
  *
  * @see [Apache HTTP Server --- Core routines --- Apache Hooks](https://ci.apache.org/projects/httpd/trunk/doxygen/group__hooks.html)
  *
- * @see [ap_expr.h](httpd-2.4.48\include\ap_expr.h)
- * @see [ap_hooks.h](httpd-2.4.48\include\ap_hooks.h)
- * @see [ap_mpm.h](httpd-2.4.48\include\ap_mpm.h)
- * @see [http_config.h](httpd-2.4.48\include\http_config.h)
- * @see [http_connection.h](httpd-2.4.48\include\http_connection.h)
- * @see [http_core.h](httpd-2.4.48\include\http_core.h)
- * @see [http_log.h](httpd-2.4.48\include\http_log.h)
- * @see [http_protocol.h](httpd-2.4.48\include\http_protocol.h)
- * @see [http_request.h](httpd-2.4.48\include\http_request.h)
- * @see [http_ssl.h](httpd-2.4.48\include\http_ssl.h)
- * @see [mpm_common.h](httpd-2.4.48\include\mpm_common.h)
- * @see [scoreboard.h](httpd-2.4.48\include\scoreboard.h)
- * @see [mod_optional_hook_export](httpd-2.4.48\modules\test\mod_optional_hook_export.h)
- * @see [unixd.h](httpd-2.4.48\os\unix\unixd.h)
+ * @see [ap_expr.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__expr_8h.html)
+ * @see [ap_expr.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__expr_8h_source.html)
+ *
+ * @see [ap_hooks.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__hooks_8h.html)
+ * @see [ap_hooks.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__hooks_8h_source.html)
+ *
+ * @see [ap_mpm.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__mpm_8h.html)
+ * @see [ap_mpm.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__mpm_8h_source.html)
+ *
+ * @see [http_config.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__config_8h.html)
+ * @see [http_config.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__config_8h_source.html)
+ *
+ * @see [http_connection.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__connection_8h.html)
+ * @see [http_connection.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__connection_8h_source.html)
+ *
+ * @see [http_core.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__core_8h.html)
+ * @see [http_core.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__core_8h_source.html)
+ *
+ * @see [http_log.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__log_8h.html)
+ * @see [http_log.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__log_8h_source.html)
+ *
+ * @see [http_protocol.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__protocol_8h.html)
+ * @see [http_protocol.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__protocol_8h_source.html)
+ *
+ * @see [http_request.h File Reference]](https://ci.apache.org/projects/httpd/trunk/doxygen/http__request_8h.html)
+ * @see [http_request.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__request_8h_source.html)
+ *
+ * @see [http_ssl.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__ssl_8h.html)
+ * @see [http_ssl.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__ssl_8h_source.html)
+ *
+ * @see [mpm_common.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/mpm__common_8h.html)
+ * @see [mpm_common.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/mpm__common_8h_source.html)
+ *
+ * @see [scoreboard.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/scoreboard_8h.html)
+ * @see [scoreboard.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/scoreboard_8h_source.html)
+ *
+ * @see [mod_optional_hook_export File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/mod__optional__hook__export_8h.html)
+ * @see [mod_optional_hook_export Source](https://ci.apache.org/projects/httpd/trunk/doxygen/mod__optional__hook__export_8h_source.html)
+ =
+ * @see [unixd.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/unixd_8h.html)
+ * @see [unixd.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/unixd_8h_source.html)
  *
  * @param[in] pool
  *   This is the pool to use for all allocations.
