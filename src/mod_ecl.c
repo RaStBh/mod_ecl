@@ -146,6 +146,8 @@ static int ecl_handler(request_rec *r)
  *
  * * [AP_TAKE3](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaacf930c9d842396ad08f860e3f25b9ec)
  *   This configuration directive takes 3 argument.
+ *
+ * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
  */
 
 static const command_rec config_file_commands[] =
