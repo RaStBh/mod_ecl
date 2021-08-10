@@ -125,6 +125,104 @@ static int ecl_handler(request_rec *r)
 }
 
 
+ 
+/**
+ * @brief Per-directory configuration handler. / Create per-directory config
+ *   structures.
+ *
+ * @details
+ *
+ * @param[in] pool
+ *   The pool to use for all allocations.
+ *
+ * @param[in] directory
+ *   The directory currently being processed.
+ *
+ * @return
+ *   The per-directory structure created.
+ */
+
+static void * per_directory_configuration_handler(apr_pool_t * pool, char * directory)
+{
+  return NULL;
+}
+
+
+
+/**
+ * @brief  Per-directory  configuration  merge handler.  /  Merge  per-directory
+ *   config structures.
+ *
+ * @details
+ *
+ * @param[in] pool
+ *   The pool to use for all allocations.
+ *
+ * @param[in] base_configuration
+ *   The directory structure created for the parent directory.
+ *
+ * @param[in] new_configuration
+ *   The directory structure currently being processed.
+ *
+ * @return
+ *    The new per-directory structure created.
+ */
+
+static void * per_directory_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration)
+{
+  return NULL;
+}
+
+
+
+/**
+ * @brief  Per-server   configuration  handler.   /  Create   per-server  config
+ *   structures.
+ *
+ * @details
+ *
+ * @param[in] pool
+ *   The pool to use for all allocations.
+ *
+ * @param[in] server
+ *   The server currently being processed.
+ *
+ * @return
+ *    The per-server structure created.
+ */
+
+static void * per_server_configuration_handler(apr_pool_t * pool, server_rec * server)
+{
+  return NULL;
+}
+
+
+
+/**
+ * @brief  Per-server configuration  merge  handler. /  Merge per-server  config
+ *   structures.
+ *
+ * @details
+ *
+ * @param[in] pool
+ *   The pool to use for all allocations.
+ *
+ * @param[in] base_configuration
+ *   The directory structure created for the parent directory.
+ *
+ * @param[in] new_configuration
+ *   The directory structure currently being processed.
+ *
+ * @return
+ *    The new per-directory structure created
+ */
+
+static void * per_server_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration)
+{
+  return NULL;
+}
+
+
 
 /**
  * @brief Table of config file commands. / Any directives we may have for httpd.
@@ -478,11 +576,11 @@ static void register_hooks(apr_pool_t * pool)
 
 module AP_MODULE_DECLARE_DATA ecl_module =
 {
-  STANDARD20_MODULE_STUFF, // STANDARD20 MODULE STUFF
-  NULL,                    // Per-directory configuration handler.
-  NULL,                    // Per-directory configuration merge handler.
-  NULL,                    // Per-server configuration handler.
-  NULL,                    // Per-server configuration merge handler.
-  config_file_commands,    // Config file Commands.
-  register_hooks           // Register hooks.
+  STANDARD20_MODULE_STUFF,                   // STANDARD20 MODULE STUFF
+  per_directory_configuration_handler,       // Per-directory configuration handler.
+  per_directory_configuration_merge_handler, // Per-directory configuration merge handler.
+  per_server_configuration_handler,          // Per-server configuration handler.
+  per_server_configuration_merge_handler,    // Per-server configuration merge handler.
+  config_file_commands,                      // Config file Commands.
+  register_hooks                             // Register hooks.
 };
