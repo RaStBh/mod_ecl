@@ -212,9 +212,9 @@ static void register_hooks(apr_pool_t *p)
  *
  * * flags --- A bitmask of AP_MODULE_FLAG_*.
  *
- * @see [Apache HTTP Server - Core routines - Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
+ * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
  *
- * @see [Apache HTTP Server - Core routines - Configuration - module_struct Struct Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
+ * @see [Apache HTTP Server --- Core routines --- Configuration - module_struct Struct Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
  *
  * @see [ap_config.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__config_8h.html)
  * @see [ap_config.h](file://httpd-2.4.48/include/ap_config.h)
