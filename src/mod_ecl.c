@@ -157,7 +157,7 @@ static const command_rec config_file_commands[] =
 };
 
 
-  
+
 /**
  * @brief Register hooks. / Our hook registering function.
  *
@@ -361,15 +361,26 @@ static void register_hooks(apr_pool_t * pool)
  *
  * This is for setting up configuration handlers and directives.
  *
- * AP_MODULE_DECLARE_DATA  ---  Apache  Core  dso variables  are  declared  with
- *   AP_MODULE_DECLARE_DATA.   This  assures   the  appropriate  indirection  is
- *   invoked at compile time.   Symbols declared with AP_MODULE_DECLARE_DATA are
- *   always exported.
+ *
+ *
+ * [AP_MODULE_DECLARE_DATA](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__config_8h.html#ae2cb2b956e7f274f8d91581331debbe0)
+ *   --- Apache  Core dso  variables are  declared with  AP_MODULE_DECLARE_DATA.
+ *   This  assures  the appropriate  indirection  is  invoked at  compile  time.
+ *   Symbols declared with AP_MODULE_DECLARE_DATA are always exported.
+ *
+ * @see [ap_config.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__config_8h.html)
+ * @see [ap_config.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__config_8h_source.html)
+ *
+ * @see [macros.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/macros_8h.html)
+ * @see [macros.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/macros_8h_source.html)
+ *
+ *
  *
  * Dispatch list for API hooks:
  *
- * * STANDARD20_MODULE_STUFF ---  Use this  in all standard  modules. /  FIll in
- *   with boilerplate code to make this module a standard 2.x module.
+ * * [STANDARD20_MODULE_STUFF](https://ci.apache.org/projects/httpd/trunk/doxygen/group__ModuleInit.html#ga852c139212175cbc1e47a608a198da13)
+ *   --- Use this  in all standard modules.  / FIll in with  boilerplate code to
+ *   make this module a standard 2.x module.
  *
  * * per_directory_configuration_handler    ---   Per-directory    configuration
  *   handler. / Create per-directory config structures.
@@ -388,64 +399,81 @@ static void register_hooks(apr_pool_t * pool)
  *
  * * register_hooks --- Register hooks. / Our hook registering function.
  *
+ * @see [Apache HTTP Server --- Core routines --- Configuration --- Module structure initializers](https://ci.apache.org/projects/httpd/trunk/doxygen/group__ModuleInit.html)
+ *
+ * @see [http_config.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__config_8h.html)
+ * @see [http_config.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__config_8h_source.html)
+ *
+ *
+ *
+ * [module](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#ga0ea4f633a5f9f88e1603aaeb1f2b2e69):
+ *
  * @code{.c}typedef struct module_struct module@endcode
  *
- * module_struct Data Fields:
  *
- * * version  ---  API  version,  not  module  version;  check  that  module  is
- *   compatible with this version of the server.
  *
- * * minor_version --- API minor version.   Provides API feature milestones. Not
- *   checked during module init.
+ * [module_struct](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
+ *  Data Fields:
  *
- * * module_index --- Index to this modules structures in config vectors.
+ * * [version](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a9fe73d6d2e8c6e3a0cfa0b7f14a1fcef)
+ *   --- API version, not  module version; check that module  is compatible with
+ *   this version of the server.
  *
- * * name --- The name of the module's C file.
+ * * [minor_version](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a89a9373f6c817795a0580bb2deaef72c)
+ *   --- API minor version.  Provides API feature milestones. Not checked during
+ *   module init.
  *
- * * dynamic_load_handle --- The handle for the DSO.  Internal use only.
+ * * [module_index](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a03b0e116532b88363264cb60d98a919b)
+ *   --- Index to this modules structures in config vectors.
  *
- * * next --- A pointer to the next module in the list.
+ * * [name](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a88f43c2576387678ac534313fd0e7ece)
+ *   --- The name of the module's C file.
  *
- * * magic  ---  Magic Cookie  to  identify  a  module structure.   It's  mainly
- *   important for the DSO facility (see also mod_so).
+ * * [dynamic_load_handle](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#af80ce97e178e8d98add86954cccd09f4)
+ *   --- The handle for the DSO.  Internal use only.
  *
- * * rewrite_args --- Function to allow MPMs to re-write command line arguments.
- *   This hook is only available to MPMs.
+ * * [next](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#aacf77ae0ad30879346ae153037ed41ea)
+ *   --- A pointer to the next module in the list.
  *
- * * create_dir_config --- Function to allow all modules to create per directory
- *   configuration structures.
+ * * [magic](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a7394965e36ccaa275a5cc4f64ccb354c)
+ *   --- Magic Cookie to identify a module structure.  It's mainly important for
+ *   the DSO facility (see also mod_so).
  *
- * * merge_dir_config  ---  Function to  allow  all  modules  to merge  the  per
- *   directory configuration structures for two directories.
+ * * [rewrite_args](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a413175b9e3a97400995e7f03d6954dee)
+ *   --- Function to allow  MPMs to re-write command line  arguments.  This hook
+ *   is only available to MPMs.
  *
- * * create_server_config --- Function to allow all modules to create per server
- *    configuration structures.
+ * * [create_dir_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#ae3ea1f05d13c0d1e7f7e1fa3a34edf1c)
+ *   --- Function to  allow all  modules to  create per  directory configuration
+ *   structures.
  *
- * * merge_server_config  --- Function  to allow  all modules  to merge  the per
- *   server configuration structures for two servers.
+ * * [merge_dir_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a7c75a2a7334554c5c92ddfae35bd4ab8)
+ *   --- Function to allow all modules  to merge the per directory configuration
+ *   structures for two directories.
  *
- * * cmds ---  A command_rec  table that  describes all  of the  directives this
- *   module defines.
+ * * [create_server_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a486e6f27e4b1d885fd4ea21f22b38a68)
+ *    --- Function  to allow  all  modules to  create  per server  configuration
+ *    structures.
  *
- * * register_hooks ---  A hook  to allow  modules to hook  other points  in the
- *   request processing.  In this function,  modules should call the ap_hook_*()
- *   functions to  register an  interest in  a specific  step in  processing the
- *   current request.
+ * * [merge_server_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a4bab1e811d95219325c24a431be75c6f)
+ *   --- Function to  allow all  modules to merge  the per  server configuration
+ *   structures for two servers.
  *
- * * flags --- A bitmask of AP_MODULE_FLAG_*.
+ * * [cmds](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#ad2bdc0c0e8af7118b21bde0911c74cca)
+ *   --- A command_rec  table that describes  all of the directives  this module
+ *   defines.
+ *
+ * * [register_hooks](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a628b4e635e922228275919f1b595c105)
+ *   --- A hook to allow modules to hook other points in the request processing.
+ *   In this function, modules should call the ap_hook_*() functions to register
+ *   an interest in a specific step in processing the current request.
+ *
+ * * [flags](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#af0c4e456d45b11fbaaabec8203886592)
+ *   --- A bitmask of AP_MODULE_FLAG_*.
  *
  * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
  *
- * @see [Apache HTTP Server --- Core routines --- Configuration - module_struct Struct Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
- *
- * @see [ap_config.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/ap__config_8h.html)
- * @see [ap_config.h](file://httpd-2.4.48/include/ap_config.h)
- *
- * @see [http_config.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__config_8h.html)
- * @see [http_config.h](httpd-2.4.48/include/http_config.h)
- *
- * @see [macros.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/macros_8h.html)
- * @see [macros.h](file://httpd-2.4.48/include/macros.h)
+ * @see [Apache HTTP Server --- Core routines --- Configuration --- module_struct Struct Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
  */
 
 module AP_MODULE_DECLARE_DATA ecl_module =
