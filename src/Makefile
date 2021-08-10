@@ -28,6 +28,7 @@
 #   directories and files
 builddir=./
 docdir=../doc/
+htmldir=../doc/html/
 top_srcdir=/usr/share/apache2
 top_builddir=/usr/share/apache2
 include /usr/share/apache2/build/special.mk
@@ -52,6 +53,7 @@ install: install-modules-yes
 #   cleanup
 clean:
 	-rm -f mod_ecl.o mod_ecl.lo mod_ecl.slo mod_ecl.la
+	-rm -f -r $(htmldir)/*
 
 #   simple test
 test: reload
