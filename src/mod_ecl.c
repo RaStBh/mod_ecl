@@ -125,7 +125,15 @@ static int ecl_handler(request_rec *r)
 }
 
 
- 
+
+//==============================================================================
+//
+//  Setup of configuration handlers and directives.
+//
+//==============================================================================
+
+
+
 /**
  * @brief Per-directory configuration handler. / Create per-directory config
  *   structures.
@@ -449,6 +457,14 @@ static void register_hooks(apr_pool_t * pool)
 {
     ap_hook_handler(ecl_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
+
+
+
+//==============================================================================
+//
+// The entry point into RaSt mod_ecl.
+//
+//==============================================================================
 
 
 
