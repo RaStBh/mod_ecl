@@ -46,12 +46,12 @@ CFLAGS=-lecl
 #   the default target
 all: local-shared-build
 
-#   install the shared object file into Apache 
+#   install the shared object file into Apache
 install: install-modules-yes
 
 #   cleanup
 clean:
-	-rm -f mod_ecl.o mod_ecl.lo mod_ecl.slo mod_ecl.la 
+	-rm -f mod_ecl.o mod_ecl.lo mod_ecl.slo mod_ecl.la
 
 #   simple test
 test: reload
