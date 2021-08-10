@@ -127,6 +127,35 @@ static int ecl_handler(request_rec *r)
 
 
 /**
+ * @brief Table of config file commands. / Any directives we may have for httpd.
+ *
+ * @details
+ *
+ * List the configuration directives we want to register with the server.
+ *
+ * Register directives with:
+ *
+ * * [AP_TAKE_ARGV](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaeafa400a7c6388b13a38d469f6cbca4a)
+ *   This configuration directive will handle its own parsing of arguments.
+ *
+ * * [AP_TAKE1](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#ga1f074abcaa85b893817adee6ea2dc816)
+ *   This configuration directive takes 1 argument.
+ *
+ * * [AP_TAKE2](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gab5ae54825b0b4b414b21bbd619e6c092)
+ *   This configuration directive takes 2 argument.
+ *
+ * * [AP_TAKE3](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaacf930c9d842396ad08f860e3f25b9ec)
+ *   This configuration directive takes 3 argument.
+ */
+
+static const command_rec config_file_commands[] =
+{
+  {NULL}
+};
+
+
+  
+/**
  * @brief Register hooks. / Our hook registering function.
  *
  * @details
@@ -396,6 +425,6 @@ module AP_MODULE_DECLARE_DATA ecl_module =
   NULL,                    // Per-directory configuration merge handler.
   NULL,                    // Per-server configuration handler.
   NULL,                    // Per-server configuration merge handler.
-  NULL,                    // Config file Commands.
+  config_file_commands,    // Config file Commands.
   register_hooks           // Register hooks.
 };
