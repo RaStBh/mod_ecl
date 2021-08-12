@@ -484,7 +484,7 @@ see httpd.h
 |                  |                  |            |            |
 |method name       |method number     |            |            |
 |                  |                  |            |            |
-|[1628338196]      |[1628338196]      |[1626788793]|[1626789081]|
+|[1628338196]      |[1628338196]      |[1628689032]|[1626789081]|
 +==================+==================+============+============+
 |GET               | 0                |X           |            |
 +------------------+------------------+------------+------------+
@@ -936,20 +936,123 @@ Louis Höfler's mod_ecl
   URL:     <https://common-lisp.net/project/ecl/posts/ECL-in-Apache-modecl.html>
   (online: 2021-03-21 14:12:08 +0000)
 
-RFCs / HTTP Request Methods / RESTful Services
+RFCs / HTTP Status Codes / HTTP Request Methods / RESTful Services
 
-[1626788793] R. Fielding,  J. Reschke.  Hypertext Transfer  Protocol (HTTP/1.1):
-  Semantics and Content.  June  2014.  -- URL: <https://www.rfc-editor.org/info/
-  rfc7231>  (online: 2021-07-20  13:46:33  +0000)  -- URL:  <https://datatracker
-  .ietf.org/doc/html/rfc7231> (online: 2021-07-20 13:47:59 +0000)
+[1628680389] K.  Holtman,  A.  Mutz.  RFC 2295:  Transparent Content Negotiation
+  in  HTTP.   March  1998.   --  URL:  <https://www.rfc-editor.org/info/rfc2295>
+  (online:  2021-08-11 11:14:00  +0000)  -- URL:  <https://datatracker.ietf.org/
+  doc/html/rfc2295> (online: 2021-08-11 11:13:09 +0000)
 
-[1626789081] L.  Dusseault, J.  Snell.  PATCH  Method for HTTP.  March 2010.  --
-  URL:  <https://www.rfc-editor.org/info/rfc5789>  (online: 2021-07-20  13:51:21
-  +0000)   --   URL:  <https://datatracker.ietf.org/doc/html/rfc5789>   (online:
-  2021-07-20 13:49:56 +0000)
+[1628677460] Y. Goland, E. Whitehead, A. Faizi, S. Carter, D. Jensen.  RFC 2518:
+  HTTP Extensions for  Distributed Authoring -- WEBDAV.   Network Working Group.
+  February  1999.   -- URL:  <https://www.rfc-editor.org/info/rfc2518>  (online:
+  2021-08-11  10:24:20  +0000) --  URL:  <https://datatracker.ietf.org/doc/html/
+  rfc2518> (online: 2021-08-11 10:20:25 +0000)
+
+[1628664638] R.  Fielding,  J.  Gettys,  J.  Mogul,  H.  Frystyk,  L.  Masinter,
+  P. Leach, T.  Berners-Lee.  RFC 2616: Hypertext Transfer Protocol -- HTTP/1.1.
+  Network Working Group.  June  1999.  -- URL: <https://www.rfc-editor.org/info/
+  rfc2616>  (online: 2021-08-11  06:50:38  +0000)  -- URL:  <https://datatracker
+  .ietf.org/doc/html/rfc2616> (online: 2021-08-11 06:49:49 +0000)
+
+[1628681512] H. Nielsen,  P. Leach,  S. Lawrence.  RFC  2774: An  HTTP Extension
+  Framework.   Network  Working Group.   February  2000.   -- URL:  <https://www
+  .rfc-editor.org/info/rfc2774>  (online:  2021-08-11  11:31:52 +0000)  --  URL:
+  <https://datatracker.ietf.org/doc/html/rfc2774>  (online: 2021-08-11  11:31:06
+  +0000)
+
+[1628682013] R. Khare, S. Lawrence.  RFC 2817: Upgrading to TLS Within HTTP/1.1.
+  Network Working  Group.  May 2000.  --  URL: <https://www.rfc-editor.org/info/
+  rfc2817>  (online: 2021-08-11  11:40:50  +0000)  -- URL:  <https://datatracker
+  .ietf.org/doc/html/rfc2817> (online: 2021-08-11 11:40:13 +0000)
+
+[1628682840] J.  Mogul, B.  Krishnamurthy,F.  Douglis, A.  Feldmann, Y.  Goland,
+  A.  van  Hoff, D.  Hellerstein.   RFC 3229:  Delta encoding in  HTTP.  Network
+  Working  Group.   January  2002.   --  URL:  <https://www.rfc-editor.org/info/
+  rfc3229>  (online: 2021-08-11  11:54:37  +0000)  -- URL:  <https://datatracker
+  .ietf.org/doc/html/rfc3229> (online: 2021-08-11 11:54:00 +0000)
+
+[1628683380] L.   Dusseault.   RFC 4918:  HTTP  Extensions  for Web  Distributed
+  Authoring and  Versioning (WebDAV).   Network Working  Group.  June  2007.  --
+  URL:  <https://www.rfc-editor.org/info/rfc4918>  (online: 2021-08-11  12:03:38
+  +0000)   --   URL:  <https://datatracker.ietf.org/doc/html/rfc4918>   (online:
+  2021-08-11 12:03:00 +0000)
+
+[1626789081] L.  Dusseault, J.  Snell.  RFC  5789: PATCH Method for HTTP.  March
+  2010.  --  URL: <https://www.rfc-editor.org/info/rfc5789>  (online: 2021-07-20
+  13:51:21   +0000)   --  URL:   <https://datatracker.ietf.org/doc/html/rfc5789>
+  (online: 2021-07-20 13:49:56 +0000)
+
+[1628687605] G. Clemm, J. Crawford, J. Reschke, J. Whitehead.  RFC 5842: Binding
+  Extensions  to Web  Distributed Authoring  and Versioning  (WebDAV).  Internet
+  Engineering Task  Force (IETF).  April 2010.   -- URL: <https://www.rfc-editor
+  .org/info/rfc5842>  (online:  2021-08-11  13:13:58 +0000)  --  URL:  <https://
+  datatracker.ietf.org/doc/html/rfc5842> (online: 2021-08-11 13:13:25 +0000)
+
+[1628664327] M.   Nottingham, R.   Fielding.  RFC  6585: Additional  HTTP Status
+  Codes.   Internet  Engineering  Task  Force  (IETF).   April  2012.   --  URL:
+  <https://www.rfc-editor.org/info/rfc6585> (online:  2021-08-11 06:45:27 +0000)
+  -- URL:  <https://datatracker.ietf.org/doc/html/rfc6585>  (online:  2021-08-11
+  06:41:56 +0000)
+
+[1628689032] R.  Fieldin,  J.  Reschke.   RFC 7231: Hypertext  Transfer Protocol
+  (HTTP/1.1): Semantics  and Content.   Internet Engineering Task  Force (IETF).
+  June   2014.   --   URL:  <https://www.rfc-editor.org/info/rfc7231>   (online:
+  2021-08-11   13:37:45   +0000)  --   URL:   <https://datatracker.ietf.org/doc/
+  html/rfc7231> (online: 2021-08-11 13:37:12 +0000)
+
+[1628698596] R.  Fielding,  J.  Reschke.  RFC 7232:  Hypertext Transfer Protocol
+  (HTTP/1.1):  Conditional Requests.   Internet Engineering  Task Force  (IETF).
+  June   2014.   --   URL:  <https://www.rfc-editor.org/info/rfc7232>   (online:
+  2021-08-11  16:17:10 +0000)  -- URL:  <https://datatracker.ietf.org/doc/html/
+  rfc7232> (online: 2021-08-11 16:16:36 +0000)
+
+[1628699244] R. Fielding, Y.  Lafon, J.   Reschke.  RFC 7233: Hypertext Transfer
+  Protocol (HTTP/1.1): Range Requests.   Internet Engineering Task Force (IETF).
+  June   2014.   --   URL:  <https://www.rfc-editor.org/info/rfc7233>   (online:
+  2021-08-11  16:27:52  +0000) --  URL:  <https://datatracker.ietf.org/doc/html/
+  rfc7233> (online: 2021-08-11 16:27:24 +0000)
+
+[1628699834] R.   Fielding, M.   Nottingham,  J. Reschke.   RFC 7234:  Hypertext
+  Transfer  Protocol  (HTTP/1.1):  Caching.   Internet  Engineering  Task  Force
+  (IETF).    June  2014.    --  URL:   <https://www.rfc-editor.org/info/rfc7234>
+  (online:  2021-08-11 16:37:41  +0000)  -- URL:  <https://datatracker.ietf.org/
+  doc/html/rfc7234> (online: 2021-08-11 16:37:14 +0000)
+
+[1628699967] R.  Fielding,  J.  Reschke.  RFC 7235:  Hypertext Transfer Protocol
+  (HTTP/1.1):  Authentication.  Internet  Engineering Task  Force (IETF).   June
+  2014.  --  URL: <https://www.rfc-editor.org/info/rfc7235>  (online: 2021-08-11
+  16:40:05   +0000)   --  URL:   <https://datatracker.ietf.org/doc/html/rfc7235>
+  (online: 2021-08-11 16:39:27 +0000)
+
+[1628685873] J.    Reschke.   draft-reschke-http-status-308-07:   The  Hypertext
+  Transfer  Protocol  (HTTP)  Status  Code 308  (Permanent  Redirect).   Network
+  Working Group.   2012-03-26.  --  URL: <https://datatracker.ietf.org/doc/html/
+  draft-reschke-http-status-308-07> (online: 2021-08-11 12:44:33 +0000)
+
+[1628686626] J. Reschke.  RFC 7538: The  Hypertext Transfer Protocol Status Code
+  308  (Permanent Redirect).   Internet  Engineering Task  Force (IETF).   April
+  2015.  --  URL: <https://www.rfc-editor.org/info/rfc7538>  (online: 2021-08-11
+  12:57:52   +0000)   --  URL:   <https://datatracker.ietf.org/doc/html/rfc7538>
+  (online: 2021-08-11 12:57:06 +0000)
+
+[1628688273] M.  Belshe,  R.  Peon,  M. Thomson.   RFC 7540:  Hypertext Transfer
+  Protocol Version  2 (HTTP/2).   Internet Engineering  Task Force  (IETF).  May
+  2015.  --  URL: <https://www.rfc-editor.org/info/rfc7540>  (online: 2021-08-11
+  13:25:20   +0000)   --  URL:   <https://datatracker.ietf.org/doc/html/rfc7540>
+  (online: 2021-08-11 13:24:33 +0000)
+
+[1628700651] T. Bray.  RFC 7725: An HTTP  Status Code to Report Legal Obstacles.
+  Internet Engineering Task Force (IETF).   February 2016.  -- URL: <https://www
+  .rfc-editor.org/info/rfc7725>  (online:  2021-08-11  16:51:29 +0000)  --  URL:
+  <https://datatracker.ietf.org/doc/html/rfc7725>  (online: 2021-08-11  16:50:51
+  +0000)
 
 [1626790959] Todd  Fredrich.  REST  API  Tutorial.  2021.   -- URL  <https://www
   .restapitutorial.com/> (online: 2021-07-20 14:22:39 +0000)
+
+[1628664887] askapache.   HTTP  Status  Codes.    2021.   --  URL:  <https://www
+  .askapache.com/net/http-status-codes/> (online: 2021-08-11 06:54:47 +0000)
 
 [1628336533] Mozilla and individual contributors.   HTTP request methods.  2021.
   -- URL:  <https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods>  (online:
