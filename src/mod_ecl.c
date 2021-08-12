@@ -111,12 +111,1815 @@
 
 
 
-/* The sample content handler */
-static int ecl_handler(request_rec *r)
+/**
+ * @brief The sample content handler.
+ *
+ * @details
+ *
+ * non-HTTP status codes:
+ *
+ * * [OK](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__DAEMON.html#gaba51915c87d64af47fb1cc59348961c9)
+ *   --- 0 --- Module has handled this stage.
+ *
+ * * [DECLINED](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__DAEMON.html#ga9eba11ca86461a3ae319311d64682dda)
+ *   --- -1 --- Module declines to handle.
+ *
+ * * [DONE](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__DAEMON.html#gabe6b865c045f3e7c6892ef4f15ff5779)
+ *   --- -2 --- Module has served the response completely.
+ *
+ * * [SUSPENDED](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__DAEMON.html#gaeb2de2a76ea6728368042cf7a3fcd60c)
+ *    --- -3 --- Module will handle the remainder of the request.  The core will
+ *    never invoke the request again.
+ *
+ * HTTP status codes:
+ *
+ * Each  Status-Code  is  described  below, including  a  description  of  which
+ * method(s) it can follow and any metainformation required in the response.
+ *
+ * * Informational 1xx (from RFC 2616)
+ *
+ *   This class of status code indicates a provisional response, consisting only
+ *   of the  Status-Line and  optional headers,  and is  terminated by  an empty
+ *   line.  There are no required headers  for this class of status code.  Since
+ *   HTTP/1.0 did not define  any 1xx status codes, servers MUST  NOT send a 1xx
+ *   response to an HTTP/1.0 client except under experimental conditions.
+ *
+ *   A client MUST be prepared to accept  one or more 1xx status responses prior
+ *   to a regular response, even if the  client does not expect a 100 (Continue)
+ *   status message.  Unexpected  1xx status responses MAY be ignored  by a user
+ *   agent.
+ *
+ *   Proxies MUST forward 1xx responses, unless the connection between the proxy
+ *   and its  client has been closed,  or unless the proxy  itself requested the
+ *   generation of the  1xx response.  (For example, if a  proxy adds a "Expect:
+ *   100-continue" field  when it forwards a  request, then it need  not forward
+ *   the corresponding 100 (Continue) response(s).)
+ *
+ * * Informational 1xx (from RFC 7231)
+ *
+ *   The 1xx (Informational) class of  status code indicates an interim response
+ *   for communicating connection status or request progress prior to completing
+ *   the  requested action  and sending  a  final response.   1xx responses  are
+ *   terminated by  the first empty line  after the status-line (the  empty line
+ *   signaling the  end of the header  section).  Since HTTP/1.0 did  not define
+ *   any 1xx status codes, a server MUST  NOT send a 1xx response to an HTTP/1.0
+ *   client.
+ *
+ *   A client MUST be able to parse  one or more 1xx responses received prior to
+ *   a final response, even if the client does not expect one.  A user agent MAY
+ *   ignore unexpected 1xx responses.
+ *
+ *   A proxy  MUST forward 1xx responses  unless the proxy itself  requested the
+ *   generation of the  1xx response.  For example, if a  proxy adds an "Expect:
+ *   100-continue" field  when it forwards a  request, then it need  not forward
+ *   the corresponding 100 (Continue) response(s).
+ *
+ *   * HTTP_CONTINUE --- 100 Continue (from RFC 2616)
+ *
+ *     The client  SHOULD continue with  its request.  This interim  response is
+ *     used to inform the  client that the initial part of  the request has been
+ *     received and has not yet been  rejected by the server.  The client SHOULD
+ *     continue by sending  the remainder of the request or,  if the request has
+ *     already been  completed, ignore  this response.  The  server MUST  send a
+ *     final response after  the request has been completed.   See section 8.2.3
+ *     for detailed discussion of the use and handling of this status code.
+ *
+ *   * HTTP_CONTINUE --- 100 Continue (from RFC 7231)
+ *
+ *     The  100 (Continue)  status code  indicates that  the initial  part of  a
+ *     request has  been received and has  not yet been rejected  by the server.
+ *     The server  intends to send a  final response after the  request has been
+ *     fully received and acted upon.
+ *
+ *     When  the  request  contains  an  Expect header  field  that  includes  a
+ *     100-continue  expectation, the  100  response indicates  that the  server
+ *     wishes  to receive  the request  payload  body, as  described in  Section
+ *     5.1.1.  The client ought to continue  sending the request and discard the
+ *     100 response.
+ *
+ *     If the  request did  not contain  an Expect  header field  containing the
+ *     100-continue  expectation, the  client  can simply  discard this  interim
+ *     response.
+ *
+ *   * HTTP_SWITCHING_PROTOCOLS --- 101 Switching Protocols (from RFC 2616)
+ *
+ *     The  server  understands and  is  willing  to  comply with  the  client's
+ *     request,  via the  Upgrade message  header field  (section 14.42),  for a
+ *     change in  the application protocol  being used on this  connection.  The
+ *     server will switch  protocols to those defined by  the response's Upgrade
+ *     header field  immediately after the  empty line which terminates  the 101
+ *     response.
+ *
+ *     The protocol  SHOULD be switched only  when it is advantageous  to do so.
+ *     For example,  switching to a newer  version of HTTP is  advantageous over
+ *     older versions, and switching to  a real-time, synchronous protocol might
+ *     be advantageous when delivering resources that use such features.
+ *
+ *   * HTTP_SWITCHING_PROTOCOLS --- 101 Switching Protocols (from RFC 7231)
+ *
+ *     The  101 (Switching  Protocols)  status code  indicates  that the  server
+ *     understands and is  willing to comply with the client's  request, via the
+ *     Upgrade header  field (Section  6.7 of  [RFC7230]), for  a change  in the
+ *     application  protocol being  used on  this connection.   The server  MUST
+ *     generate an  Upgrade header  field in the  response that  indicates which
+ *     protocol(s) will  be switched  to immediately after  the empty  line that
+ *     terminates the 101 response.
+ *
+ *     It is assumed that the server will only agree to switch protocols when it
+ *     is advantageous to  do so.  For example, switching to  a newer version of
+ *     HTTP  might be  advantageous  over  older versions,  and  switching to  a
+ *     real-time,  synchronous protocol  might be  advantageous when  delivering
+ *     resources that use such features.
+ *
+ *   * HTTP_PROCESSING --- 102 Processing (from RFC 2518)
+ *
+ *     The 102  (Processing) status code is  an interim response used  to inform
+ *     the client that the server has accepted the complete request, but has not
+ *     yet completed it.   This status code SHOULD only be  sent when the server
+ *     has a reasonable expectation that  the request will take significant time
+ *     to complete.  As  guidance, if a method is taking  longer than 20 seconds
+ *     (a reasonable, but arbitrary value) to process the server SHOULD return a
+ *     102 (Processing) response.   The server MUST send a  final response after
+ *     the request has been completed.
+ *
+ *     Methods can potentially take a long period of time to process, especially
+ *     methods that  support the  Depth header.   In such  cases the  client may
+ *     time-out the  connection while waiting  for a response.  To  prevent this
+ *     the server may  return a 102 (Processing) status code  to indicate to the
+ *     client that the server is still processing the method.
+ *
+ * * Successful 2xx (from RFC 2616)
+ *
+ *   This  class  of  status  code  indicates  that  the  client's  request  was
+ *   successfully received, understood, and accepted.
+ *
+ * * Successful 2xx (from RFC 7231)
+ *
+ *   The  2xx (Successful)  class of  status  code indicates  that the  client's
+ *   request was successfully received, understood, and accepted.
+ *
+ *   * HTTP_OK --- 200 OK (from RFC 2616)
+ *
+ *     The request has succeeded.  The information returned with the response is
+ *     dependent on the method used in the request, for example:
+ *
+ *     GET --- an entity corresponding to  the requested resource is sent in the
+ *       response;
+ *
+ *     HEAD --- the entity-header fields corresponding to the requested resource
+ *       are sent in the response without any message-body;
+ *
+ *     POST --- an entity describing or containing the result of the action;
+ *
+ *     TRACE an  entity containing the  request message  as received by  the end
+ *       server.
+ *
+ *   * HTTP_OK --- 200 OK (from RFC 7231)
+ *
+ *     The 200 (OK)  status code indicates that the request  has succeeded.  The
+ *     payload sent  in a 200 response  depends on the request  method.  For the
+ *     methods  defined  by this  specification,  the  intended meaning  of  the
+ *     payload can be summarized as:
+ *
+ *     GET --- a representation of the target resource;
+ *
+ *     HEAD --- the  same representation as GET, but  without the representation
+ *     data;
+ *
+ *     POST --- a representation of the status of, or results obtained from, the
+ *     action;
+ *
+ *     PUT, DELETE --- a representation of the status of the action;
+ *
+ *     OPTIONS --- a representation of the communications options;
+ *
+ *     TRACE --- a representation of the  request message as received by the end
+ *     server.
+ *
+ *     Aside from  responses to CONNECT,  a 200  response always has  a payload,
+ *     though an origin  server MAY generate a payload body  of zero length.  If
+ *     no payload  is desired, an origin  server ought to send  204 (No Content)
+ *     instead.   For CONNECT,  no  payload is  allowed  because the  successful
+ *     result  is a  tunnel, which  begins  immediately after  the 200  response
+ *     header section.
+ *
+ *     A 200 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_CREATED --- 201 Created (from RFC 2616)
+ *
+ *     The  request has  been fulfilled  and resulted  in a  new resource  being
+ *     created.   The newly  created resource  can be  referenced by  the URI(s)
+ *     returned in  the entity of the  response, with the most  specific URI for
+ *     the  resource given  by a  Location  header field.   The response  SHOULD
+ *     include  an entity  containing  a list  of  resource characteristics  and
+ *     location(s) from  which the user  or user agent  can choose the  one most
+ *     appropriate.  The entity  format is specified by the media  type given in
+ *     the  Content-Type  header  field.   The origin  server  MUST  create  the
+ *     resource before returning  the 201 status code.  If the  action cannot be
+ *     carried out  immediately, the server  SHOULD respond with  202 (Accepted)
+ *     response instead.
+ *
+ *     A 201 response  MAY contain an ETag response header  field indicating the
+ *     current value of  the entity tag for the requested  variant just created,
+ *     see section 14.19.
+ *
+ *   * HTTP_CREATED --- 201 Created (from RFC 7231)
+ *
+ *     The  201  (Created) status  code  indicates  that  the request  has  been
+ *     fulfilled and  has resulted in one  or more new resources  being created.
+ *     The primary  resource created by  the request  is identified by  either a
+ *     Location  header field  in  the  response or,  if  no  Location field  is
+ *     received, by the effective request URI.
+ *
+ *     The 201 response payload typically describes and links to the resource(s)
+ *     created.  See Section 7.2 for a discussion of the meaning and purpose of
+ *     validator header fields, such as ETag and Last-Modified, in a 201
+ *     response.
+ *
+ *   * HTTP_ACCEPTED --- 202 Accepted (from RFC 2616)
+ *
+ *     The request has been accepted for  processing, but the processing has not
+ *     been completed.  The request might or might not eventually be acted upon,
+ *     as it might be disallowed when processing actually takes place.  There is
+ *     no facility for  re-sending a status code from  an asynchronous operation
+ *     such as this.
+ *
+ *     The 202 response is intentionally non-committal.  Its purpose is to allow
+ *     a  server  to  accept  a  request  for  some  other  process  (perhaps  a
+ *     batch-oriented process that  is only run once per  day) without requiring
+ *     that the user agent's connection to  the server persist until the process
+ *     is completed.  The  entity returned with this response  SHOULD include an
+ *     indication of  the request's  current status  and either  a pointer  to a
+ *     status monitor or  some estimate of when the user  can expect the request
+ *     to be fulfilled.
+ *
+ *   * HTTP_ACCEPTED --- 202 Accepted (from RFC 7231)
+ *
+ *     The  202 (Accepted)  status  code  indicates that  the  request has  been
+ *     accepted for processing, but the  processing has not been completed.  The
+ *     request  might or  might not  eventually be  acted upon,  as it  might be
+ *     disallowed when processing actually takes place.  There is no facility in
+ *     HTTP for re-sending a status code from an asynchronous operation.
+ *
+ *     The 202 response is intentionally  noncommittal.  Its purpose is to allow
+ *     a  server  to  accept  a  request  for  some  other  process  (perhaps  a
+ *     batch-oriented process that  is only run once per  day) without requiring
+ *     that the user agent's connection to  the server persist until the process
+ *     is  completed.   The representation  sent  with  this response  ought  to
+ *     describe the  request's current status and  point to (or embed)  a status
+ *     monitor that  can provide the user  with an estimate of  when the request
+ *     will be fulfilled.
+ *
+ *   * HTTP_NON_AUTHORITATIVE  --- 203  Non-Authoritative Information  (from RFC
+ *     2616)
+ *
+ *     The returned metainformation  in the entity-header is  not the definitive
+ *     set as available from the origin server,  but is gathered from a local or
+ *     a third-party copy.  The set presented MAY be a subset or superset of the
+ *     original version.   For example,  including local  annotation information
+ *     about  the resource  might result  in a  superset of  the metainformation
+ *     known by  the origin server.  Use  of this response code  is not required
+ *     and is only appropriate when the response would otherwise be 200 (OK).
+ *
+ *   * HTTP_NON_AUTHORITATIVE  --- 203  Non-Authoritative Information  (from RFC
+ *     7231)
+ *
+ *     The 203  (Non-Authoritative Information)  status code indicates  that the
+ *     request was  successful but the  enclosed payload has been  modified from
+ *     that of  the origin server's  200 (OK)  response by a  transforming proxy
+ *     (Section  5.7.2 of  [RFC7230]).  This  status  code allows  the proxy  to
+ *     notify  recipients when  a transformation  has been  applied, since  that
+ *     knowledge  might  impact  later  decisions regarding  the  content.   For
+ *     example, future cache  validation requests for the content  might only be
+ *     applicable along the same request path (through the same proxies).
+ *
+ *     The 203  response is similar  to the  Warning code of  214 Transformation
+ *     Applied  (Section 5.5  of [RFC7234]),  which has  the advantage  of being
+ *     applicable to responses with any status code.
+ *
+ *     A 203 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_NO_CONTENT --- 204 No Content (from RFC 2616)
+ *
+ *     The  server has  fulfilled the  request but  does not  need to  return an
+ *     entity-body,  and  might want  to  return  updated metainformation.   The
+ *     response  MAY include  new  or  updated metainformation  in  the form  of
+ *     entity-headers, which if present SHOULD  be associated with the requested
+ *     variant.
+ *
+ *     If the  client is a  user agent, it SHOULD  NOT change its  document view
+ *     from  that  which caused  the  request  to  be  sent.  This  response  is
+ *     primarily  intended to  allow input  for  actions to  take place  without
+ *     causing a change  to the user agent's active document  view, although any
+ *     new  or  updated  metainformation  SHOULD  be  applied  to  the  document
+ *     currently in the user agent's active view.
+ *
+ *     The 204  response MUST  NOT include  a message-body,  and thus  is always
+ *     terminated by the first empty line after the header fields.
+ *
+ *   * HTTP_NO_CONTENT --- 204 No Content (from RFC 7231)
+ *
+ *     The  204  (No  Content)  status   code  indicates  that  the  server  has
+ *     successfully  fulfilled  the request  and  that  there is  no  additional
+ *     content to send  in the response payload body.  Metadata  in the response
+ *     header   fields  refer   to  the   target  resource   and  its   selected
+ *     representation after the requested action was applied.
+ *
+ *     For  example, if  a 204  status code  is received  in response  to a  PUT
+ *     request and the response contains an  ETag header field, then the PUT was
+ *     successful and the  ETag field-value contains the entity-tag  for the new
+ *     representation of that target resource.
+ *
+ *     The 204  response allows a  server to indicate  that the action  has been
+ *     successfully applied to the target resource, while implying that the user
+ *     agent does not need to traverse away from its current "document view" (if
+ *     any).   The  server  assumes  that  the  user  agent  will  provide  some
+ *     indication of the success to its  user, in accord with its own interface,
+ *     and  apply any  new or  updated metadata  in the  response to  its active
+ *     representation.
+ *
+ *     For example,  a 204 status  code is  commonly used with  document editing
+ *     interfaces corresponding to a "save" action, such that the document being
+ *     saved remains available  to the user for editing.  It  is also frequently
+ *     used  with  interfaces  that  expect   automated  data  transfers  to  be
+ *     prevalent, such as within distributed version control systems.
+ *
+ *     A 204  response is terminated  by the first  empty line after  the header
+ *     fields because it cannot contain a message body.
+ *
+ *     A 204 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_RESET_CONTENT --- 205 Reset Content (from RFC 2616)
+ *
+ *     The server has fulfilled the request  and the user agent SHOULD reset the
+ *     document view  which caused  the request  to be  sent.  This  response is
+ *     primarily intended  to allow  input for  actions to  take place  via user
+ *     input, followed by a clearing of the  form in which the input is given so
+ *     that the  user can  easily initiate another  input action.   The response
+ *     MUST NOT include an entity.
+ *
+ *   * HTTP_RESET_CONTENT --- 205 Reset Content (from RFC 7231)
+ *
+ *     The  205  (Reset Content)  status  code  indicates  that the  server  has
+ *     fulfilled the request and desires that the user agent reset the "document
+ *     view", which  caused the  request to  be sent, to  its original  state as
+ *     received from the origin server.
+ *
+ *     This response is  intended to support a common data  entry use case where
+ *     the  user receives  content that  supports data  entry (a  form, notepad,
+ *     canvas,  etc.), enters  or manipulates  data  in that  space, causes  the
+ *     entered  data to  be submitted  in  a request,  and then  the data  entry
+ *     mechanism  is reset  for  the next  entry  so that  the  user can  easily
+ *     initiate another input action.
+ *
+ *     Since the  205 status  code implies  that no  additional content  will be
+ *     provided, a  server MUST NOT  generate a payload  in a 205  response.  In
+ *     other words, a server MUST do one of the following for a 205 response: a)
+ *     indicate   a  zero-length   body  for   the  response   by  including   a
+ *     Content-Length header field with a value  of 0; b) indicate a zero-length
+ *     payload for  the response by  including a Transfer-Encoding  header field
+ *     with a value of  chunked and a message body consisting  of a single chunk
+ *     of zero-length; or, c) close the connection immediately after sending the
+ *     blank line terminating the header section.
+ *
+ *   * HTTP_PARTIAL_CONTENT --- 206 Partial Content (from RFC 2616)
+ *
+ *     The server has  fulfilled the partial GET request for  the resource.  The
+ *     request  MUST  have  included  a   Range  header  field  (section  14.35)
+ *     indicating the  desired range, and  MAY have included an  If-Range header
+ *     field (section 14.27) to make the request conditional.
+ *
+ *     The response MUST include the following header fields:
+ *
+ *     * Either  a Content-Range  header  field (section  14.16) indicating  the
+ *       range   included  with   this  response,   or  a   multipart/byteranges
+ *       Content-Type  including  Content-Range  fields  for each  part.   If  a
+ *       Content-Length header field is present  in the response, its value MUST
+ *       match the actual number of OCTETs transmitted in the message-body.
+ *
+ *     * Date
+ *
+ *     * ETag and/or Content-Location,  if the header would have been  sent in a
+ *       200 response to the same request
+ *
+ *     * Expires, Cache-Control,  and/or Vary,  if the field-value  might differ
+ *       from that sent in any previous response for the same variant
+ *
+ *     If the  206 response  is the result  of an If-Range  request that  used a
+ *     strong  cache validator  (see section  13.3.3), the  response SHOULD  NOT
+ *     include  other entity-headers.   If  the  response is  the  result of  an
+ *     If-Range  request that  used  a  weak validator,  the  response MUST  NOT
+ *     include  other  entity-headers;  this  prevents  inconsistencies  between
+ *     cached entity-bodies  and updated headers.  Otherwise,  the response MUST
+ *     include all  of the entity-headers that  would have been returned  with a
+ *     200 (OK) response to the same request.
+ *
+ *     A cache  MUST NOT  combine a  206 response  with other  previously cached
+ *     content if  the ETag or Last-Modified  headers do not match  exactly, see
+ *     13.5.4.
+ *
+ *     A cache that does not support the Range and Content-Range headers
+ *     MUST NOT cache 206 (Partial) responses.
+ *
+ *   * HTTP_MULTI_STATUS --- 207 Multi-Status (from RFC 2518)
+ *
+ *     The  207   (Multi-Status)  status  code  provides   status  for  multiple
+ *     independent operations (see section 11 for more information).
+ *
+ *   * HTTP_MULTI_STATUS --- 207 Multi-Status (from RFC 4918)
+ *
+ *     The  207   (Multi-Status)  status  code  provides   status  for  multiple
+ *     independent operations (see Section 13 for more information).
+ *
+ *   * HTTP_ALREADY_REPORTED --- 208 Already Reported (from RFC 5842)
+ *
+ *     The 208 (Already Reported) status code can be used inside a DAV: propstat
+ *     response element  to avoid enumerating  the internal members  of multiple
+ *     bindings  to the  same  collection  repeatedly.  For  each  binding to  a
+ *     collection inside the  request's scope, only one will be  reported with a
+ *     200 status, while subsequent DAV:response elements for all other bindings
+ *     will  use  the  208  status,  and  no  DAV:response  elements  for  their
+ *     descendants are included.
+ *
+ *     Note that the 208 status will  only occur for "Depth: infinity" requests,
+ *     and  that it  is of  particular importance  when the  multiple collection
+ *     bindings cause a bind loop as discussed in Section 2.2.
+ *
+ *     A client can  request the DAV:resource-id property in  a PROPFIND request
+ *     to guarantee that  they can accurately reconstruct  the binding structure
+ *     of a collection with multiple bindings to a single resource.
+ *
+ *     For backward compatibility with clients not  aware of the 208 status code
+ *     appearing in  multistatus response bodies,  it SHOULD NOT be  used unless
+ *     the client  has signaled support  for this specification using  the "DAV"
+ *     request  header (see  Section  8.2).   Instead, a  508  status should  be
+ *     returned when  a binding loop is  discovered.  This allows the  server to
+ *     return the 508 as the top-level  return status, if it discovers it before
+ *     it  started the  response,  or in  the  middle of  a  multistatus, if  it
+ *     discovers it in the middle of streaming out a multistatus response.
+ *
+ *   * HTTP_IM_USED --- 226 IM Used (from RFC 3229)
+ *
+ *     The server has fulfilled a GET request for the resource, and the response
+ *     is a representation  of the result of one  or more instance-manipulations
+ *     applied to the  current instance.  The actual current  instance might not
+ *     be available  except by  combining this response  with other  previous or
+ *     future     responses,     as     appropriate     for     the     specific
+ *     instance-manipulation(s).  If  so, the headers of  the resulting instance
+ *     are the result of combining the  headers from the status-226 response and
+ *     the  other  instances, following  the  rules  in  section 13.5.3  of  the
+ *     HTTP/1.1 specification [10].
+ *
+ *     The request MUST have included an  A-IM header field listing at least one
+ *     instance-manipulation.  The  response MUST  include an Etag  header field
+ *     giving the entity tag of the current instance.
+ *
+ *     A response received  with a status code  of 226 MAY be stored  by a cache
+ *     and used in reply to a subsequent request, subject to the HTTP expiration
+ *     mechanism  and any  Cache-Control  headers, and  to  the requirements  in
+ *     section 10.6.
+ *
+ *     A response received with a status code of  226 MAY be used by a cache, in
+ *     conjunction with a  cache entry for the base instance,  to create a cache
+ *     entry for the current instance.
+ *
+ * * Redirection 3xx (from RFC 2616)
+ *
+ *   This class of  status code indicates that further action  needs to be taken
+ *   by the user agent in order to fulfill the request.  The action required MAY
+ *   be carried out by  the user agent without interaction with  the user if and
+ *   only if  the method used in  the second request  is GET or HEAD.   A client
+ *   SHOULD detect infinite redirection loops, since such loops generate network
+ *   traffic for each redirection.
+ *
+ *   Note: previous versions of this specification recommended a maximum of five
+ *   redirections.   Content developers  should  be aware  that  there might  be
+ *   clients that implement such a fixed limitation.
+ *
+ * * Redirection 3xx (from RFC 7231)
+ *
+ *   The 3xx  (Redirection) class of  status code indicates that  further action
+ *   needs to be taken by the user agent  in order to fulfill the request.  If a
+ *   Location  header field  (Section 7.1.2)  is  provided, the  user agent  MAY
+ *   automatically redirect  its request to  the URI referenced by  the Location
+ *   field value, even if the specific status code is not understood.  Automatic
+ *   redirection needs to  done with care for  methods not known to  be safe, as
+ *   defined in  Section 4.2.1,  since the  user might not  wish to  redirect an
+ *   unsafe request.
+ *
+ *   There are several types of redirects:
+ *
+ *   1. Redirects that  indicate the resource might be available  at a different
+ *      URI,  as provided  by the  Location field,  as in  the status  codes 301
+ *      (Moved Permanently), 302 (Found), and 307 (Temporary Redirect).
+ *
+ *   2. Redirection that offers a choice  of matching resources, each capable of
+ *      representing  the  original request  target,  as  in the  300  (Multiple
+ *      Choices) status code.
+ *
+ *   3. Redirection to  a different resource, identified by  the Location field,
+ *      that can  represent an indirect response  to the request, as  in the 303
+ *      (See Other) status code.
+ *
+ *   4. Redirection to a previously cached  result, as in the 304 (Not Modified)
+ *      status code.
+ *
+ *   Note: In HTTP/1.0, the status codes 301 (Moved Permanently) and 302 (Found)
+ *   were  defined for  the first  type  of redirect  ([RFC1945], Section  9.3).
+ *   Early  user agents  split on  whether the  method applied  to the  redirect
+ *   target would be the  same as the original request or  would be rewritten as
+ *   GET.  Although HTTP originally defined the former semantics for 301 and 302
+ *   (to match its original implementation at CERN), and defined 303 (See Other)
+ *   to match the  latter semantics, prevailing practice  gradually converged on
+ *   the  latter semantics  for 301  and  302 as  well.  The  first revision  of
+ *   HTTP/1.1 added  307 (Temporary Redirect)  to indicate the  former semantics
+ *   without being  impacted by divergent  practice.  Over 10 years  later, most
+ *   user agents  still do  method rewriting  for 301  and 302;  therefore, this
+ *   specification makes that  behavior conformant when the  original request is
+ *   POST.
+ *
+ *   A  client  SHOULD detect  and  intervene  in cyclical  redirections  (i.e.,
+ *   "infinite" redirection loops).
+ *
+ *   Note: An  earlier version  of this specification  recommended a  maximum of
+ *   five redirections ([RFC2068], Section 10.3).  Content developers need to be
+ *   aware that some clients might implement such a fixed limitation.
+ *
+ *   * HTTP_MULTIPLE_CHOICES --- 300 Multiple Choices (from RFC 2616)
+ *
+ *     The   requested  resource   corresponds  to   any   one  of   a  set   of
+ *     representations, each  with its  own specific location,  and agent-driven
+ *     negotiation information (section  12) is being provided so  that the user
+ *     (or user  agent) can select  a preferred representation and  redirect its
+ *     request to that location.
+ *
+ *     Unless  it was  a HEAD  request, the  response SHOULD  include an  entity
+ *     containing a list of resource  characteristics and location(s) from which
+ *     the user or  user agent can choose the one  most appropriate.  The entity
+ *     format is  specified by the media  type given in the  Content-Type header
+ *     field.  Depending upon the format and the capabilities of the user agent,
+ *     selection of the most appropriate  choice MAY be performed automatically.
+ *     However,  this  specification  does  not define  any  standard  for  such
+ *     automatic selection.
+ *
+ *     If the server has a preferred choice of representation, it SHOULD include
+ *     the  specific URI  for that  representation in  the Location  field; user
+ *     agents MAY use the Location  field value for automatic redirection.  This
+ *     response is cacheable unless indicated otherwise.
+ *
+ *   * HTTP_MULTIPLE_CHOICES --- 300 Multiple Choices (from RFC 7231)
+ *
+ *     The 300 (Multiple Choices) status code indicates that the target resource
+ *     has  more  than one  representation,  each  with  its own  more  specific
+ *     identifier, and information  about the alternatives is  being provided so
+ *     that the  user (or user agent)  can select a preferred  representation by
+ *     redirecting its  request to one or  more of those identifiers.   In other
+ *     words,  the  server  desires  that  the user  agent  engage  in  reactive
+ *     negotiation  to select  the  most appropriate  representation(s) for  its
+ *     needs (Section 3.4).
+ *
+ *     If  the server  has  a preferred  choice, the  server  SHOULD generate  a
+ *     Location header field containing a preferred choice's URI reference.  The
+ *     user agent MAY use the Location field value for automatic redirection.
+ *
+ *     For request methods other than HEAD, the server SHOULD generate a payload
+ *     in the 300 response containing a  list of representation metadata and URI
+ *     reference(s) from  which the user or  user agent can choose  the one most
+ *     preferred.   The  user  agent  MAY   make  a  selection  from  that  list
+ *     automatically  if it  understands the  provided media  type.  A  specific
+ *     format  for automatic  selection  is not  defined  by this  specification
+ *     because  HTTP  tries  to  remain  orthogonal to  the  definition  of  its
+ *     payloads.  In  practice, the  representation is  provided in  some easily
+ *     parsed format believed to be acceptable  to the user agent, as determined
+ *     by shared  design or  content negotiation, or  in some  commonly accepted
+ *     hypertext format.
+ *
+ *     A 300 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *     Note:  The original  proposal for  the 300  status code  defined the  URI
+ *     header field  as providing  a list  of alternative  representations, such
+ *     that  it  would  be  usable  for  200, 300,  and  406  responses  and  be
+ *     transferred in responses to the HEAD method.  However, lack of deployment
+ *     and disagreement over syntax led to both URI and Alternates (a subsequent
+ *     proposal)  being dropped  from  this specification.   It  is possible  to
+ *     communicate the  list using a set  of Link header fields  [RFC5988], each
+ *     with   a   relationship   of   "alternate",  though   deployment   is   a
+ *     chicken-and-egg problem.
+ *
+ *   * HTTP_MOVED_PERMANENTLY --- 301 Moved Permanently (from RFC 2616)
+ *
+ *     The requested  resource has  been assigned  a new  permanent URI  and any
+ *     future references to  this resource SHOULD use one of  the returned URIs.
+ *     Clients  with link  editing capabilities  ought to  automatically re-link
+ *     references  to the  Request-URI  to one  or more  of  the new  references
+ *     returned  by the  server,  where possible.   This  response is  cacheable
+ *     unless indicated otherwise.
+ *
+ *     The  new permanent  URI SHOULD  be  given by  the Location  field in  the
+ *     response.  Unless the request method was HEAD, the entity of the response
+ *     SHOULD contain a short hypertext note with a hyperlink to the new URI(s).
+ *
+ *     If the 301  status code is received  in response to a  request other than
+ *     GET or HEAD,  the user agent MUST NOT automatically  redirect the request
+ *     unless  it can  be confirmed  by the  user, since  this might  change the
+ *     conditions under which the request was issued.
+ *
+ *     Note: When automatically redirecting a POST request after receiving a 301
+ *     status code, some  existing HTTP/1.0 user agents  will erroneously change
+ *     it into a GET request.
+ *
+ *   * HTTP_MOVED_PERMANENTLY --- 301 Moved Permanently (from RFC 7231)
+ *
+ *     The  301  (Moved  Permanently)  status code  indicates  that  the  target
+ *     resource has been assigned a new  permanent URI and any future references
+ *     to this  resource ought to  use one of  the enclosed URIs.   Clients with
+ *     link-editing capabilities  ought to  automatically re-link  references to
+ *     the effective request  URI to one or  more of the new  references sent by
+ *     the server, where possible.
+ *
+ *     The  server SHOULD  generate  a  Location header  field  in the  response
+ *     containing a preferred URI reference for the new permanent URI.  The user
+ *     agent MAY  use the Location  field value for automatic  redirection.  The
+ *     server's response payload usually contains  a short hypertext note with a
+ *     hyperlink to the new URI(s).
+ *
+ *     Note: For historical reasons, a user  agent MAY change the request method
+ *     from  POST to  GET  for  the subsequent  request.   If  this behavior  is
+ *     undesired, the 307 (Temporary Redirect) status code can be used instead.
+ *
+ *     A 301 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_MOVED_TEMPORARILY --- 302 Found (from RFC 2616)
+ *
+ *     The requested resource resides temporarily  under a different URI.  Since
+ *     the redirection might be altered  on occasion, the client SHOULD continue
+ *     to  use the  Request-URI  for  future requests.   This  response is  only
+ *     cacheable if indicated by a Cache-Control or Expires header field.
+ *
+ *     The temporary URI SHOULD be given  by the Location field in the response.
+ *     Unless the  request method was  HEAD, the  entity of the  response SHOULD
+ *     contain a short hypertext note with a hyperlink to the new URI(s).
+ *
+ *     If the 302  status code is received  in response to a  request other than
+ *     GET or HEAD,  the user agent MUST NOT automatically  redirect the request
+ *     unless  it can  be confirmed  by the  user, since  this might  change the
+ *     conditions under which the request was issued.
+ *
+ *     Note: RFC  1945 and RFC  2068 specify that the  client is not  allowed to
+ *     change the method on the redirected request.  However, most existing user
+ *     agent implementations treat 302 as if  it were a 303 response, performing
+ *     a  GET on  the Location  field-value regardless  of the  original request
+ *     method.  The  status codes 303 and  307 have been added  for servers that
+ *     wish to  make unambiguously clear which  kind of reaction is  expected of
+ *     the client.
+ *
+ *   * HTTP_MOVED_TEMPORARILY --- 302 Found (from RFC 7231)
+ *
+ *     The 302  (Found) status code  indicates that the target  resource resides
+ *     temporarily  under  a different  URI.   Since  the redirection  might  be
+ *     altered on  occasion, the client ought  to continue to use  the effective
+ *     request URI for future requests.
+ *
+ *     The  server SHOULD  generate  a  Location header  field  in the  response
+ *     containing a URI reference for the different URI.  The user agent MAY use
+ *     the  Location  field  value  for  automatic  redirection.   The  server's
+ *     response payload usually contains a short hypertext note with a hyperlink
+ *     to the different URI(s).
+ *
+ *     Note: For historical reasons, a user  agent MAY change the request method
+ *     from  POST to  GET  for  the subsequent  request.   If  this behavior  is
+ *     undesired, the 307 (Temporary Redirect) status code can be used instead.
+ *
+ *   * HTTP_SEE_OTHER --- 303 See Other (from RFC 2616)
+ *
+ *     The response to the request can be found under a different URI and SHOULD
+ *     be retrieved  using a GET  method on  that resource.  This  method exists
+ *     primarily to allow the output of  a POST-activated script to redirect the
+ *     user  agent to  a selected  resource.  The  new URI  is not  a substitute
+ *     reference for the  originally requested resource.  The  303 response MUST
+ *     NOT be cached, but the response  to the second (redirected) request might
+ *     be cacheable.
+ *
+ *     The different URI SHOULD be given  by the Location field in the response.
+ *     Unless the  request method was  HEAD, the  entity of the  response SHOULD
+ *     contain a short hypertext note with a hyperlink to the new URI(s).
+ *
+ *     Note: Many  pre-HTTP/1.1 user  agents do not  understand the  303 status.
+ *     When interoperability with such clients is a concern, the 302 status code
+ *     may be used  instead, since most user  agents react to a  302 response as
+ *     described here for 303.
+ *
+ *   * HTTP_SEE_OTHER --- 303 See Other (from RFC 7231)
+ *
+ *     The 303 (See Other) status code  indicates that the server is redirecting
+ *     the user  agent to  a different resource,  as indicated by  a URI  in the
+ *     Location header field, which is  intended to provide an indirect response
+ *     to the  original request.  A user  agent can perform a  retrieval request
+ *     targeting that  URI (a GET  or HEAD request  if using HTTP),  which might
+ *     also be redirected,  and present the eventual result as  an answer to the
+ *     original request.  Note that the new  URI in the Location header field is
+ *     not considered equivalent to the effective request URI.
+ *
+ *     This status code is applicable to  any HTTP method.  It is primarily used
+ *     to allow  the output of  a POST  action to redirect  the user agent  to a
+ *     selected resource, since doing  so provides the information corresponding
+ *     to  the POST  response  in  a form  that  can  be separately  identified,
+ *     bookmarked, and cached, independent of the original request.
+ *
+ *     A 303 response to a GET request indicates that the origin server does not
+ *     have a representation  of the target resource that can  be transferred by
+ *     the server  over HTTP.   However, the  Location field  value refers  to a
+ *     resource that is  descriptive of the target resource, such  that making a
+ *     retrieval request on that other resource might result in a representation
+ *     that  is useful  to recipients  without implying  that it  represents the
+ *     original target resource.  Note that answers to the questions of what can
+ *     be represented,  what representations are  adequate, and what might  be a
+ *     useful description are outside the scope of HTTP.
+ *
+ *     Except  for responses  to a  HEAD request,  the representation  of a  303
+ *     response ought to contain a short  hypertext note with a hyperlink to the
+ *     same URI reference provided in the Location header field.
+ *
+ *   * HTTP_NOT_MODIFIED --- 304 Not Modified (from RFC 2616)
+ *
+ *     If  the client  has performed  a conditional  GET request  and access  is
+ *     allowed,  but the  document  has  not been  modified,  the server  SHOULD
+ *     respond  with this  status code.   The 304  response MUST  NOT contain  a
+ *     message-body, and thus is always terminated by the first empty line after
+ *     the header fields.
+ *
+ *     The response MUST include the following header fields:
+ *
+ *     * Date, unless its omission is required by section 14.18.1
+ *
+ *     If a clockless  origin server obeys these rules, and  proxies and clients
+ *     add  their own  Date to  any response  received without  one (as  already
+ *     specified by [RFC 2068], section 14.19), caches will operate correctly.
+ *
+ *     * ETag and/or Content-Location,  if the header would have been  sent in a
+ *       200 response to the same request
+ *
+ *     * Expires, Cache-Control,  and/or Vary,  if the field-value  might differ
+ *       from that sent in any previous response for the same variant
+ *
+ *     If  the  conditional GET  used  a  strong  cache validator  (see  section
+ *     13.3.3), the response SHOULD NOT include other entity-headers.  Otherwise
+ *     (i.e., the conditional GET used a  weak validator), the response MUST NOT
+ *     include  other  entity-headers;  this  prevents  inconsistencies  between
+ *     cached entity-bodies and updated headers.
+ *
+ *     If a  304 response  indicates an  entity not  currently cached,  then the
+ *     cache  MUST disregard  the response  and repeat  the request  without the
+ *     conditional.
+ *
+ *     If a  cache uses  a received 304  response to update  a cache  entry, the
+ *     cache MUST update the entry to reflect  any new field values given in the
+ *     response.
+ *
+ *   * HTTP_NOT_MODIFIED --- 304 Not Modified (from RFC 7232)
+ *
+ *     The 304  (Not Modified) status code  indicates that a conditional  GET or
+ *     HEAD request  has been  received and  would have resulted  in a  200 (OK)
+ *     response if  it were  not for  the fact that  the condition  evaluated to
+ *     false.  In  other words, there  is no need for  the server to  transfer a
+ *     representation of the target resource  because the request indicates that
+ *     the  client, which  made the  request  conditional, already  has a  valid
+ *     representation; the  server is therefore  redirecting the client  to make
+ *     use of that stored representation as if it were the payload of a 200 (OK)
+ *     response.
+ *
+ *     The server generating  a 304 response MUST generate any  of the following
+ *     header fields  that would have  been sent in a  200 (OK) response  to the
+ *     same request:  Cache-Control, Content-Location, Date, ETag,  Expires, and
+ *     Vary.
+ *
+ *     Since the goal of a 304 response is to minimize information transfer when
+ *     the recipient  already has one  or more cached representations,  a sender
+ *     SHOULD NOT generate  representation metadata other than  the above listed
+ *     fields  unless said  metadata exists  for  the purpose  of guiding  cache
+ *     updates (e.g.,  Last-Modified might  be useful if  the response  does not
+ *     have an ETag field).
+ *
+ *     Requirements  on a  cache that  receives a  304 response  are defined  in
+ *     Section 4.3.4 of  [RFC7234].  If the conditional  request originated with
+ *     an outbound  client, such as  a user agent with  its own cache  sending a
+ *     conditional GET to a shared proxy,  then the proxy SHOULD forward the 304
+ *     response to that client.
+ *
+ *     A 304 response cannot contain a  message-body; it is always terminated by
+ *     the first empty line after the header fields.
+ *
+ *   * HTTP_USE_PROXY --- 305 Use Proxy (from RFC 2616)
+ *
+ *     The requested  resource MUST be accessed  through the proxy given  by the
+ *     Location field.   The Location  field gives  the URI  of the  proxy.  The
+ *     recipient is expected  to repeat this single request via  the proxy.  305
+ *     responses MUST only be generated by origin servers.
+ *
+ *     Note: RFC 2068 was  not clear that 305 was intended  to redirect a single
+ *     request, and to be generated by origin servers only.  Not observing these
+ *     limitations has significant security consequences.
+ *
+ *   * HTTP_USE_PROXY --- 305 Use Proxy (from RFC 7231)
+ *
+ *     The 305 (Use Proxy) status code was defined in a previous version of this
+ *     specification and is now deprecated (Appendix B).
+ *
+ *   * ??? --- 306 (Unused) (from RFC 2616)
+ *
+ *     The 306 status code was used  in a previous version of the specification,
+ *     is no longer used, and the code is reserved.
+ *
+ *   * ??? --- 306 (Unused) (from RFC 7231)
+ *
+ *     The  306  status  code  was  defined   in  a  previous  version  of  this
+ *     specification, is no longer used, and the code is reserved.
+ *
+ *   * HTTP_TEMPORARY_REDIRECT --- 307 Temporary Redirect (from RFC 2616)
+ *
+ *     The requested resource resides temporarily  under a different URI.  Since
+ *     the redirection MAY be altered on occasion, the client SHOULD continue to
+ *     use the Request-URI for future requests.  This response is only cacheable
+ *     if indicated by a Cache-Control or Expires header field.
+ *
+ *     The temporary URI SHOULD be given  by the Location field in the response.
+ *     Unless the  request method was  HEAD, the  entity of the  response SHOULD
+ *     contain a short hypertext note with a hyperlink to the new URI(s) , since
+ *     many  pre-HTTP/1.1  user  agents  do   not  understand  the  307  status.
+ *     Therefore, the note  SHOULD contain the information necessary  for a user
+ *     to repeat the original request on the new URI.
+ *
+ *     If the 307  status code is received  in response to a  request other than
+ *     GET or HEAD,  the user agent MUST NOT automatically  redirect the request
+ *     unless  it can  be confirmed  by the  user, since  this might  change the
+ *     conditions under which the request was issued.
+ *
+ *   * HTTP_TEMPORARY_REDIRECT --- 307 Temporary Redirect (from RFC  7231)
+ *
+ *     The  307  (Temporary Redirect)  status  code  indicates that  the  target
+ *     resource resides  temporarily under  a different URI  and the  user agent
+ *     MUST  NOT  change  the  request   method  if  it  performs  an  automatic
+ *     redirection to that URI.  Since the redirection can change over time, the
+ *     client ought  to continue  using the original  effective request  URI for
+ *     future requests.
+ *
+ *     The  server SHOULD  generate  a  Location header  field  in the  response
+ *     containing a URI reference for the different URI.  The user agent MAY use
+ *     the  Location  field  value  for  automatic  redirection.   The  server's
+ *     response payload usually contains a short hypertext note with a hyperlink
+ *     to the different URI(s).
+ *
+ *     Note: This status code is similar to 302 (Found), except that it does not
+ *     allow changing the  request method from POST to  GET.  This specification
+ *     defines no equivalent counterpart for 301 (Moved Permanently) ([RFC7238],
+ *     however,  defines  the status  code  308  (Permanent Redirect)  for  this
+ *     purpose).
+ *
+ *   * HTTP_PERMANENT_REDIRECT --- 308 Permanent Redirect (from RFC 7538)
+ *
+ *     The  308  (Permanent Redirect)  status  code  indicates that  the  target
+ *     resource has been assigned a new  permanent URI and any future references
+ *     to this  resource ought to  use one of  the enclosed URIs.   Clients with
+ *     link editing  capabilities ought  to automatically re-link  references to
+ *     the effective  request URI (Section 5.5  of [RFC7230]) to one  or more of
+ *     the new references sent by the server, where possible.
+ *
+ *     The server  SHOULD generate a  Location header field  ([RFC7231], Section
+ *     7.1.2) in the  response containing a preferred URI reference  for the new
+ *     permanent  URI.  The  user agent  MAY use  the Location  field value  for
+ *     automatic redirection.  The server's  response payload usually contains a
+ *     short hypertext note with a hyperlink to the new URI(s).
+ *
+ *     A 308 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by  the method  definition  or explicit  cache  controls (see  [RFC7234],
+ *     Section 4.2.2).
+ *
+ *     Note: This status code is  similar to 301 (Moved Permanently) ([RFC7231],
+ *     Section 6.4.2), except that it does not allow changing the request method
+ *     from POST to GET.
+ *
+ * * Client Error 4xx (from RFC 2616)
+ *
+ *   The 4xx  class of  status code is  intended for cases  in which  the client
+ *   seems to have erred.  Except when  responding to a HEAD request, the server
+ *   SHOULD include an entity containing  an explanation of the error situation,
+ *   and whether it  is a temporary or permanent condition.   These status codes
+ *   are  applicable to  any request  method.   User agents  SHOULD display  any
+ *   included entity to the user.
+ *
+ *   If the client is sending data,  a server implementation using TCP SHOULD be
+ *   careful to  ensure that  the client acknowledges  receipt of  the packet(s)
+ *   containing the response, before the server closes the input connection.  If
+ *   the  client continues  sending  data to  the server  after  the close,  the
+ *   server's TCP stack will send a reset  packet to the client, which may erase
+ *   the  client's unacknowledged  input buffers  before  they can  be read  and
+ *   interpreted by the HTTP application.
+ *
+ * * Client Error 4xx (from RFC 7231)
+ *
+ *   The 4xx (Client Error) class of status code indicates that the client seems
+ *   to have erred.  Except when responding to a HEAD request, the server SHOULD
+ *   send a representation containing an explanation of the error situation, and
+ *   whether it is  a temporary or permanent condition.  These  status codes are
+ *   applicable to any request method.   User agents SHOULD display any included
+ *   representation to the user.
+ *
+ *   * HTTP_BAD_REQUEST --- 400 Bad Request (from RFC 2616)
+ *
+ *     The  request could  not  be understood  by the  server  due to  malformed
+ *     syntax.  The client SHOULD NOT repeat the request without modifications.
+ *
+ *   * HTTP_BAD_REQUEST --- 400 Bad Request (from RFC 7231)
+ *
+ *     The 400  (Bad Request) status  code indicates  that the server  cannot or
+ *     will not process the  request due to something that is  perceived to be a
+ *     client  error (e.g.,  malformed request  syntax, invalid  request message
+ *     framing, or deceptive request routing).
+ *
+ *   * HTTP_UNAUTHORIZED --- 401 Unauthorized (from RFC 2616)
+ *
+ *     The request  requires user authentication.   The response MUST  include a
+ *     WWW-Authenticate  header field  (section  14.47)  containing a  challenge
+ *     applicable to the requested resource.   The client MAY repeat the request
+ *     with  a  suitable Authorization  header  field  (section 14.8).   If  the
+ *     request already included Authorization credentials, then the 401 response
+ *     indicates that authorization has been  refused for those credentials.  If
+ *     the 401 response  contains the same challenge as the  prior response, and
+ *     the user agent  has already attempted authentication at  least once, then
+ *     the user SHOULD  be presented the entity that was  given in the response,
+ *     since that  entity might  include relevant diagnostic  information.  HTTP
+ *     access  authentication is  explained in  "HTTP Authentication:  Basic and
+ *     Digest Access Authentication" [43].
+ *
+ *   * HTTP_UNAUTHORIZED --- 401 Unauthorized (from RFC 7235)
+ *
+ *     The 401  (Unauthorized) status  code indicates that  the request  has not
+ *     been applied  because it lacks  valid authentication credentials  for the
+ *     target  resource.  The  server  generating  a 401  response  MUST send  a
+ *     WWW-Authenticate  header  field (Section  4.1)  containing  at least  one
+ *     challenge applicable to the target resource.
+ *
+ *     If the request included authentication credentials, then the 401 response
+ *     indicates that authorization has been refused for those credentials.  The
+ *     user agent  MAY repeat the request  with a new or  replaced Authorization
+ *     header  field (Section  4.2).   If  the 401  response  contains the  same
+ *     challenge as the prior response, and the user agent has already attempted
+ *     authentication  at least  once, then  the user  agent SHOULD  present the
+ *     enclosed representation to  the user, since it  usually contains relevant
+ *     diagnostic information.
+ *
+ *   * HTTP_PAYMENT_REQUIRED --- 402 Payment Required (from RFC 2616)
+ *
+ *     This code is reserved for future use.
+ *
+ *   * HTTP_PAYMENT_REQUIRED --- 402 Payment Required (from RFC 7231)
+ *
+ *     The 402 (Payment Required) status code is reserved for future use.
+ *
+ *   * HTTP_FORBIDDEN --- 403 Forbidden (from RFC 2616)
+ *
+ *     The  server  understood the  request,  but  is  refusing to  fulfill  it.
+ *     Authorization will not  help and the request SHOULD NOT  be repeated.  If
+ *     the request method was not HEAD and  the server wishes to make public why
+ *     the request has not been fulfilled, it SHOULD describe the reason for the
+ *     refusal  in  the entity.   If  the  server does  not  wish  to make  this
+ *     information available to the client, the  status code 404 (Not Found) can
+ *     be used instead.
+ *
+ *   * HTTP_FORBIDDEN --- 403 Forbidden (from RFC 7231)
+ *
+ *     The 403 (Forbidden) status code  indicates that the server understood the
+ *     request but refuses to authorize it.  A server that wishes to make public
+ *     why  the request  has  been forbidden  can describe  that  reason in  the
+ *     response payload (if any).
+ *
+ *     If authentication  credentials were provided  in the request,  the server
+ *     considers  them insufficient  to  grant access.   The  client SHOULD  NOT
+ *     automatically repeat the  request with the same  credentials.  The client
+ *     MAY repeat  the request  with new or  different credentials.   However, a
+ *     request might be forbidden for reasons unrelated to the credentials.
+ *
+ *     An  origin server  that  wishes  to "hide"  the  current  existence of  a
+ *     forbidden target resource  MAY instead respond with a status  code of 404
+ *     (Not Found).
+ *
+ *   * HTTP_NOT_FOUND --- 404 Not Found (from RFC 2616)
+ *
+ *     The  server  has  not  found   anything  matching  the  Request-URI.   No
+ *     indication is given  of whether the condition is  temporary or permanent.
+ *     The 410  (Gone) status code SHOULD  be used if the  server knows, through
+ *     some  internally   configurable  mechanism,  that  an   old  resource  is
+ *     permanently unavailable and has no  forwarding address.  This status code
+ *     is commonly used when the server does  not wish to reveal exactly why the
+ *     request has been refused, or when no other response is applicable.
+ *
+ *   * HTTP_NOT_FOUND --- 404 Not Found (from RFC 7231)
+ *
+ *     The 404 (Not Found) status code  indicates that the origin server did not
+ *     find a current  representation for the target resource or  is not willing
+ *     to disclose that one exists.  A 404 status code does not indicate whether
+ *     this lack  of representation  is temporary or  permanent; the  410 (Gone)
+ *     status code is preferred over 404  if the origin server knows, presumably
+ *     through  some configurable  means, that  the  condition is  likely to  be
+ *     permanent.
+ *
+ *     A 404 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_METHOD_NOT_ALLOWED --- 405 Method Not Allowed (from RFC 2616)
+ *
+ *     The method specified in the Request-Line  is not allowed for the resource
+ *     identified by the Request-URI.  The response MUST include an Allow header
+ *     containing a list of valid methods for the requested resource.
+ *
+ *   * HTTP_METHOD_NOT_ALLOWED --- 405 Method Not Allowed (from RFC 7231)
+ *
+ *     The  405 (Method  Not  Allowed)  status code  indicates  that the  method
+ *     received  in the  request-line  is known  by the  origin  server but  not
+ *     supported by  the target  resource.  The origin  server MUST  generate an
+ *     Allow header  field in  a 405  response containing a  list of  the target
+ *     resource's currently supported methods.
+ *
+ *     A 405 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_NOT_ACCEPTABLE --- 406 Not Acceptable (from RFC 2616)
+ *
+ *     The  resource identified  by the  request is  only capable  of generating
+ *     response  entities  which  have content  characteristics  not  acceptable
+ *     according to the accept headers sent in the request.
+ *
+ *     Unless  it was  a HEAD  request, the  response SHOULD  include an  entity
+ *     containing  a list  of available  entity characteristics  and location(s)
+ *     from which  the user or user  agent can choose the  one most appropriate.
+ *     The  entity  format  is  specified  by   the  media  type  given  in  the
+ *     Content-Type   header  field.    Depending  upon   the  format   and  the
+ *     capabilities of the user agent,  selection of the most appropriate choice
+ *     MAY  be performed  automatically.  However,  this specification  does not
+ *     define any standard for such automatic selection.
+ *
+ *     Note:  HTTP/1.1 servers  are allowed  to return  responses which  are not
+ *     acceptable according to the accept headers  sent in the request.  In some
+ *     cases,  this may  even be  preferable to  sending a  406 response.   User
+ *     agents are encouraged  to inspect the headers of an  incoming response to
+ *     determine if it is acceptable.
+ *
+ *     If the  response could  be unacceptable, a  user agent  SHOULD emporarily
+ *     stop receipt of  more data and query  the user for a  decision on further
+ *     actions.
+ *
+ *   * HTTP_NOT_ACCEPTABLE --- 406 Not Acceptable (from RFC 7231)
+ *
+ *     The 406 (Not  Acceptable) status code indicates that  the target resource
+ *     does not  have a current representation  that would be acceptable  to the
+ *     user agent, according to the proactive negotiation header fields received
+ *     in the  request (Section 5.3),  and the server  is unwilling to  supply a
+ *     default representation.
+ *
+ *     The  server SHOULD  generate a  payload  containing a  list of  available
+ *     representation  characteristics  and corresponding  resource  identifiers
+ *     from which the user or user agent can choose the one most appropriate.  A
+ *     user agent MAY automatically select the most appropriate choice from that
+ *     list.  However, this specification does  not define any standard for such
+ *     automatic selection, as described in Section 6.4.1.
+ *
+ *   * HTTP_PROXY_AUTHENTICATION_REQUIRED --- 407  Proxy Authentication Required
+ *     (from RFC 2616)
+ *
+ *     This code is similar to 401 (Unauthorized), but indicates that the client
+ *     must first authenticate  itself with the proxy.  The proxy  MUST return a
+ *     Proxy-Authenticate header  field (section  14.33) containing  a challenge
+ *     applicable  to the  proxy for  the  requested resource.   The client  MAY
+ *     repeat  the  request with  a  suitable  Proxy-Authorization header  field
+ *     (section  14.34).   HTTP  access  authentication is  explained  in  "HTTP
+ *     Authentication: Basic and Digest Access Authentication" [43].
+ *
+ *   * HTTP_PROXY_AUTHENTICATION_REQUIRED --- 407  Proxy Authentication Required
+ *     (from RFC 7235)
+ *
+ *      The 407  (Proxy Authentication Required)  status code is similar  to 401
+ *      (Unauthorized), but it  indicates that the client  needs to authenticate
+ *      itself   in  order   to   use  a   proxy.   The   proxy   MUST  send   a
+ *      Proxy-Authenticate  header field  (Section 4.3)  containing a  challenge
+ *      applicable to that proxy for the target resource.  The client MAY repeat
+ *      the  request with  a new  or replaced  Proxy-Authorization header  field
+ *      (Section 4.4).
+ *
+ *   * HTTP_REQUEST_TIME_OUT --- 408 Request Timeout (from RFC 2616)
+ *
+ *     The client did not produce a request  within the time that the server was
+ *     prepared  to   wait.   The   client  MAY   repeat  the   request  without
+ *     modifications at any later time.
+ *
+ *   * HTTP_REQUEST_TIME_OUT --- 408 Request Timeout (from RFC 7231)
+ *
+ *     The 408 (Request  Timeout) status code indicates that the  server did not
+ *     receive a complete  request message within the time that  it was prepared
+ *     to wait.  A server SHOULD send the "close" connection option (Section 6.1
+ *     of [RFC7230])  in the  response, since  408 implies  that the  server has
+ *     decided to  close the  connection rather than  continue waiting.   If the
+ *     client has an outstanding request in  transit, the client MAY repeat that
+ *     request on a new connection.
+ *
+ *   * HTTP_CONFLICT --- 409 Conflict (from RFC 2616)
+ *
+ *     The request  could not be  completed due to  a conflict with  the current
+ *     state of the resource.  This code  is only allowed in situations where it
+ *     is  expected that  the user  might be  able to  resolve the  conflict and
+ *     resubmit  the   request.   The   response  body  SHOULD   include  enough
+ *     information  for  the user  to  recognize  the  source of  the  conflict.
+ *     Ideally, the  response entity  would include  enough information  for the
+ *     user  or user  agent  to fix  the  problem; however,  that  might not  be
+ *     possible and is not required.
+ *
+ *     Conflicts are  most likely to  occur in response  to a PUT  request.  For
+ *     example, if versioning were being used  and the entity being PUT included
+ *     changes  to a  resource  which conflict  with those  made  by an  earlier
+ *     (third-party) request, the server might  use the 409 response to indicate
+ *     that it  can't complete the request.   In this case, the  response entity
+ *     would likely contain  a list of the differences between  the two versions
+ *     in a format defined by the response Content-Type.
+ *
+ *   * HTTP_CONFLICT --- 409 Conflict (from RFC 7231)
+ *
+ *     The 409  (Conflict) status code indicates  that the request could  not be
+ *     completed  due  to a  conflict  with  the  current  state of  the  target
+ *     resource.  This code  is used in situations where the  user might be able
+ *     to  resolve the  conflict and  resubmit the  request.  The  server SHOULD
+ *     generate  a  payload that  includes  enough  information  for a  user  to
+ *     recognize the source of the conflict.
+ *
+ *     Conflicts are  most likely to  occur in response  to a PUT  request.  For
+ *     example, if versioning  were being used and the  representation being PUT
+ *     included  changes to  a  resource that  conflict with  those  made by  an
+ *     earlier (third-party) request, the origin server might use a 409 response
+ *     to  indicate that  it  can't complete  the request.   In  this case,  the
+ *     response  representation  would  likely contain  information  useful  for
+ *     merging the differences based on the revision history.
+ *
+ *   * HTTP_GONE --- 410 Gone (from RFC 2616)
+ *
+ *     The  requested resource  is  no longer  available at  the  server and  no
+ *     forwarding address is known.  This condition is expected to be considered
+ *     permanent.   Clients   with  link  editing  capabilities   SHOULD  delete
+ *     references to  the Request-URI after  user approval.  If the  server does
+ *     not know, or  has no facility to determine, whether  or not the condition
+ *     is permanent,  the status code  404 (Not  Found) SHOULD be  used instead.
+ *     This response is cacheable unless indicated otherwise.
+ *
+ *     The  410  response is  primarily  intended  to  assist  the task  of  web
+ *     maintenance by notifying the recipient that the resource is intentionally
+ *     unavailable and that  the server owners desire that remote  links to that
+ *     resource  be  removed.   Such  an   event  is  common  for  limited-time,
+ *     promotional services and for resources belonging to individuals no longer
+ *     working  at  the  server's  site.   It  is  not  necessary  to  mark  all
+ *     permanently unavailable resources  as "gone" or to keep the  mark for any
+ *     length of time -- that is left to the discretion of the server owner.
+ *
+ *   * HTTP_GONE --- 410 Gone (from RFC 7231)
+ *
+ *     The 410 (Gone)  status code indicates that access to  the target resource
+ *     is no  longer available at the  origin server and that  this condition is
+ *     likely to be  permanent.  If the origin  server does not know,  or has no
+ *     facility to  determine, whether  or not the  condition is  permanent, the
+ *     status code 404 (Not Found) ought to be used instead.
+ *
+ *     The  410  response is  primarily  intended  to  assist  the task  of  web
+ *     maintenance by notifying the recipient that the resource is intentionally
+ *     unavailable and that  the server owners desire that remote  links to that
+ *     resource  be  removed.   Such  an   event  is  common  for  limited-time,
+ *     promotional services and for resources belonging to individuals no longer
+ *     associated with  the origin server's site.   It is not necessary  to mark
+ *     all permanently unavailable  resources as "gone" or to keep  the mark for
+ *     any length of time -- that is left to the discretion of the server owner.
+ *
+ *     A 410 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_LENGTH_REQUIRED --- 411 Length Required (from RFC 2616)
+ *
+ *     The   server  refuses   to   accept  the   request   without  a   defined
+ *     Content-Length.  The  client MAY repeat  the request  if it adds  a valid
+ *     Content-Length header field containing the  length of the message-body in
+ *     the request message.
+ *
+ *   * HTTP_LENGTH_REQUIRED --- 411 Length Required (from RFC
+ *
+ *     The 411 (Length  Required) status code indicates that  the server refuses
+ *     to accept the request without  a defined Content-Length (Section 3.3.2 of
+ *     [RFC7230]).   The client  MAY  repeat  the request  if  it  adds a  valid
+ *     Content-Length header field containing the  length of the message body in
+ *     the request message.
+ *
+ *   * HTTP_PRECONDITION_FAILED --- 412 Precondition Failed (from RFC 2616)
+ *
+ *     The  precondition given  in  one  or more  of  the request-header  fields
+ *     evaluated to false when it was  tested on the server.  This response code
+ *     allows  the  client  to  place  preconditions  on  the  current  resource
+ *     metainformation (header field data) and thus prevent the requested method
+ *     from being applied to a resource other than the one intended.
+ *
+ *   * HTTP_PRECONDITION_FAILED --- 412 Precondition Failed (from RFC 7232)
+ *
+ *     The  412 (Precondition  Failed) status  code indicates  that one  or more
+ *     conditions given  in the  request header fields  evaluated to  false when
+ *     tested on  the server.   This response  code allows  the client  to place
+ *     preconditions on the current  resource state (its current representations
+ *     and metadata) and, thus, prevent the request method from being applied if
+ *     the target resource is in an unexpected state.
+ *
+ *   * HTTP_REQUEST_ENTITY_TOO_LARGE --- 413 Request  Entity Too Large (from RFC
+ *     2616)
+ *
+ *     The server is refusing to process a request because the request entity is
+ *     larger than  the server is  willing or able  to process.  The  server MAY
+ *     close the connection to prevent the client from continuing the request.
+ *
+ *     If the  condition is temporary,  the server SHOULD include  a Retry-After
+ *     header field  to indicate that  it is temporary  and after what  time the
+ *     client MAY try again.
+ *
+ *   * HTTP_REQUEST_ENTITY_TOO_LARGE --- 413 Request  Entity Too Large (from RFC
+ *     7231)
+ *
+ *     The 413  (Payload Too  Large) status  code indicates  that the  server is
+ *     refusing to process a request because  the request payload is larger than
+ *     the  server is  willing or  able to  process.  The  server MAY  close the
+ *     connection to prevent the client from continuing the request.
+ *
+ *     If the condition  is temporary, the server SHOULD  generate a Retry-After
+ *     header field  to indicate that  it is temporary  and after what  time the
+ *     client MAY try again.
+ *
+ *   * HTTP_REQUEST_URI_TOO_LARGE --- 414 Request-URI Too Long (from RFC 2616)
+ *
+ *     The server is refusing to service  the request because the Request-URI is
+ *     longer than the  server is willing to interpret.  This  rare condition is
+ *     only  likely to  occur  when a  client has  improperly  converted a  POST
+ *     request to a GET request with long query information, when the client has
+ *     descended into a URI "black hole"  of redirection (e.g., a redirected URI
+ *     prefix that points  to a suffix of  itself), or when the  server is under
+ *     attack by a  client attempting to exploit security holes  present in some
+ *     servers  using  fixed-length  buffers  for reading  or  manipulating  the
+ *     Request-URI.
+ *
+ *   * HTTP_REQUEST_URI_TOO_LARGE --- 414 Request-URI Too Long (from RFC 7231)
+ *
+ *     The 414 (URI Too Long) status  code indicates that the server is refusing
+ *     to  service  the  request  because the  request-target  (Section  5.3  of
+ *     [RFC7230]) is longer than the server  is willing to interpret.  This rare
+ *     condition is only likely to occur  when a client has improperly converted
+ *     a POST  request to a  GET request with  long query information,  when the
+ *     client  has  descended  into  a  "black hole"  of  redirection  (e.g.,  a
+ *     redirected URI  prefix that  points to  a suffix of  itself) or  when the
+ *     server  is under  attack  by  a client  attempting  to exploit  potential
+ *     security holes.
+ *
+ *     A 414 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_UNSUPPORTED_MEDIA_TYPE  --- 415  Unsupported  Media  Type (from  RFC
+ *     2616)
+ *
+ *     The server is  refusing to service the request because  the entity of the
+ *     request is  in a format not  supported by the requested  resource for the
+ *     requested method.
+ *
+ *   * HTTP_UNSUPPORTED_MEDIA_TYPE  --- 415  Unsupported  Media  Type (from  RFC
+ *     7231)
+ *
+ *     The 415  (Unsupported Media Type)  status code indicates that  the origin
+ *     server is  refusing to service  the request because  the payload is  in a
+ *     format not supported  by this method on the target  resource.  The format
+ *     problem  might  be  due  to   the  request's  indicated  Content-Type  or
+ *     Content-Encoding, or as a result of inspecting the data directly.
+ *
+ *   * HTTP_RANGE_NOT_SATISFIABLE --- 416 Requested  Range Not Satisfiable (from
+ *     RFC 2616)
+ *
+ *     A server  SHOULD return  a response  with this status  code if  a request
+ *     included a  Range request-header field  (section 14.35), and none  of the
+ *     range-specifier values  in this field  overlap the current extent  of the
+ *     selected  resource,  and   the  request  did  not   include  an  If-Range
+ *     request-header   field.    (For   byte-ranges,  this   means   that   the
+ *     first-byte-pos of all of the byte-range-spec values were greater than the
+ *     current length of the selected resource.)
+ *
+ *     When this status code is returned  for a byte-range request, the response
+ *     SHOULD include a Content-Range entity-header field specifying the current
+ *     length of the  selected resource (see section 14.16).  This response MUST
+ *     NOT use the multipart/byteranges content-type.
+ *
+ *   * HTTP_RANGE_NOT_SATISFIABLE --- 416 Requested  Range Not Satisfiable (from
+ *     RFC 7233)
+ *
+ *     The 416  (Range Not Satisfiable) status  code indicates that none  of the
+ *     ranges  in the  request's Range  header field  (Section 3.1)  overlap the
+ *     current  extent of  the  selected  resource or  that  the  set of  ranges
+ *     requested has been rejected due to invalid ranges or an excessive request
+ *     of small or overlapping ranges.
+ *
+ *     For byte  ranges, failing to  overlap the  current extent means  that the
+ *     first-byte-pos of all of the byte-range-spec values were greater than the
+ *     current length of the selected  representation.  When this status code is
+ *     generated in response to a byte-range request, the sender SHOULD generate
+ *     a  Content-Range  header  field  specifying the  current  length  of  the
+ *     selected representation (Section 4.2).
+ *
+ *     For example:
+ *
+ *     <pre class="fragment">HTTP/1.1 416 Range Not Satisfiable
+ * Date: Fri, 20 Jan 2012 15:41:54 GMT
+ * Content-Range: bytes *&zwj;/47022</pre>
+ *     .
+ *
+ *     Note: Because servers are free to ignore Range, many implementations will
+ *     simply  respond with  the entire  selected representation  in a  200 (OK)
+ *     response.  That is partly because most  clients are prepared to receive a
+ *     200  (OK) to  complete  the  task (albeit  less  efficiently) and  partly
+ *     because clients  might not stop  making an invalid partial  request until
+ *     they  have  received a  complete  representation.   Thus, clients  cannot
+ *     depend on receiving  a 416 (Range Not Satisfiable) response  even when it
+ *     is most appropriate.
+ *
+ *   * HTTP_EXPECTATION_FAILED --- 417 Expectation Failed (from RFC 2616)
+ *
+ *     The  expectation given  in an  Expect request-header  field (see  section
+ *     14.20) could not be met by this server, or, if the server is a proxy, the
+ *     server has unambiguous evidence that the  request could not be met by the
+ *     next-hop server.
+ *
+ *   * HTTP_EXPECTATION_FAILED --- 417 Expectation Failed (from RFC 7231)
+ *
+ *     The 417 (Expectation  Failed) status code indicates  that the expectation
+ *     given in the  request's Expect header field (Section 5.1.1)  could not be
+ *     met by at least one of the inbound servers.
+ *
+ *   * HTTP_MISDIRECTED_REQUEST --- 421 Misdirected Request (from RFC 7540)
+ *
+ *     The 421 (Misdirected Request) status  code indicates that the request was
+ *     directed at a server that is not able to produce a response.  This can be
+ *     sent by  a server  that is  not configured to  produce responses  for the
+ *     combination of scheme and authority that are included in the request URI.
+ *
+ *     Clients receiving a 421 (Misdirected  Request) response from a server MAY
+ *     retry the request  -- whether the request method is  idempotent or not --
+ *     over a different connection.  This is  possible if a connection is reused
+ *     (Section 9.1.1) or if an alternative service is selected [ALT-SVC].
+ *
+ *     This status code MUST NOT be generated by proxies.
+ *
+ *     A 421 response is cacheable  by default, i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_UNPROCESSABLE_ENTITY --- 422 Unprocessable Entity (from RFC 2518)
+ *
+ *     The 422 (Unprocessable  Entity) status code means  the server understands
+ *     the content  type of  the request entity  (hence a  415(Unsupported Media
+ *     Type) status code is inappropriate), and the syntax of the request entity
+ *     is correct  (thus a 400 (Bad  Request) status code is  inappropriate) but
+ *     was  unable to  process the  contained instructions.   For example,  this
+ *     error condition  may occur  if an XML  request body  contains well-formed
+ *     (i.e.,   syntactically   correct),   but   semantically   erroneous   XML
+ *     instructions.
+ *
+ *   * HTTP_UNPROCESSABLE_ENTITY --- 422 Unprocessable Entity (from RFC 4918)
+ *
+ *     The 422 (Unprocessable  Entity) status code means  the server understands
+ *     the content  type of  the request entity  (hence a  415(Unsupported Media
+ *     Type) status code is inappropriate), and the syntax of the request entity
+ *     is correct  (thus a 400 (Bad  Request) status code is  inappropriate) but
+ *     was  unable to  process the  contained instructions.   For example,  this
+ *     error condition  may occur  if an XML  request body  contains well-formed
+ *     (i.e.,   syntactically   correct),   but  semantically   erroneous,   XML
+ *     instructions.
+ *
+ *   * HTTP_LOCKED --- 423  Locked (from RFC 2518)
+ *
+ *     The 423 (Locked) status code means  the source or destination resource of
+ *     a method is locked.
+ *
+ *   * HTTP_LOCKED --- 423  Locked (from RFC 4918)
+ *
+ *     The 423 (Locked) status code means  the source or destination resource of
+ *     a  method  is  locked.   This  response  SHOULD  contain  an  appropriate
+ *     precondition  or postcondition  code, such  as 'lock-token-submitted'  or
+ *     'no-conflicting-lock'.
+ *
+ *   * HTTP_FAILED_DEPENDENCY --- 424 Failed Dependency (from RFC 2518)
+ *
+ *     The 424 (Failed  Dependency) status code means that the  method could not
+ *     be performed  on the  resource because the  requested action  depended on
+ *     another action  and that action failed.   For example, if a  command in a
+ *     PROPPATCH method  fails then, at minimum,  the rest of the  commands will
+ *     also fail with 424 (Failed Dependency).
+ *
+ *   * HTTP_FAILED_DEPENDENCY --- 424 Failed Dependency (from RFC 4918)
+ *
+ *     The 424 (Failed  Dependency) status code means that the  method could not
+ *     be performed  on the  resource because the  requested action  depended on
+ *     another action  and that action failed.   For example, if a  command in a
+ *     PROPPATCH method fails,  then, at minimum, the rest of  the commands will
+ *     also fail with 424 (Failed Dependency).
+ *
+ *   * HTTP_UPGRADE_REQUIRED --- 426 Upgrade Required (from RFC 7231)
+ *
+ *     The 426 (Upgrade Required) status  code indicates that the server refuses
+ *     to perform the request using the current protocol but might be willing to
+ *     do so after the client upgrades to a different protocol.  The server MUST
+ *     send an Upgrade  header field in a 426 response  to indicate the required
+ *     protocol(s) (Section 6.7 of [RFC7230]).
+ *
+ *     Example:
+ *
+ *         HTTP/1.1 426 Upgrade Required
+ *         Upgrade: HTTP/3.0
+ *         Connection: Upgrade
+ *         Content-Length: 53
+ *         Content-Type: text/plain
+ *
+ *         This service requires use of the HTTP/3.0 protocol.
+ *
+ *   * HTTP_PRECONDITION_REQUIRED --- 428 Precondition Required (from RFC 6585)
+ *
+ *     The 428 status code indicates that the origin server requires the request
+ *     to be conditional.
+ *
+ *     Its typical  use is to  avoid the "lost  update" problem, where  a client
+ *     GETs a  resource's state, modifies  it, and PUTs  it back to  the server,
+ *     when  meanwhile a  third  party has  modified the  state  on the  server,
+ *     leading  to a  conflict.  By  requiring requests  to be  conditional, the
+ *     server can assure that clients are working with the correct copies.
+ *
+ *     Responses  using this  status code  SHOULD  explain how  to resubmit  the
+ *     request successfully.  For example:
+ *
+ *         HTTP/1.1 428 Precondition Requiredy
+ *         Content-Type: text/html
+ *
+ *         <html>
+ *           <head>
+ *             <title>Precondition Required</title>
+ *           </head>
+ *           <body>
+ *             <h1>Precondition Required</h1>
+ *             <p>This request is required to be conditional;
+ *             try using "If-Match".</p>
+ *           </body>
+ *         </html>
+ *
+ *     Responses with the 428 status code MUST NOT be stored by a cache.
+ *
+ *   * HTTP_TOO_MANY_REQUESTS --- 429 Too Many Requests (from RFC 6585)
+ *
+ *     The 429 status code indicates that the user has sent too many requests in
+ *     a given amount of time ("rate limiting").
+ *
+ *     The  response  representations  SHOULD  include  details  explaining  the
+ *     condition, and  MAY include a  Retry-After header indicating how  long to
+ *     wait before making a new request.
+ *
+ *     For example:
+ *
+ *         HTTP/1.1 429 Too Many Requests
+ *         Content-Type: text/html
+ *         Retry-After: 3600
+ *
+ *         <html>
+ *           <head>
+ *             <title>Too Many Requests</title>
+ *           </head>
+ *           <body>
+ *             <h1>Too Many Requests</h1>
+ *             <p>I only allow 50 requests per hour to this Web site per
+ *             logged in user.  Try again soon.</p>
+ *           </body>
+ *         </html>
+ *
+ *     Note  that this  specification  does  not define  how  the origin  server
+ *     identifies the user, nor how it  counts requests.  For example, an origin
+ *     server that  is limiting  request rates  can do so  based upon  counts of
+ *     requests on a per-resource basis, across the entire server, or even among
+ *     a  set  of  servers.   Likewise,  it  might  identify  the  user  by  its
+ *     authentication credentials, or a stateful cookie.
+ *
+ *     Responses with the 429 status code MUST NOT be stored by a cache.
+ *
+ *   * HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE  --- 431  Request Header  Fields Too
+ *     Large (from RFC 6585)
+ *
+ *     The 431 status code indicates that the server is unwilling to process the
+ *     request because  its header  fields are  too large.   The request  MAY be
+ *     resubmitted after reducing the size of the request header fields.
+ *
+ *     It can be used both when the set of request header fields in total is too
+ *     large, and when a  single header field is at fault.   In the latter case,
+ *     the response  representation SHOULD  specify which  header field  was too
+ *     large.
+ *
+ *     For example:
+ *
+ *         HTTP/1.1 431 Request Header Fields Too Large
+ *         Content-Type: text/html
+ *
+ *         <html>
+ *           <head>
+ *             <title>Request Header Fields Too Large</title>
+ *           </head>
+ *           <body>
+ *             <h1>Request Header Fields Too Large</h1>
+ *             <p>The "Example" header was too large.</p>
+ *           </body>
+ *         </html>
+ *
+ *     Responses with the 431 status code MUST NOT be stored by a cache.
+ *
+ *   * HTTP_UNAVAILABLE_FOR_LEGAL_REASONS --- 451  Unavailable For Legal Reasons
+ *     (from RFC 7725)
+ *
+ *     This  status code  indicates that  the server  is denying  access to  the
+ *     resource as a consequence of a legal demand.
+ *
+ *     The server in question might not be an origin server.  This type of legal
+ *     demand typically most directly affects  the operations of ISPs and search
+ *     engines.
+ *
+ *     Responses using  this status code  SHOULD include an explanation,  in the
+ *     response body, of  the details of the legal demand:  the party making it,
+ *     the applicable legislation or regulation,  and what classes of person and
+ *     resource it applies to.  For example:
+ *
+ *         HTTP/1.1 451 Unavailable For Legal Reasons
+ *         Link: <https://spqr.example.org/legislatione>; rel="blocked-by"
+ *         Content-Type: text/html
+ *
+ *         <html>
+ *           <head><title>Unavailable For Legal Reasons</title></head>
+ *           <body>
+ *             <h1>Unavailable For Legal Reasons</h1>
+ *             <p>This request may not be serviced in the Roman Province
+ *             of Judea due to the Lex Julia Majestatis, which disallows
+ *             access to resources hosted on servers deemed to be
+ *             oerated by the People's Front of Judea.</p>
+ *           </body>
+ *         </html>
+ *
+ *     The  use  of the  451  status  code  implies  neither the  existence  nor
+ *     nonexistence of the resource named in the request.  That is to say, it is
+ *     possible  that if  the  legal demands  were removed,  a  request for  the
+ *     resource still might not succeed.
+ *
+ *     Note that in  many cases clients can still access  the denied resource by
+ *     using technical countermeasures such as a VPN or the Tor network.
+ *
+ *     A 451 response is cacheable  by default, i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls; see [RFC7234].
+ *
+ * * Server Error 5xx (from RFC 2616)
+ *
+ *   Response status codes beginning with the  digit "5" indicate cases in which
+ *   the server  is aware that  it has erred or  is incapable of  performing the
+ *   request.   Except when  responding to  a  HEAD request,  the server  SHOULD
+ *   include an  entity containing  an explanation of  the error  situation, and
+ *   whether  it is  a temporary  or  permanent condition.   User agents  SHOULD
+ *   display  any  included  entity  to  the  user.  These  response  codes  are
+ *   applicable to any request method.
+ *
+ * * Server Error 5xx (from RFC 7231)
+ *
+ *   The 5xx  (Server Error) class of  status code indicates that  the server is
+ *   aware that it has erred or is incapable of performing the requested method.
+ *   Except  when  responding to  a  HEAD  request,  the  server SHOULD  send  a
+ *   representation  containing  an  explanation  of the  error  situation,  and
+ *   whether it  is a  temporary or  permanent condition.   A user  agent SHOULD
+ *   display any included representation to  the user.  These response codes are
+ *   applicable to any request method.
+ *
+ *   * HTTP_INTERNAL_SERVER_ERROR --- 500 Internal Server Error (from RFC 2616)
+ *
+ *     The server  encountered an unexpected  condition which prevented  it from
+ *     fulfilling the request.
+ *
+ *   * HTTP_INTERNAL_SERVER_ERROR --- 500 Internal Server Error (from RFC 7231)
+ *
+ *     The 500  (Internal Server  Error) status code  indicates that  the server
+ *     encountered an unexpected condition that prevented it from fulfilling the
+ *     request.
+ *
+ *   * HTTP_NOT_IMPLEMENTED --- 501 Not Implemented (from RFC 2616)
+ *
+ *     The server  does not  support the functionality  required to  fulfill the
+ *     request.   This is  the appropriate  response  when the  server does  not
+ *     recognize the request method and is  not capable of supporting it for any
+ *     resource.
+ *
+ *   * HTTP_NOT_IMPLEMENTED --- 501 Not Implemented (from RFC 7231)
+ *
+ *     The 501 (Not Implemented) status code  indicates that the server does not
+ *     support the functionality  required to fulfill the request.   This is the
+ *     appropriate  response when  the  server does  not  recognize the  request
+ *     method and is not capable of supporting it for any resource.
+ *
+ *     A 501 response is cacheable  by default; i.e., unless otherwise indicated
+ *     by the method definition or explicit cache controls (see Section 4.2.2 of
+ *     [RFC7234]).
+ *
+ *   * HTTP_BAD_GATEWAY --- 502 Bad Gateway (from RFC 2616)
+ *
+ *     The  server, while  acting as  a gateway  or proxy,  received an  invalid
+ *     response from  the upstream server  it accessed in attempting  to fulfill
+ *     the request.
+ *
+ *   * HTTP_BAD_GATEWAY --- 502 Bad Gateway (from RFC 7231)
+ *
+ *     The 502 (Bad Gateway) status code indicates that the server, while acting
+ *     as  a gateway  or proxy,  received an  invalid response  from an  inbound
+ *     server it accessed while attempting to fulfill the request.
+ *
+ *   * HTTP_SERVICE_UNAVAILABLE --- 503 Service Unavailable (from RFC 2616)
+ *
+ *     The server is  currently unable to handle the request  due to a temporary
+ *     overloading or maintenance  of the server.  The implication  is that this
+ *     is a temporary  condition which will be alleviated after  some delay.  If
+ *     known, the length of the delay  MAY be indicated in a Retry-After header.
+ *     If no Retry-After  is given, the client SHOULD handle  the response as it
+ *     would for a 500 response.
+ *
+ *     Note: The existence of  the 503 status code does not  imply that a server
+ *     must use  it when becoming overloaded.   Some servers may wish  to simply
+ *     refuse the connection.
+ *
+ *   * HTTP_SERVICE_UNAVAILABLE --- 503 Service Unavailable (from RFC 7231)
+ *
+ *     The 503  (Service Unavailable) status  code indicates that the  server is
+ *     currently unable  to handle the  request due  to a temporary  overload or
+ *     scheduled maintenance, which will likely  be alleviated after some delay.
+ *     The server MAY send a Retry-After header field (Section 7.1.3) to suggest
+ *     an appropriate amount of time for  the client to wait before retrying the
+ *     request.
+ *
+ *     Note: The existence of  the 503 status code does not  imply that a server
+ *     has to use it when becoming overloaded.  Some servers might simply refuse
+ *     the connection.
+ *
+ *   * HTTP_GATEWAY_TIME_OUT --- 504 Gateway Timeout (from RFC 2616)
+ *
+ *     The server, while acting as a gateway  or proxy, did not receive a timely
+ *     response from the upstream server specified  by the URI (e.g.  HTTP, FTP,
+ *     LDAP) or  some other auxiliary server  (e.g. DNS) it needed  to access in
+ *     attempting to complete the request.
+ *
+ *     Note: Note to implementors: some deployed proxies are known to return 400
+ *     or 500 when DNS lookups time out.
+ *
+ *   * HTTP_GATEWAY_TIME_OUT --- 504 Gateway Timeout (from RFC 7231)
+ *
+ *     The 504  (Gateway Timeout) status  code indicates that the  server, while
+ *     acting as a gateway  or proxy, did not receive a  timely response from an
+ *     upstream server it needed to access in order to complete the request.
+ *
+ *   * HTTP_VERSION_NOT_SUPPORTED ---  505 HTTP Version Not  Supported (from RFC
+ *     2616)
+ *
+ *     The server  does not support,  or refuses  to support, the  HTTP protocol
+ *     version that was  used in the request message.  The  server is indicating
+ *     that it  is unable or  unwilling to complete  the request using  the same
+ *     major version as the client, as described in section 3.1, other than with
+ *     this error message.  The response SHOULD contain an entity describing why
+ *     that version is  not supported and what other protocols  are supported by
+ *     that server.
+ *
+ *   * HTTP_VERSION_NOT_SUPPORTED ---  505 HTTP Version Not  Supported (from RFC
+ *     7231)
+ *
+ *     The  505 (HTTP  Version Not  Supported)  status code  indicates that  the
+ *     server does not support, or refuses to support, the major version of HTTP
+ *     that was used  in the request message.  The server  is indicating that it
+ *     is  unable or  unwilling to  complete the  request using  the same  major
+ *     version as  the client, as described  in Section 2.6 of  [RFC7230], other
+ *     than   with  this   error  message.    The  server   SHOULD  generate   a
+ *     representation for  the 505 response  that describes why that  version is
+ *     not supported and what other protocols are supported by that server.
+ *
+ *   * HTTP_VARIANT_ALSO_VARIES --- 506 Variant Also Negotiates (from RFC 2295)
+ *
+ *     The  506  status   code  indicates  that  the  server   has  an  internal
+ *     configuration error: the chosen variant  resource is configured to engage
+ *     in transparent content negotiation itself,  and is therefore not a proper
+ *     end point in the negotiation process.
+ *
+ *   * HTTP_INSUFFICIENT_STORAGE --- 507 Insufficient Storage (from RFC 2518)
+ *
+ *     The 507 (Insufficient Storage) status code  means the method could not be
+ *     performed  on the  resource because  the server  is unable  to store  the
+ *     representation  needed  to  successfully   complete  the  request.   This
+ *     condition is considered  to be temporary.  If the  request which received
+ *     this status code was the result of a user action, the request MUST NOT be
+ *     repeated until it is requested by a separate user action.
+ *
+ *   * HTTP_INSUFFICIENT_STORAGE --- 507 Insufficient Storage (from RFC 4918)
+ *
+ *     The 507 (Insufficient Storage) status code  means the method could not be
+ *     performed  on the  resource because  the server  is unable  to store  the
+ *     representation  needed  to  successfully   complete  the  request.   This
+ *     condition is  considered to be  temporary.  If the request  that received
+ *     this status code was the result of a user action, the request MUST NOT be
+ *     repeated until it is requested by a separate user action.
+ *
+ *   * HTTP_LOOP_DETECTED --- 508 Loop Detected (from RFC 5842)
+ *
+ *     The 508 (Loop Detected) status  code indicates that the server terminated
+ *     an operation because  it encountered an infinite loop  while processing a
+ *     request with  "Depth: infinity".  This  status indicates that  the entire
+ *     operation failed.
+ *
+ *   * HTTP_NOT_EXTENDED --- 510 Not Extended (from RFC 2774)
+ *
+ *     The policy  for accessing the resource  has not been met  in the request.
+ *     The server should send back all  the information necessary for the client
+ *     to  issue  an  extended  request.   It  is  outside  the  scope  of  this
+ *     specification to specify how the extensions inform the client.
+ *
+ *     If the 510  response contains information about extensions  that were not
+ *     present in the initial request then  the client MAY repeat the request if
+ *     it has reason to believe it can fulfill the extension policy by modifying
+ *     the request  according to the  information provided in the  510 response.
+ *     Otherwise the client MAY present any  entity included in the 510 response
+ *     to  the  user,   since  that  entity  may   include  relevant  diagnostic
+ *     information.
+ *
+ *   * HTTP_NETWORK_AUTHENTICATION_REQUIRED   ---  511   Network  Authentication
+ *     Required (from RFC 6585)
+ *
+ *     The 511  status code indicates that  the client needs to  authenticate to
+ *     gain network access.
+ *
+ *     The  response representation  SHOULD contain  a link  to a  resource that
+ *     allows the user to submit credentials (e.g., with an HTML form).
+ *
+ *     Note that  the 511 response SHOULD  NOT contain a challenge  or the login
+ *     interface  itself, because  browsers would  show the  login interface  as
+ *     being  associated with  the  originally requested  URL,  which may  cause
+ *     confusion.
+ *
+ *     The 511 status SHOULD NOT be  generated by origin servers; it is intended
+ *     for  use by  intercepting  proxies  that are  interposed  as  a means  of
+ *     controlling access to the network.
+ *
+ *     Responses with the 511 status code MUST NOT be stored by a cache.
+ *
+ * @see [Apache HTTP Server --- Core routines --- HTTP Daemon Routine --- HTTP Status Codes](https://ci.apache.org/projects/httpd/trunk/doxygen/group__HTTP__Status.html)
+ * @see [Apache HTTP Server --- Core routines --- HTTP Daemon Routine](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__DAEMON.html)
+ *
+ * @see [httpd.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/httpd_8h.html)
+ * @see [httpd.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/httpd_8h_source.html)
+ *
+ * @see [RFC 2295: Transparent Content Negotiation in HTTP](https://datatracker.ietf.org/ doc/html/rfc2295)
+ * @see [RFC 2518: HTTP Extensions for Distributed Authoring -- WEBDAV](<https://datatracker.ietf.org/doc/html/rfc2518)
+ * @see [RFC 2616: Hypertext Transfer Protocol -- HTTP/1.1](https://datatracker.ietf.org/doc/html/rfc2616)
+ * @see [RFC 2774: An HTTP Extension Framework](https://datatracker.ietf.org/doc/html/rfc2774)
+ * @see [RFC 2817: Upgrading to TLS Within HTTP/1.1](https://datatracker.ietf.org/doc/html/rfc2817)
+ * @see [RFC 3229: Delta encoding in HTTP.](https://datatracker.ietf.org/doc/html/rfc3229)
+ * @see [RFC 4918: HTTP Extensions for Web Distributed Authoring and Versioning (WebDAV)](https://datatracker.ietf.org/doc/html/rfc4918)
+ * @see [RFC 5842: Binding Extensions to Web Distributed Authoring and Versioning (WebDAV)](https://datatracker.ietf.org/doc/html/rfc5842)
+ * @see [RFC 6585: Additional HTTP Status Codes](https://datatracker.ietf.org/doc/html/rfc6585))
+ * @see [RFC 7231: Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content](https://datatracker.ietf.org/doc/html/rfc7231)
+ * @see [RFC 7232: Hypertext Transfer Protocol (HTTP/1.1): Conditional Requests](https://datatracker.ietf.org/doc/html/rfc7232)
+ * @see [RFC 7233: Hypertext Transfer Protocol (HTTP/1.1): Range Requests](https://datatracker.ietf.org/doc/html/rfc7233)
+ * @see [RFC 7234: Hypertext Transfer Protocol (HTTP/1.1): Caching](https://datatracker.ietf.org/doc/html/rfc7234)
+ * @see [RFC 7235: Hypertext Transfer Protocol (HTTP/1.1): Authentication](https://datatracker.ietf.org/doc/html/rfc7235)
+ * @see [RFC 7538: The Hypertext Transfer Protocol Status Code 308 (Permanent Redirect)](https://datatracker.ietf.org/doc/html/rfc7538)
+ * @see [RFC 7540: Hypertext Transfer Protocol Version 2 (HTTP/2)](https://datatracker.ietf.org/doc/html/rfc7540)
+ * @see [RFC 7725: An HTTP Status Code to Report Legal Obstacles](https://datatracker.ietf.org/doc/html/rfc7725)
+ *
+ * @param[in] request
+ *   The structure that represents the current request.
+ *
+ * @return
+ *   on success: OK --- on failure: DECLINED
+ */
+
+static int ecl_handler(request_rec * request)
 {
     if (strcmp(r->handler, "application/x-httpd-ecl")) {
         return DECLINED;
     }
+
     r->content_type = "text/html";
 
     if (!r->header_only)
@@ -140,6 +1943,13 @@ static int ecl_handler(request_rec *r)
  *
  * @details
  *
+ * Function  to  allow  all  modules   to  create  per  directory  configuration
+ * structures.
+ *
+ * @code{.c}void *(* module_struct::create_dir_config)(apr_pool_t *p, char *dir)@endcode
+ *
+ * @see [module_struct::create_dir_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#ae3ea1f05d13c0d1e7f7e1fa3a34edf1c)
+ *
  * @param[in] pool
  *   The pool to use for all allocations.
  *
@@ -162,6 +1972,13 @@ static void * per_directory_configuration_handler(apr_pool_t * pool, char * dire
  *   config structures.
  *
  * @details
+ *
+ * Function  to allow  all  modules  to merge  the  per directory  configuration
+ * structures for two directories.
+ *
+ * @code{.c}void *(* module_struct::merge_dir_config)(apr_pool_t *p, void *base_conf, void *new_conf)@endcode
+ *
+ * @see [module_struct::merge_dir_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a7c75a2a7334554c5c92ddfae35bd4ab8)
  *
  * @param[in] pool
  *   The pool to use for all allocations.
@@ -189,6 +2006,12 @@ static void * per_directory_configuration_merge_handler(apr_pool_t * pool, void 
  *
  * @details
  *
+ * Function to allow all modules to create per server configuration structures.
+ *
+ * @code{.c}void *(* module_struct::create_server_config)(apr_pool_t *p, server_rec *s)@endcode
+ *
+ * @see [module_struct::create_server_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a486e6f27e4b1d885fd4ea21f22b38a68)
+ *
  * @param[in] pool
  *   The pool to use for all allocations.
  *
@@ -211,6 +2034,13 @@ static void * per_server_configuration_handler(apr_pool_t * pool, server_rec * s
  *   structures.
  *
  * @details
+ *
+ * Function  to  allow  all  modules  to  merge  the  per  server  configuration
+ * structures for two servers.
+ *
+ * @code{.c}void * (* module_struct::merge_server_config)(apr_pool_t *p, void *base_conf, void *new_conf)@endcode
+ *
+ * @see [module_struct::merge_server_config](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a4bab1e811d95219325c24a431be75c6f)
  *
  * @param[in] pool
  *   The pool to use for all allocations.
@@ -239,6 +2069,10 @@ static void * per_server_configuration_merge_handler(apr_pool_t * pool, void * b
  *
  * List the configuration directives we want to register with the server.
  *
+ * @code{.c}const command_rec * module_struct::cmds@endcode
+ *
+ * @see [module_struct::cmds](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#ad2bdc0c0e8af7118b21bde0911c74cca)
+ *
  * Register directives with:
  *
  * * [AP_TAKE_ARGV](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaeafa400a7c6388b13a38d469f6cbca4a)
@@ -251,8 +2085,7 @@ static void * per_server_configuration_merge_handler(apr_pool_t * pool, void * b
  *   --- This configuration directive takes 2 argument.
  *
  * * [AP_TAKE3](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#gaacf930c9d842396ad08f860e3f25b9ec)
- *
- *   This configuration directive takes 3 argument.
+ *   --- This configuration directive takes 3 argument.
  *
  * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
  */
@@ -272,6 +2105,10 @@ static const command_rec config_file_commands[] =
  * A hook to allow  modules to hook other points in  the request processing.  In
  * this function, modules  should call the ap_hook_*() functions  to register an
  * interest in a specific step in processing the current request.
+ *
+ * @code{.c}void(* module_struct::register_hooks )(apr_pool_t *p)@endcode
+ *
+ * @see [module_struct::register_hooks](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html#a628b4e635e922228275919f1b595c105)
  *
  * Available hooks functions:
  *
@@ -429,7 +2266,7 @@ static const command_rec config_file_commands[] =
  * @see [http_protocol.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__protocol_8h.html)
  * @see [http_protocol.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__protocol_8h_source.html)
  *
- * @see [http_request.h File Reference]](https://ci.apache.org/projects/httpd/trunk/doxygen/http__request_8h.html)
+ * @see [http_request.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__request_8h.html)
  * @see [http_request.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/http__request_8h_source.html)
  *
  * @see [http_ssl.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/http__ssl_8h.html)
@@ -522,7 +2359,7 @@ static void register_hooks(apr_pool_t * pool)
  *
  * [module](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html#ga0ea4f633a5f9f88e1603aaeb1f2b2e69):
  *
- * @code{.c}typedef struct module_struct module@endcode
+ *     typedef struct module_struct module
  *
  *
  *
