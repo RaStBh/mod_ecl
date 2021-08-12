@@ -102,6 +102,9 @@
 
 
 
+
+
+
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
@@ -1931,7 +1934,7 @@ static int ecl_handler(request_rec * request)
 
 //==============================================================================
 //
-//  Setup of configuration handlers and directives.
+// Setup of configuration handlers and directives.
 //
 //==============================================================================
 
