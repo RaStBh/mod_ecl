@@ -102,15 +102,35 @@
 
 
 
+//==============================================================================
+//
+// Headers to include.
+//
+//==============================================================================
 
 
+
+// Headers from Apache HTTP Server.
 
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
+
 #include "ap_config.h"
 
+// Header from Apache Request Library.
+
+// Header from RaSt mod_ecl.
+
 #include "mod_ecl.h"
+
+
+
+//==============================================================================
+//
+// Function that will handle the request.
+//
+//==============================================================================
 
 
 
