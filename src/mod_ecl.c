@@ -1319,7 +1319,7 @@
  *     Content-Length header field containing the  length of the message-body in
  *     the request message.
  *
- *   * HTTP_LENGTH_REQUIRED --- 411 Length Required (from RFC
+ *   * HTTP_LENGTH_REQUIRED --- 411 Length Required (from RFC 7231)
  *
  *     The 411 (Length  Required) status code indicates that  the server refuses
  *     to accept the request without  a defined Content-Length (Section 3.3.2 of
