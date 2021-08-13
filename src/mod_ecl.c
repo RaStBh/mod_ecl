@@ -1941,15 +1941,19 @@
 
 static int ecl_handler(request_rec * request)
 {
-    if (strcmp(request->handler, "application/x-httpd-ecl")) {
-        return DECLINED;
-    }
+  if (strcmp(request->handler, "application/x-httpd-ecl"))
+  {
+    return DECLINED;
+  }
 
-    request->content_type = "text/html";
+  request->content_type = "text/html";
 
-    if (!request->header_only)
-        ap_rputs("The sample page from mod_ecl.c\n", request);
-    return OK;
+  if (!request->header_only)
+  {
+    ap_rputs("The sample page from mod_ecl.c\n", request);
+  }
+
+  return OK;
 }
 
 
