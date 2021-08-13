@@ -122,6 +122,8 @@
 
 // Header from RaSt mod_ecl.
 
+#include "boolean.h"
+#include "status_codes.h"
 #include "mod_ecl.h"
 
 
@@ -1939,14 +1941,14 @@
 
 static int ecl_handler(request_rec * request)
 {
-    if (strcmp(r->handler, "application/x-httpd-ecl")) {
+    if (strcmp(request->handler, "application/x-httpd-ecl")) {
         return DECLINED;
     }
 
-    r->content_type = "text/html";
+    request->content_type = "text/html";
 
-    if (!r->header_only)
-        ap_rputs("The sample page from mod_ecl.c\n", r);
+    if (!request->header_only)
+        ap_rputs("The sample page from mod_ecl.c\n", request);
     return OK;
 }
 
