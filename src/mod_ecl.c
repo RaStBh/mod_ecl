@@ -2117,7 +2117,7 @@ static void * per_server_configuration_merge_handler(apr_pool_t * pool, void * b
  * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
  */
 
-static const command_rec config_file_commands[] =
+static const command_rec config_file_commands[1] =
 {
   {NULL}
 };

@@ -40,7 +40,7 @@ static void * per_directory_configuration_handler(apr_pool_t * pool, char * dire
 static void * per_directory_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration);
 static void * per_server_configuration_handler(apr_pool_t * pool, server_rec * server);
 static void * per_server_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration);
-static const command_rec config_file_commands[];
+static const command_rec config_file_commands[1];
 static void register_hooks(apr_pool_t * pool);
 extern module AP_MODULE_DECLARE_DATA ecl_module;
 
