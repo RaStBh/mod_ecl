@@ -2452,9 +2452,41 @@ static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
  * @see [Apache HTTP Server --- Core routines --- Configuration](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__CONFIG.html)
  *
  * @see [Apache HTTP Server --- Core routines --- Configuration --- module_struct Struct Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
+ *
+ * <b>Problem:</b>
+ *
+ *     vagrant@ubuntu-focal:~/mod_ecl/src$ make
+ *     /usr/share/apr-1.0/build/libtool --no-silent --mode=compile x86_64-linux-gnu-gcc
+ *       -pthread   -Wall -Wextra -Werror -Wpedantic -Wconversion -lecl    -DLINUX -D_R
+ *     EENTRANT -D_GNU_SOURCE   -Wdate-time -D_FORTIFY_SOURCE=2    -I/usr/include/apach
+ *     e2 -I. -I/usr/include/apr-1.0 -I/usr/include -prefer-pic -c mod_ecl.c && touch m
+ *     od_ecl.slo
+ *     libtool: compile:  x86_64-linux-gnu-gcc -pthread -Wall -Wextra -Werror -Wpedanti
+ *     c -Wconversion -lecl -DLINUX -D_REENTRANT -D_GNU_SOURCE -Wdate-time -D_FORTIFY_S
+ *     OURCE=2 -I/usr/include/apache2 -I. -I/usr/include/apr-1.0 -I/usr/include -c mod_
+ *     ecl.c  -fPIC -DPIC -o .libs/mod_ecl.o
+ *     mod_ecl.c:2485:1: error: missing initializer for field ‘flags’ of ‘module’ {aka
+ *     ‘struct module_struct’} [-Werror=missing-field-initializers]
+ *      2485 | };
+ *           | ^
+ *     In file included from mod_ecl.c:116:
+ *     /usr/include/apache2/http_config.h:420:9: note: ‘flags’ declared here
+ *       420 |     int flags;
+ *           |         ^~~~~
+ *     cc1: all warnings being treated as errors
+ *     make: *** [/usr/share/apache2/build/rules.mk:212: mod_ecl.slo] Error 1
+ *
+ * <b>Solution:</b>
+ *
+ * Temporarily disable the warning using \#pragma.
+ *
+ * @see [Bug 82283 - Wrong warning with -Wmissing-field-initializers](https://gcc.gnu.org/bugzilla//show_bug.cgi?id=82283)
+ * @see [Bug 84685 - Designated initializers warning](https://gcc.gnu.org/bugzilla//show_bug.cgi?id=84685)
+ * @see [Why is the compiler throwing this warning: “missing initializer”? Isn't the structure initialized?](https://stackoverflow.com/questions/1538943/why-is-the-compiler-throwing-this-warning-missing-initializer-isnt-the-stru)
  */
 
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 module AP_MODULE_DECLARE_DATA ecl_module =
 {
   STANDARD20_MODULE_STUFF,                   // STANDARD20 MODULE STUFF
@@ -2465,3 +2497,4 @@ module AP_MODULE_DECLARE_DATA ecl_module =
   config_file_commands,                      // Config file Commands.
   register_hooks                             // Register hooks.
 };
+#pragma GCC diagnostic pop
