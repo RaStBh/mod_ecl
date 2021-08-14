@@ -1987,7 +1987,7 @@ static int ecl_handler(request_rec * request)
  *   The per-directory structure created.
  */
 
-static void * per_directory_configuration_handler(apr_pool_t * pool, char * directory)
+static void * per_directory_configuration_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) char * directory)
 {
   return NULL;
 }
@@ -2020,7 +2020,7 @@ static void * per_directory_configuration_handler(apr_pool_t * pool, char * dire
  *    The new per-directory structure created.
  */
 
-static void * per_directory_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration)
+static void * per_directory_configuration_merge_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) void * base_configuration, __attribute__((unused)) void * new_configuration)
 {
   return NULL;
 }
@@ -2049,7 +2049,7 @@ static void * per_directory_configuration_merge_handler(apr_pool_t * pool, void 
  *    The per-server structure created.
  */
 
-static void * per_server_configuration_handler(apr_pool_t * pool, server_rec * server)
+static void * per_server_configuration_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) server_rec * server)
 {
   return NULL;
 }
@@ -2082,7 +2082,7 @@ static void * per_server_configuration_handler(apr_pool_t * pool, server_rec * s
  *    The new per-directory structure created
  */
 
-static void * per_server_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration)
+static void * per_server_configuration_merge_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) void * base_configuration, __attribute__((unused)) void * new_configuration)
 {
   return NULL;
 }
@@ -2317,7 +2317,7 @@ static const command_rec config_file_commands[1] =
  * @return void
  */
 
-static void register_hooks(apr_pool_t * pool)
+static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
 {
     ap_hook_handler(ecl_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
@@ -2453,6 +2453,7 @@ static void register_hooks(apr_pool_t * pool)
  *
  * @see [Apache HTTP Server --- Core routines --- Configuration --- module_struct Struct Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/structmodule__struct.html)
  */
+
 
 module AP_MODULE_DECLARE_DATA ecl_module =
 {
