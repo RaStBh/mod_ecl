@@ -122,6 +122,8 @@
 
 // Header from RaSt mod_ecl.
 
+#include "boolean.h"
+#include "status_codes.h"
 #include "mod_ecl.h"
 
 
