@@ -42,7 +42,7 @@ CAT=cat
 #DEFS=-Dmy_define=my_value
 #INCLUDES=-Imy/include/dir
 #LIBS=-Lmy/lib/dir -lmylib
-CFLAGS=-lecl
+CFLAGS=-Wall -Wextra -Werror -Wpedantic -Wconversion -lecl
 
 #   the default target
 all: local-shared-build
