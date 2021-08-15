@@ -35,8 +35,8 @@
 #ifndef STATUS_CODES_H
 #define STATUS_CODES_H
 
-extern const int FAILURE;
-
-extern const int SUCCESS;
+typedef int status_t;
+extern const status_t FAILURE;
+extern const status_t SUCCESS;
 
 #endif

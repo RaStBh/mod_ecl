@@ -58,7 +58,7 @@
  * @details
  */
 
-const int FAILURE = -1;
+const status_t FAILURE = -1;
 
 
 
@@ -68,4 +68,4 @@ const int FAILURE = -1;
  * @details
  */
 
-const int SUCCESS = 1;
+const status_t SUCCESS = 1;
