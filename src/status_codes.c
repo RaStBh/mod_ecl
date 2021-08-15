@@ -23,7 +23,7 @@
 
 
 /**
- * @file staus_codes.c
+ * @file
  *
  * @brief Status codes.
  *

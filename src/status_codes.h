@@ -23,7 +23,7 @@
 
 
 /**
- * @file status_codes.h
+ * @file
  *
  * @brief Status codes.
  *
