@@ -129,6 +129,7 @@
 //#include "request_rec.h" // Not yet needed at the moment.
 //#include "server_rec.h" // Not yet needed at the moment.
 //#include "http_methods.h" // Not yet needed at the moment.
+//#include "eval_ecl.h" // Not yet needed at the moment.
 #include "mod_ecl.h"
 
 
