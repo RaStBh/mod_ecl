@@ -28,9 +28,33 @@
  * @brief Methods recognized (but not necessarily handled) by the server.
  *
  * @details
- * 
+ *
  * @see [http.h Source Code](https://ci.apache.org/projects/httpd/trunk/doxygen/httpd_8h_source.html)
  */
+
+
+
+//==============================================================================
+//
+// Headers to include.
+//
+//==============================================================================
+
+
+
+// Headers from Apache HTTP Server.
+
+// Header from Apache Request Library.
+
+// Header from RaSt mod_ecl.
+
+
+
+//==============================================================================
+//
+// HTTP request methods.
+//
+//==============================================================================
 
 
 
