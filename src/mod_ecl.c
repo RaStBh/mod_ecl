@@ -124,6 +124,11 @@
 
 #include "boolean.h"
 #include "status_codes.h"
+//#include "conn_rec.h" // Not yet needed at the moment.
+//#include "process_rec.h" // Not yet needed at the moment.
+//#include "request_rec.h" // Not yet needed at the moment.
+//#include "server_rec.h" // Not yet needed at the moment.
+//#include "http_methods.h" // Not yet needed at the moment.
 #include "mod_ecl.h"
 
 
