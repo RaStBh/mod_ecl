@@ -29,7 +29,7 @@ mod_ecl.la: \
 	#request_rec.slo \ # Not yet needed at the moment.
 	#server_rec.slo \ # Not yet needed at the moment.
 	#http_methods.slo \ # Not yet needed at the moment.
-	#ecl.slo # Not yet needed at the moment.
+	#eval_ecl.slo # Not yet needed at the moment.
 	$(SH_LINK) -rpath $(libexecdir) -module -avoid-version \
 	mod_ecl.lo \
 	boolean.lo \
@@ -39,7 +39,7 @@ mod_ecl.la: \
 	#request_rec.lo \ # Not yet needed at the moment.
 	#server_rec.lo \ # Not yet needed at the moment.
 	#http_methods.lo \ # Not yet needed at the moment.
-	#ecl.lo # Not yet needed at the moment.
+	#eval_ecl.lo # Not yet needed at the moment.
 
 DISTCLEAN_TARGETS = modules.mk
 
