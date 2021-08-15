@@ -64,7 +64,9 @@
  * @see [apr_general.h Source](https://apr.apache.org/docs/apr/1.7/apr__general_8h_source.html)
  */
 
-const int FALSE = 0;
+#ifndef FALSE
+const boolean_t FALSE = 0;
+#endif
 
 
 
@@ -77,4 +79,6 @@ const int FALSE = 0;
  * @see [apr_general.h Source](https://apr.apache.org/docs/apr/1.7/apr__general_8h_source.html)
  */
 
-const int TRUE = 1;
+#ifndef TRUE
+const boolean_t TRUE = 1;
+#endif

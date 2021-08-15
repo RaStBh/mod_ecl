@@ -35,12 +35,14 @@
 #ifndef BOOLEAN_H
 #define BOOLEAN_H
 
+typedef int boolean_t;
+
 #ifndef FALSE
-extern const int FALSE;
+extern const boolean_t FALSE;
 #endif
 
 #ifndef TRUE
-extern const int TRUE;
+extern const boolean_t TRUE;
 #endif
 
 #endif
