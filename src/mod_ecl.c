@@ -93,7 +93,7 @@
 
 
 /**
- * @file mod_ecl.c
+ * @file
  *
  * @brief This file contains the core functionality of this module.
  *

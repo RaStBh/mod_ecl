@@ -23,9 +23,9 @@
 
 
 /**
- * @file mod_ecl.h
+ * @file
  *
- * @brief
+ * @brief This file contains the core functionality of this module.
  *
  * @details
  */
