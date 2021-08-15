@@ -36,6 +36,30 @@
 
 
 
+//==============================================================================
+//
+// Headers to include.
+//
+//==============================================================================
+
+
+
+// Headers from Apache HTTP Server.
+
+// Header from Apache Request Library.
+
+// Header from RaSt mod_ecl.
+
+
+
+//==============================================================================
+//
+// Data from struct process_rec.
+//
+//==============================================================================
+
+
+
 //struct process_rec {
 //    /** Global pool. Cleared upon normal exit */
 //    apr_pool_t *pool;

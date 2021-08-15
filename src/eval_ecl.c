@@ -28,8 +28,32 @@
  * @brief Evaluate Embeddable Common-Lisp scripts.
  *
  * @details
-  *
-  * @see [Embeddable Common-Lisp](https://common-lisp.net/project/ecl/)
-  *
-  * @see [Embeddable Common-Lisp main repository.](https://gitlab.com/embeddable-common-lisp/ecl/)
+ *
+ * @see [Embeddable Common-Lisp](https://common-lisp.net/project/ecl/)
+ *
+ * @see [Embeddable Common-Lisp main repository.](https://gitlab.com/embeddable-common-lisp/ecl/)
  */
+
+
+
+//==============================================================================
+//
+// Headers to include.
+//
+//==============================================================================
+
+
+
+// Headers from Apache HTTP Server.
+
+// Header from Apache Request Library.
+
+// Header from RaSt mod_ecl.
+
+
+
+//==============================================================================
+//
+// Evaluate ecl script.
+//
+//==============================================================================

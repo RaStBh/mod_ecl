@@ -36,6 +36,30 @@
 
 
 
+//==============================================================================
+//
+// Headers to include.
+//
+//==============================================================================
+
+
+
+// Headers from Apache HTTP Server.
+
+// Header from Apache Request Library.
+
+// Header from RaSt mod_ecl.
+
+
+
+//==============================================================================
+//
+// Data from struct request_rec.
+//
+//==============================================================================
+
+
+
 //struct request_rec {
 //    /** The pool associated with the request */
 //    apr_pool_t *pool;
