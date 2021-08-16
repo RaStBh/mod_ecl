@@ -282,6 +282,39 @@ status_t getRequestRecFilename(request_rec * request, char ** filename)
 //     *  and alias correction, e.g. "Image.jpeg" not "IMAGE$1.JPE" on Windows.
 //     *  The core map_to_storage canonicalizes r->filename when they mismatch */
 //    char *canonical_filename;
+
+/**
+ * @brief The true filename stored in the filesystem.
+ *
+ * @details
+ *
+ * @see [canonical_filename](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#aa20aec80e844ee733951d22c82e51063)
+ *
+ * @param[in] request
+ *   The structure that represents the current request.
+ *
+ * @param[in.out] canonical_filename
+ *   The true filename stored in the filesystem.
+ *
+ * @return status
+ *  on failure: FAILURE --- on success SUCCESS
+ */
+
+status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename)
+{
+  status_t status = FAILURE;
+
+  if (request)
+  {
+    * canonical_filename = request->canonical_filename;
+    status = SUCCESS;
+  }
+
+  return status;
+}
+
+
+
 //    /** The PATH_INFO extracted from this request */
 //    char *path_info;
 //    /** The QUERY_ARGS extracted from this request */
