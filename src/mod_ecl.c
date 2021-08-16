@@ -1970,11 +1970,22 @@ static int ecl_handler(request_rec * request)
     {
       ap_rputs("filename = ERROR<br>\n", request);
     }
+
+    char * canonical_filename = NULL;
+    status = getRequestRecFilename(request, & canonical_filename);
+    if (SUCCESS == status)
+    {
+      ap_rprintf(request, "canonical_filename = \"%s\"<br>", canonical_filename);
+    }
+    else
+    {
+      ap_rputs("filename = ERROR<br>\n", request);
+    }
   }
 
   return OK;
 
-  
+
 }
 
 

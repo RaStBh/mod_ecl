@@ -36,5 +36,6 @@
 #define REQUEST_REC_H
 
 status_t getRequestRecFilename(request_rec * request, char ** filename);
+status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename);
 
 #endif
