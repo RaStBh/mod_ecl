@@ -35,4 +35,6 @@
 #ifndef REQUEST_REC_H
 #define REQUEST_REC_H
 
+status_t getRequestRecFilename(request_rec * request, char ** filename);
+
 #endif

@@ -46,9 +46,17 @@
 
 // Headers from Apache HTTP Server.
 
+#include "httpd.h"
+#include "http_config.h"
+#include "http_protocol.h"
+
+#include "ap_config.h"
+
 // Header from Apache Request Library.
 
 // Header from RaSt mod_ecl.
+
+#include "status_codes.h"
 
 
 
@@ -232,8 +240,44 @@
 //    char *unparsed_uri;
 //    /** The path portion of the URI, or "/" if no path provided */
 //    char *uri;
+
+
+
 //    /** The filename on disk corresponding to this response */
-//    char *filename;
+//    char *filename
+
+/**
+ * @brief The filename on disk corresponding to this response.
+ *
+ * @details
+ *
+ * @see [filename](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#a6caa86b9b2ee9393d8dbce2f723751b5)
+ *
+ * @param[in] request
+ *   The structure that represents the current request.
+ *
+ * @param[in,out] filename
+ *    The filename on disk corresponding to this response.
+ *
+ * @return status
+ *  on failure: FAILURE --- on success SUCCESS
+ */
+
+status_t getRequestRecFilename(request_rec * request, char ** filename)
+{
+  status_t status = FAILURE;
+
+  if (request)
+  {
+    * filename = request->filename;
+    status = SUCCESS;
+  }
+
+  return status;
+}
+
+
+
 //    /** The true filename stored in the filesystem, as in the true alpha case
 //     *  and alias correction, e.g. "Image.jpeg" not "IMAGE$1.JPE" on Windows.
 //     *  The core map_to_storage canonicalizes r->filename when they mismatch */

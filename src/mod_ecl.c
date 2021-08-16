@@ -126,7 +126,7 @@
 #include "status_codes.h"
 //#include "conn_rec.h" // Not yet needed at the moment.
 //#include "process_rec.h" // Not yet needed at the moment.
-//#include "request_rec.h" // Not yet needed at the moment.
+#include "request_rec.h" // Not yet needed at the moment.
 //#include "server_rec.h" // Not yet needed at the moment.
 //#include "http_methods.h" // Not yet needed at the moment.
 //#include "eval_ecl.h" // Not yet needed at the moment.
@@ -1947,6 +1947,8 @@
 
 static int ecl_handler(request_rec * request)
 {
+  status_t status = FAILURE;
+
   if (strcmp(request->handler, "application/x-httpd-ecl"))
   {
     return DECLINED;
@@ -1956,10 +1958,23 @@ static int ecl_handler(request_rec * request)
 
   if (!request->header_only)
   {
-    ap_rputs("The sample page from mod_ecl.c.\n", request);
+    ap_rputs("The sample page from mod_ecl.c.<br>\n", request);
+
+    char * filename = NULL;
+    status = getRequestRecFilename(request, & filename);
+    if (SUCCESS == status)
+    {
+      ap_rprintf(request, "filename = \"%s\"<br>", filename);
+    }
+    else
+    {
+      ap_rputs("filename = ERROR<br>\n", request);
+    }
   }
 
   return OK;
+
+  
 }
 
 
