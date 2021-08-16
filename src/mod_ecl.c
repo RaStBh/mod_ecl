@@ -1979,7 +1979,7 @@ static int ecl_handler(request_rec * request)
     }
     else
     {
-      ap_rputs("filename = ERROR<br>\n", request);
+      ap_rputs("canonical_filename = ERROR<br>\n", request);
     }
   }
 
