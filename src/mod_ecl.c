@@ -1981,6 +1981,17 @@ static int ecl_handler(request_rec * request)
     {
       ap_rputs("canonical_filename = ERROR<br>\n", request);
     }
+
+    char * path_info = NULL;
+    status = getRequestRecPathInfo(request, & path_info);
+    if (SUCCESS == status)
+    {
+      ap_rprintf(request, "path_info = \"%s\"<br>", path_info);
+    }
+    else
+    {
+      ap_rputs("path_info = ERROR<br>\n", request);
+    }
   }
 
   return OK;

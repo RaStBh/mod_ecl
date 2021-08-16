@@ -317,6 +317,39 @@ status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical
 
 //    /** The PATH_INFO extracted from this request */
 //    char *path_info;
+
+/**
+ * @brief The PATH_INFO extracted from this request.
+ *
+ * @details
+ *
+ * @see [path_info](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#af34210af74563a561b051d9c7675e79f)
+ *
+ * @param[in] request
+ *   The structure that represents the current request.
+ *
+ * @param[in.out] path_info
+ *   The PATH_INFO extracted from this request..
+ *
+ * @return status
+ *  on failure: FAILURE --- on success SUCCESS
+ */
+
+status_t getRequestRecPathInfo(request_rec * request, char ** path_info)
+{
+  status_t status = FAILURE;
+
+  if (request)
+  {
+    * path_info = request->path_info;
+    status = SUCCESS;
+  }
+
+  return status;
+}
+
+
+
 //    /** The QUERY_ARGS extracted from this request */
 //    char *args;
 //

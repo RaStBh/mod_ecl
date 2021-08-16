@@ -37,5 +37,6 @@
 
 status_t getRequestRecFilename(request_rec * request, char ** filename);
 status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename);
+status_t getRequestRecPathInfo(request_rec * request, char ** path_info);
 
 #endif
