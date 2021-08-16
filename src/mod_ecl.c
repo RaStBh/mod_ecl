@@ -1972,7 +1972,7 @@ static int ecl_handler(request_rec * request)
     }
 
     char * canonical_filename = NULL;
-    status = getRequestRecFilename(request, & canonical_filename);
+    status = getRequestRecCanonicalFilename(request, & canonical_filename);
     if (SUCCESS == status)
     {
       ap_rprintf(request, "canonical_filename = \"%s\"<br>", canonical_filename);
