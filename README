@@ -151,6 +151,21 @@ Alternativly you can use (you might require root privileges to do this):
 
   bash> /etc/init.d/apache restart
 
+The script src/make.sh is a convinient way  to run the commands above to compile
+and install mod_ecl and to stop and start the Apache HTTP Server.
+
+  #!/bin/bash
+
+  make clean && \
+  make doc && \
+  make && \
+  sudo make install && \
+  sudo make stop && \
+  sleep 3 && \
+  sudo make start && \
+  sleep 3 && \
+  lynx https://mod_ecl.lh.ld/index.ecl
+
 ================================================================================
 
 ASDF Configuration for Apache HTTP Server
