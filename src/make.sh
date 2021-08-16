@@ -4,5 +4,8 @@ make clean && \
 make doc && \
 make && \
 sudo make install && \
-sudo /etc/init.d/apache2 stop && \
-sudo /etc/init.d/apache2 start
+sudo make stop && \
+sleep 3 && \
+sudo make start && \
+sleep 3 && \
+lynx https://mod_ecl.lh.ld/index.ecl
