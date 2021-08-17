@@ -235,9 +235,37 @@
 //    /* What object is being requested (either directly, or via include
 //     * or content-negotiation mapping).
 //     */
-//
+
 //    /** The URI without any parsing performed */
 //    char *unparsed_uri;
+
+/**
+ * @brief The URI without any parsing performed.
+ *
+ * @details
+ *
+ * @param[in] request
+ *   The structure that represents the current request.
+ *
+ * @param[in,out] unparsed_uri
+ *   The URI without any parsing performed.
+ *
+ * @return status
+ *   on failure: FAILURE --- on success SUCCESS
+ */
+
+status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri)
+{
+  status_t status = FAILURE;
+
+  if (request)
+  {
+    * unparsed_uri = request->unparsed_uri;
+    status = SUCCESS;
+  }
+
+  return status;
+}
 
 
 
