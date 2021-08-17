@@ -251,7 +251,7 @@
  *
  * @details
  *
- * @see [filename](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#a6caa86b9b2ee9393d8dbce2f723751b5)
+ * @see [request_rec::filename](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#a6caa86b9b2ee9393d8dbce2f723751b5)
  *
  * @param[in] request
  *   The structure that represents the current request.
@@ -288,7 +288,7 @@ status_t getRequestRecFilename(request_rec * request, char ** filename)
  *
  * @details
  *
- * @see [canonical_filename](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#aa20aec80e844ee733951d22c82e51063)
+ * @see [request_rec::canonical_filename](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#aa20aec80e844ee733951d22c82e51063)
  *
  * @param[in] request
  *   The structure that represents the current request.
@@ -323,7 +323,7 @@ status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical
  *
  * @details
  *
- * @see [path_info](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#af34210af74563a561b051d9c7675e79f)
+ * @see [request_rec::path_info](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#af34210af74563a561b051d9c7675e79f)
  *
  * @param[in] request
  *   The structure that represents the current request.
