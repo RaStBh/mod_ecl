@@ -1960,6 +1960,17 @@ static int ecl_handler(request_rec * request)
   {
     ap_rputs("The sample page from mod_ecl.c.<br>\n", request);
 
+    char * uri = NULL;
+    status = getRequestRecUri(request, & uri);
+    if (SUCCESS == status)
+    {
+      ap_rprintf(request, "uri = \"%s\"<br>", uri);
+    }
+    else
+    {
+      ap_rputs("uri = ERROR<br>\n", request);
+    }
+
     char * filename = NULL;
     status = getRequestRecFilename(request, & filename);
     if (SUCCESS == status)

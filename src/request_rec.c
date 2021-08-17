@@ -238,9 +238,41 @@
 //
 //    /** The URI without any parsing performed */
 //    char *unparsed_uri;
+
+
+
 //    /** The path portion of the URI, or "/" if no path provided */
 //    char *uri;
 
+/**
+ * @brief The path portion of the URI, or "/" if no path provided.
+ *
+ * @details4
+ *
+ * @see [request_rec::uri](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#a200869c456b0bd046a32942f9ff51af4)
+ *
+ * @param[in] request
+ *   The structure that represents the current request.
+ *
+ * @param[in,out] uri
+ *   The path portion of the URI, or "/" if no path provided.
+ *
+ * @return status
+ *  on failure: FAILURE --- on success SUCCESS
+ */
+
+status_t getRequestRecUri(request_rec * request, char ** uri)
+{
+  status_t status = FAILURE;
+
+  if (request)
+  {
+    * uri = request->uri;
+    status = SUCCESS;
+  }
+
+  return status;
+}
 
 
 //    /** The filename on disk corresponding to this response */
