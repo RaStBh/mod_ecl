@@ -247,7 +247,7 @@
 /**
  * @brief The path portion of the URI, or "/" if no path provided.
  *
- * @details4
+ * @details
  *
  * @see [request_rec::uri](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#a200869c456b0bd046a32942f9ff51af4)
  *
