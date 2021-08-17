@@ -2017,8 +2017,6 @@ static int ecl_handler(request_rec * request)
   }
 
   return OK;
-
-
 }
 
 
