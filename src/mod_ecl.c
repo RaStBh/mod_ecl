@@ -1958,13 +1958,24 @@ static int ecl_handler(request_rec * request)
 
   if (!request->header_only)
   {
-    ap_rputs("The sample page from mod_ecl.c.<br>\n", request);
+    ap_rputs("Hello, it's me --- your RaSt mod_ecl.<br>\n", request);
+
+    char * unparsed_uri = NULL;
+    status = getRequestRecUnparsedUri(request, & unparsed_uri);
+    if (SUCCESS == status)
+    {
+      ap_rprintf(request, "unparsed_uri = \"%s\"<br>\n", unparsed_uri);
+    }
+    else
+    {
+      ap_rputs("unparsed_uri = ERROR<br>\n", request);
+    }
 
     char * uri = NULL;
     status = getRequestRecUri(request, & uri);
     if (SUCCESS == status)
     {
-      ap_rprintf(request, "uri = \"%s\"<br>", uri);
+      ap_rprintf(request, "uri = \"%s\"<br>\n", uri);
     }
     else
     {
@@ -1975,7 +1986,7 @@ static int ecl_handler(request_rec * request)
     status = getRequestRecFilename(request, & filename);
     if (SUCCESS == status)
     {
-      ap_rprintf(request, "filename = \"%s\"<br>", filename);
+      ap_rprintf(request, "filename = \"%s\"<br>\n", filename);
     }
     else
     {
@@ -1986,7 +1997,7 @@ static int ecl_handler(request_rec * request)
     status = getRequestRecCanonicalFilename(request, & canonical_filename);
     if (SUCCESS == status)
     {
-      ap_rprintf(request, "canonical_filename = \"%s\"<br>", canonical_filename);
+      ap_rprintf(request, "canonical_filename = \"%s\"<br>\n", canonical_filename);
     }
     else
     {
@@ -1997,7 +2008,7 @@ static int ecl_handler(request_rec * request)
     status = getRequestRecPathInfo(request, & path_info);
     if (SUCCESS == status)
     {
-      ap_rprintf(request, "path_info = \"%s\"<br>", path_info);
+      ap_rprintf(request, "path_info = \"%s\"<br>\n", path_info);
     }
     else
     {

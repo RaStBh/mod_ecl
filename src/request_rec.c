@@ -242,6 +242,8 @@
 /**
  * @brief The URI without any parsing performed.
  *
+ * @see [request_rec::unparsed_uri](https://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html#a81b80733c9a6bd54b9b683ae254b6535)
+ *
  * @details
  *
  * @param[in] request

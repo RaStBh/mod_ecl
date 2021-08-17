@@ -35,6 +35,7 @@
 #ifndef REQUEST_REC_H
 #define REQUEST_REC_H
 
+status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri);
 status_t getRequestRecUri(request_rec * request, char ** uri);
 status_t getRequestRecFilename(request_rec * request, char ** filename);
 status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename);
