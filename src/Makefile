@@ -53,7 +53,7 @@ install: install-modules-yes
 #   cleanup
 clean:
 	-rm -f mod_ecl.o mod_ecl.lo mod_ecl.slo mod_ecl.la
-	-rm -f -r $(htmldir)/*
+	-rm -f -r $(htmldir)*
 
 #   simple test
 test: reload
