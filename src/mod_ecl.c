@@ -2376,6 +2376,63 @@ static const command_rec config_file_commands[1] =
  * @see [unixd.h File Reference](https://ci.apache.org/projects/httpd/trunk/doxygen/unixd_8h.html)
  * @see [unixd.h Source](https://ci.apache.org/projects/httpd/trunk/doxygen/unixd_8h_source.html)
  *
+ *
+ *
+ * Filters have  different types/classifications.  These  are used to  group and
+ * sort the filters to properly sequence their operation.
+ *
+ * The types have a  particular sort order, which allows us  to insert them into
+ * the filter chain  in a determistic order.  Within a  particular grouping, the
+ * ordering is equivalent to the order of calls to ap_add_*_filter().
+ *
+ * Enumerator:
+ *
+ * AP_FTYPE_RESOURCE ---  These filters are  used to  alter the content  that is
+ *   passed through them.  Examples are SSI or PHP.
+ *
+ * AP_FTYPE_CONTENT_SET ---  These filters are  used to  alter the content  as a
+ *   whole, but after all AP_FTYPE_RESOURCE filters are executed.  These filters
+ *   should not change the content-type.  An example is deflate.
+ *
+ * AP_FTYPE_PROTOCOL --- These  filters are used to handle  the protocol between
+ *   server and client.  Examples are HTTP and POP.
+ *
+ * AP_FTYPE_TRANSCODE  --- These  filters implement  transport encodings  (e.g.,
+ *   chunking).
+ *
+ * AP_FTYPE_CONNECTION ---  These filters  will alter the  content, but  in ways
+ *   that  are  more strongly  associated  with  the connection.   Examples  are
+ *   splitting  an HTTP  connection into  multiple requests  and buffering  HTTP
+ *   responses across multiple requests.
+ *
+ *   It is important  to note that these  types of filters are not  allowed in a
+ *   sub-request.   A   sub-request's  output  can  certainly   be  filtered  by
+ *   AP_FTYPE_RESOURCE filters, but all of  the "final processing" is determined
+ *   by the main request.
+ *
+ * AP_FTYPE_NETWORK  ---  These  filters  don't alter  the  content.   They  are
+ *   responsible for sending/receiving data to/from the client.
+ *
+ * Protocol flags: logical OR of AP_FILTER_PROTO_* bits:
+ *
+ * AP_FILTER_PROTO_CHANGE   ---  Filter   changes   contents  (so   invalidating
+ *   checksums/etc).
+ *
+ * AP_FILTER_PROTO_CHANGE_LENGTH  ---  Filter  changes length  of  contents  (so
+ *   invalidating content-length/etc).
+ *
+ * AP_FILTER_PROTO_NO_BYTERANGE  --- Filter  requires complete  input and  can't
+ * work on byteranges.
+ *
+ * AP_FILTER_PROTO_NO_CACHE --- Filter makes output non-cacheable.
+ *
+ * AP_FILTER_PROTO_NO_PROXY --- Filter should not run in a proxy.
+ *
+ * AP_FILTER_PROTO_TRANSFORM  --- Filter  is  incompatible with  "Cache-Control:
+ * no-transform".
+ *
+ * @see [Apache HTTP Server --- Core routines --- Filter Chain](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html)
+ *
  * @param[in] pool
  *   This is the pool to use for all allocations.
  *
@@ -2384,7 +2441,13 @@ static const command_rec config_file_commands[1] =
 
 static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
 {
-    ap_hook_handler(ecl_hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
+  // The RaSt mod_ecl hook handler.
+
+  ap_hook_handler(ecl_hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
+
+  // The Rast mod_ecl output filter handler.
+
+  ap_register_output_filter_protocol("ecl", ecl_output_filter_hander, ecl_output_filter_init, AP_FTYPE_RESOURCE, (AP_FILTER_PROTO_CHANGE|AP_FILTER_PROTO_CHANGE_LENGTH));
 }
 
 
