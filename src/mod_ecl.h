@@ -35,7 +35,7 @@
 #ifndef MOD_ECL_H
 #define MOD_ECL_H
 
-static int ecl_handler(request_rec * request);
+static int ecl_hook_handler(request_rec * request);
 static void * per_directory_configuration_handler(apr_pool_t * pool, char * directory);
 static void * per_directory_configuration_merge_handler(apr_pool_t * pool, void * base_configuration, void * new_configuration);
 static void * per_server_configuration_handler(apr_pool_t * pool, server_rec * server);

@@ -1945,7 +1945,7 @@
  *   on success: OK --- on failure: DECLINED
  */
 
-static int ecl_handler(request_rec * request)
+static int ecl_hook_handler(request_rec * request)
 {
   status_t status = FAILURE;
 
@@ -2384,7 +2384,7 @@ static const command_rec config_file_commands[1] =
 
 static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
 {
-    ap_hook_handler(ecl_handler, NULL, NULL, APR_HOOK_MIDDLE);
+    ap_hook_handler(ecl_hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 
