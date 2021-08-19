@@ -1941,7 +1941,7 @@
  * @param[in] request
  *   The structure that represents the current request.
  *
- * @return
+ * @return status
  *   on success: OK --- on failure: DECLINED
  */
 
