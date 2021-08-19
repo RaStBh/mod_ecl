@@ -2444,10 +2444,6 @@ static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
   // The RaSt mod_ecl hook handler.
 
   ap_hook_handler(ecl_hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
-
-  // The Rast mod_ecl output filter handler.
-
-  ap_register_output_filter_protocol("ecl", ecl_output_filter_hander, ecl_output_filter_init, AP_FTYPE_RESOURCE, (AP_FILTER_PROTO_CHANGE|AP_FILTER_PROTO_CHANGE_LENGTH));
 }
 
 
