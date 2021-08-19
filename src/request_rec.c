@@ -266,7 +266,7 @@ status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri)
     status = SUCCESS;
   }
 
-  return status;
+  return (status);
 }
 
 
@@ -301,7 +301,7 @@ status_t getRequestRecUri(request_rec * request, char ** uri)
     status = SUCCESS;
   }
 
-  return status;
+  return (status);
 }
 
 
@@ -335,7 +335,7 @@ status_t getRequestRecFilename(request_rec * request, char ** filename)
     status = SUCCESS;
   }
 
-  return status;
+  return (status);
 }
 
 
@@ -372,7 +372,7 @@ status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical
     status = SUCCESS;
   }
 
-  return status;
+  return (status);
 }
 
 
@@ -407,7 +407,7 @@ status_t getRequestRecPathInfo(request_rec * request, char ** path_info)
     status = SUCCESS;
   }
 
-  return status;
+  return (status);
 }
 
 

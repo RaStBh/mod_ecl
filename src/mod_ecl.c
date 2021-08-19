@@ -1951,7 +1951,7 @@ static int ecl_hook_handler(request_rec * request)
 
   if (strcmp(request->handler, "application/x-httpd-ecl"))
   {
-    return DECLINED;
+    return (DECLINED);
   }
 
   request->content_type = "text/html";
@@ -2016,7 +2016,7 @@ static int ecl_hook_handler(request_rec * request)
     }
   }
 
-  return OK;
+  return (OK);
 }
 
 
@@ -2054,7 +2054,7 @@ static int ecl_hook_handler(request_rec * request)
 
 static void * per_directory_configuration_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) char * directory)
 {
-  return NULL;
+  return (NULL);
 }
 
 
@@ -2087,7 +2087,7 @@ static void * per_directory_configuration_handler(__attribute__((unused)) apr_po
 
 static void * per_directory_configuration_merge_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) void * base_configuration, __attribute__((unused)) void * new_configuration)
 {
-  return NULL;
+  return (NULL);
 }
 
 
@@ -2116,7 +2116,7 @@ static void * per_directory_configuration_merge_handler(__attribute__((unused)) 
 
 static void * per_server_configuration_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) server_rec * server)
 {
-  return NULL;
+  return (NULL);
 }
 
 
@@ -2149,7 +2149,7 @@ static void * per_server_configuration_handler(__attribute__((unused)) apr_pool_
 
 static void * per_server_configuration_merge_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) void * base_configuration, __attribute__((unused)) void * new_configuration)
 {
-  return NULL;
+  return (NULL);
 }
 
 
