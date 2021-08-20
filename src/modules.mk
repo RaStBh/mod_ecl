@@ -24,7 +24,8 @@ mod_ecl.la: \
 	mod_ecl.slo \
 	boolean.slo \
 	status_codes.slo \
-	request_rec.slo #\ # Not yet needed at the moment.
+	request_rec.slo \
+	io_filter.slo #\
 	#conn_rec.slo \ # Not yet needed at the moment.
 	#process_rec.slo \ # Not yet needed at the moment.
 	#server_rec.slo \ # Not yet needed at the moment.
@@ -34,7 +35,8 @@ mod_ecl.la: \
 	mod_ecl.lo \
 	boolean.lo \
 	status_codes.lo \
-	request_rec.lo #\ # Not yet needed at the moment.
+	request_rec.lo \
+	io_filter.lo #\
 	#conn_rec.lo \ # Not yet needed at the moment.
 	#process_rec.lo \ # Not yet needed at the moment.
 	#server_rec.lo \ # Not yet needed at the moment.
