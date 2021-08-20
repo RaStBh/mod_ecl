@@ -1941,24 +1941,56 @@
  * @param[in] request
  *   The structure that represents the current request.
  *
- * @return status
- *   on success: OK --- on failure: DECLINED
+ * @return ap_status --- on success: OK / on failure: HTTP_INTERNAL_SERVER_ERROR, DECLINED
  */
 
 static int ecl_hook_handler(request_rec * request)
 {
+  int ap_status = HTTP_INTERNAL_SERVER_ERROR;
   status_t status = FAILURE;
+
+  // Check if we should handle the request.
 
   if (strcmp(request->handler, "application/x-httpd-ecl"))
   {
-    return (DECLINED);
+    // We should not handle the request.
+
+    // Set the status code.  We do not handle the request.
+
+    ap_status = DECLINED;
+
+    // Return status code.
+
+    return (ap_status);
   }
+  else
+  {
+    // We should handle the request.
+  }
+
+  // Set the status code.  We have handled the request.
+
+  ap_status = OK;
+
+  // Now we output data to the request.
+
+  // Set the content type.
 
   request->content_type = "text/html";
 
-  if (!request->header_only)
+  // Check if we output the header only.
+
+  if (request->header_only)
   {
+    // Output header only.
+  }
+  else
+  {
+    // Output header and data.
+
     ap_rputs("Hello, it's me --- your RaSt mod_ecl.<br>\n", request);
+
+    // Output the URI without any parsing performed.
 
     char * unparsed_uri = NULL;
     status = getRequestRecUnparsedUri(request, & unparsed_uri);
@@ -1971,6 +2003,8 @@ static int ecl_hook_handler(request_rec * request)
       ap_rputs("unparsed_uri = ERROR<br>\n", request);
     }
 
+    // Output the path portion of the URI, or "/" if no path provided.
+
     char * uri = NULL;
     status = getRequestRecUri(request, & uri);
     if (SUCCESS == status)
@@ -1981,6 +2015,8 @@ static int ecl_hook_handler(request_rec * request)
     {
       ap_rputs("uri = ERROR<br>\n", request);
     }
+
+    // Output the filename on disk corresponding to this response.
 
     char * filename = NULL;
     status = getRequestRecFilename(request, & filename);
@@ -1993,6 +2029,8 @@ static int ecl_hook_handler(request_rec * request)
       ap_rputs("filename = ERROR<br>\n", request);
     }
 
+    // Output the true filename stored in the filesystem.
+
     char * canonical_filename = NULL;
     status = getRequestRecCanonicalFilename(request, & canonical_filename);
     if (SUCCESS == status)
@@ -2003,6 +2041,8 @@ static int ecl_hook_handler(request_rec * request)
     {
       ap_rputs("canonical_filename = ERROR<br>\n", request);
     }
+
+    // Output the PATH_INFO extracted from this request.
 
     char * path_info = NULL;
     status = getRequestRecPathInfo(request, & path_info);
@@ -2016,7 +2056,9 @@ static int ecl_hook_handler(request_rec * request)
     }
   }
 
-  return (OK);
+  // Return status code.
+
+  return (ap_status);
 }
 
 
@@ -2048,8 +2090,7 @@ static int ecl_hook_handler(request_rec * request)
  * @param[in] directory
  *   The directory currently being processed.
  *
- * @return
- *   The per-directory structure created.
+ * @return The per-directory structure created.
  */
 
 static void * per_directory_configuration_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) char * directory)
@@ -2081,8 +2122,7 @@ static void * per_directory_configuration_handler(__attribute__((unused)) apr_po
  * @param[in] new_configuration
  *   The directory structure currently being processed.
  *
- * @return
- *    The new per-directory structure created.
+ * @return The new per-directory structure created.
  */
 
 static void * per_directory_configuration_merge_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) void * base_configuration, __attribute__((unused)) void * new_configuration)
@@ -2110,8 +2150,7 @@ static void * per_directory_configuration_merge_handler(__attribute__((unused)) 
  * @param[in] server
  *   The server currently being processed.
  *
- * @return
- *    The per-server structure created.
+ * @return The per-server structure created.
  */
 
 static void * per_server_configuration_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) server_rec * server)
@@ -2143,8 +2182,7 @@ static void * per_server_configuration_handler(__attribute__((unused)) apr_pool_
  * @param[in] new_configuration
  *   The directory structure currently being processed.
  *
- * @return
- *    The new per-directory structure created
+ * @return The new per-directory structure created
  */
 
 static void * per_server_configuration_merge_handler(__attribute__((unused)) apr_pool_t * pool, __attribute__((unused)) void * base_configuration, __attribute__((unused)) void * new_configuration)
