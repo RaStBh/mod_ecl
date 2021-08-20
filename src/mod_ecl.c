@@ -1968,10 +1968,6 @@ static int ecl_hook_handler(request_rec * request)
     // We should handle the request.
   }
 
-  // Set the status code.  We have handled the request.
-
-  ap_status = OK;
-
   // Now we output data to the request.
 
   // Set the content type.
@@ -2055,6 +2051,10 @@ static int ecl_hook_handler(request_rec * request)
       ap_rputs("path_info = ERROR<br>\n", request);
     }
   }
+
+  // Set the status code.  We have handled the request.
+
+  ap_status = OK;
 
   // Return status code.
 
