@@ -60,6 +60,9 @@
 
 
 
+
+
+
 //==============================================================================
 //
 // Data from struct request_rec.
@@ -252,8 +255,7 @@
  * @param[in,out] unparsed_uri
  *   The URI without any parsing performed.
  *
- * @return status
- *   on failure: FAILURE --- on success SUCCESS
+ * @return status --- on failure: FAILURE / on success: SUCCESS
  */
 
 status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri)
@@ -287,8 +289,7 @@ status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri)
  * @param[in,out] uri
  *   The path portion of the URI, or "/" if no path provided.
  *
- * @return status
- *   on failure: FAILURE --- on success SUCCESS
+ * @return status --- on failure: FAILURE / on success: SUCCESS
  */
 
 status_t getRequestRecUri(request_rec * request, char ** uri)
@@ -321,8 +322,7 @@ status_t getRequestRecUri(request_rec * request, char ** uri)
  * @param[in,out] filename
  *   The filename on disk corresponding to this response.
  *
- * @return status
- *   on failure: FAILURE --- on success SUCCESS
+ * @return status --- on failure: FAILURE / on success: SUCCESS
  */
 
 status_t getRequestRecFilename(request_rec * request, char ** filename)
@@ -358,8 +358,7 @@ status_t getRequestRecFilename(request_rec * request, char ** filename)
  * @param[in.out] canonical_filename
  *   The true filename stored in the filesystem.
  *
- * @return status
- *   on failure: FAILURE --- on success SUCCESS
+ * @return status --- on failure: FAILURE / on success: SUCCESS
  */
 
 status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename)
@@ -393,8 +392,7 @@ status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical
  * @param[in.out] path_info
  *   The PATH_INFO extracted from this request..
  *
- * @return status
- *   on failure: FAILURE --- on success SUCCESS
+ * @return status --- on failure: FAILURE / on success: SUCCESS
  */
 
 status_t getRequestRecPathInfo(request_rec * request, char ** path_info)
