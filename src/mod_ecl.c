@@ -2004,6 +2004,7 @@ ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "mod_ecl --- ecl_ecl_hook_handl
 //
 //ecl_output_filter_context = (ecl_output_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_output_filter_context_t));
 //ecl_output_filter_context->dummy = -1; // dummy value, we can remove this later
+//ecl_output_filter_context->brigade = apr_brigade_create(request->pool, request->connection->bucket_alloc);
 //
 ap_filter_t * output_filter = NULL;
 output_filter = ap_add_output_filter("ecl-output-filter", ecl_output_filter_context, request, request->connection);
