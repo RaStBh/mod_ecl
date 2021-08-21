@@ -35,4 +35,12 @@
 #ifndef IO_FILTER_H
 #define IO_FILTER_H
 
+typedef struct
+{
+  int dummy; // dummy value, we can remove this later
+} ecl_output_filter_context_t;
+extern ecl_output_filter_context_t * ecl_output_filter_context;
+int ecl_output_filter_initalize(ap_filter_t * output_filter);
+int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * output_brigade);
+
 #endif

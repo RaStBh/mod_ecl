@@ -42,11 +42,25 @@
 
 // Headers from Apache HTTP Server.
 
+#include "httpd.h"
+#include "http_config.h"
+#include "http_protocol.h"
+#include "http_log.h" // ??? io-filter
+
+#include "ap_config.h"
+
+#include "util_filter.h"
+
 // Header from Apache Request Library.
+
+#include "apr_buckets.h"
 
 // Header from RaSt mod_ecl.
 
 #include "boolean.h"
+#include "status_codes.h"
+
+#include "io_filter.h"
 
 
 
@@ -63,3 +77,298 @@
 // Functions for output filter handling.
 //
 //==============================================================================
+
+/**
+ * @brief Context data to set in the output filter.
+ *
+ * @details
+ *
+ * @see [Apache HTTP Server --- Core routines --- Filter Chain](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html)
+ *
+ * @see [ap_add_output_filter](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html#ga551cd1de5706c74d5d8643823791d679)
+ */
+
+ecl_output_filter_context_t * ecl_output_filter_context = NULL;
+
+
+
+/**
+ * @brief The function to call before the output filter handlers are invoked.
+ *
+ * @details
+ *
+ * @code{.c}typedef int (* ap_init_filter_func) (ap_filter_t * f)@endcode
+ *
+ * @see[Apache HTTP Server --- Core routines --- Filter Chain](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html)
+ *
+ * @see[ap_init_filter_func](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html#ga7ecd47b41aacab276198f6d1fc05a56c)
+ *
+ * @param[in,out] output_filter
+ *   The output filter.
+ *
+ * @return ap_status ---  on success: OK /  on failure: one of  the (none-) HTTP
+ *   status codes (HTTP_INTERNAL_SERVER_ERROR)
+ */
+
+int ecl_output_filter_initalize(ap_filter_t * output_filter)
+{
+  int ap_status = HTTP_INTERNAL_SERVER_ERROR;
+
+  // Allocate memory for the output filter.
+
+  output_filter->ctx = (ecl_output_filter_context_t *) apr_pcalloc(output_filter->r->pool, sizeof(ecl_output_filter_context_t));
+
+  // Initalize the output filter context.
+
+  ecl_output_filter_context_t * ecl_output_filter_context = NULL;
+  ecl_output_filter_context = output_filter->ctx;
+  (* ecl_output_filter_context).dummy = 0; // dummy value, we can remove this later
+
+  // Return status code.
+
+  ap_status = OK;
+  return (ap_status);
+}
+
+
+
+/**
+ * @brief The output filter function.
+ *
+ * @details
+ *
+ * <b>Problem</b>
+ *
+ *    Alert!: Unexpected network read error; connection aborted.
+ *
+ * <b>Solution:</b>
+ *
+ * Minimum required code:
+ *
+ * @code{.c}apr_bucket * eos_bucket = NULL;
+ * eos_bucket = apr_bucket_eos_create(output_filter->r->connection->bucket_alloc);
+ * APR_BRIGADE_INSERT_TAIL(output_brigade, eos_bucket);
+ * ap_pass_brigade(output_filter->next, output_brigade);
+ * apr_brigade_cleanup(output_brigade);@endcode
+ *
+ * @code{.c}typedef apr_status_t (* ap_out_filter_func) (ap_filter_t * f, apr_bucket_brigade * b)@endcode
+ *
+ * @see[Apache HTTP Server --- Core routines --- Filter Chain](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html)
+ *
+ * @see[ap_out_filter_func](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html#ga5c80541a5a1dcc9a383e90aa82be59b3)
+ *
+ * @param[in,out] output_filter
+ *   The output filter.
+ *
+ * @param[in,out] brigade
+ *   The output brigade.
+ *
+ * @return ap_status ---  on success: OK /  on failure: one of  the (none-) HTTP
+ *   status codes (HTTP_INTERNAL_SERVER_ERROR)
+ */
+
+int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * output_brigade)
+{
+  int ap_status = HTTP_INTERNAL_SERVER_ERROR;
+  apr_status_t apr_status = APR_FAILURE;
+
+  //
+  // Initalize the output filter.
+  //
+
+  // Check if the output filter is already initialised.
+
+  if (NULL == output_filter)
+  {
+    // Output filter is not initialised.
+
+    ap_status = ecl_output_filter_initalize(output_filter);
+
+    // Check if we have initialised the output filter.
+
+    if (OK == ap_status)
+    {
+      // We have initialised the  output filter.
+    }
+    else
+    {
+       // We have not initialised the output filter.
+
+      return (ap_status);
+    }
+  }
+  else
+  {
+    // Output filter is initialised.
+  }
+
+  //
+  // Create EOS bucket.
+  //
+
+  // Create EOS bucket.
+
+  apr_bucket * eos_bucket = NULL;
+  eos_bucket = apr_bucket_eos_create(output_filter->r->connection->bucket_alloc);
+
+  // Check if we have an EOS bucket.
+
+  if (NULL == eos_bucket)
+  {
+    // We have no EOS bucket.
+
+    // Return status code.
+
+    return (ap_status);
+  }
+  else
+  {
+    // We have an EOS bucket.
+  }
+
+  //
+  // Create a new bucket and fill it using the data form the output bucket.
+  //
+
+  // Create input brigade.
+
+  apr_bucket_brigade * brigade = NULL;
+  brigade = apr_brigade_create(output_filter->r->pool, output_filter->r->connection->bucket_alloc);
+
+  // Check if we have a brigade.
+  if (NULL == brigade)
+  {
+    // We have no brigade.
+
+    // Return status code
+
+    return (ap_status);
+  }
+  else
+  {
+    // We have a brigade.
+  }
+
+  // dummy value, we can remove this later
+  char * output_begin_text = "( output begin text )";
+  apr_bucket * output_begin_bucket = NULL;
+  output_begin_bucket = apr_bucket_heap_create(output_begin_text, strlen(output_begin_text), NULL, output_filter->r->connection->bucket_alloc);
+  APR_BRIGADE_INSERT_TAIL(brigade, output_begin_bucket);
+
+  // Loop throu output brigade and build brigade.
+
+  apr_bucket * read_bucket = NULL;
+  apr_bucket * temp_bucket = NULL;
+  const char * data = NULL;
+  apr_size_t lenght = 0;
+  for (read_bucket = APR_BRIGADE_FIRST(output_brigade); read_bucket != APR_BRIGADE_SENTINEL(output_brigade); read_bucket = APR_BUCKET_NEXT(read_bucket))
+  {
+
+    // Read from bucket.
+
+    apr_status = apr_bucket_read(read_bucket, & data, & lenght, APR_BLOCK_READ);
+
+    // Check if we have read from bucket.
+
+    if (APR_SUCCESS == apr_status)
+    {
+      // We have read from bucket.
+    }
+    else
+    {
+      // We have not read from bucket.
+
+      // Return status code.
+
+      return (ap_status);
+    }
+
+    // We create a bucket.
+
+    temp_bucket = apr_bucket_heap_create(data, lenght, NULL, output_filter->r->connection->bucket_alloc);
+
+    // Check if we have a bucket.
+
+    if (NULL == temp_bucket)
+    {
+      // We have not a bucket.
+
+      // Return status code.
+
+      return (ap_status);
+    }
+    else
+    {
+      // We have a bucket.
+    }
+
+    // Add to tail of bucket.
+
+    APR_BRIGADE_INSERT_TAIL(brigade, temp_bucket);
+  }
+
+  // dummy value, we can remove this later
+  char * output_end_text = "( output end text )";
+  apr_bucket * output_end_bucket = NULL;
+  output_end_bucket = apr_bucket_heap_create(output_end_text, strlen(output_end_text), NULL, output_filter->r->connection->bucket_alloc);
+  APR_BRIGADE_INSERT_TAIL(brigade, output_end_bucket);
+
+  // We add an EOS bucket to the end of the input brigade.
+
+  APR_BRIGADE_INSERT_TAIL(brigade, eos_bucket);
+
+  //
+  // Pass the output bucket.
+  //
+
+  // Pass the output bucket down to the next filter on the filter stack.
+
+  apr_status = ap_pass_brigade(output_filter->next, brigade);
+
+  // Check if we passed the output brigade.
+
+  if (APR_SUCCESS == apr_status)
+  {
+    // We have passed the output brigase.
+  }
+  else
+  {
+    // We have not passed the brigade.
+
+    // Return status code.
+
+    return (ap_status);
+  }
+
+  //
+  // Clean up the brigade.
+  //
+
+  // Clean up the brigade.
+
+  apr_status = apr_brigade_cleanup(output_brigade);
+
+  // Check if we have cleandup the brigade.
+
+  if (APR_SUCCESS == apr_status)
+  {
+    // We have passed the output brigase.
+  }
+  else
+  {
+    // We have not passed the brigade.
+
+    // Return status code.
+
+    return (ap_status);
+  }
+
+  //
+  // We are done.
+  //
+
+  // Return status code.
+
+  ap_status = OK;
+  return (ap_status);
+}
