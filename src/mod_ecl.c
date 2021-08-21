@@ -115,6 +115,7 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
+#include "http_log.h" // ??? io-filter
 
 #include "ap_config.h"
 
@@ -124,12 +125,17 @@
 
 #include "boolean.h"
 #include "status_codes.h"
+
 //#include "conn_rec.h" // Not yet needed at the moment.
 //#include "process_rec.h" // Not yet needed at the moment.
 #include "request_rec.h" // Not yet needed at the moment.
 //#include "server_rec.h" // Not yet needed at the moment.
+
+#include "io_filter.h"
 //#include "http_methods.h" // Not yet needed at the moment.
 //#include "eval_ecl.h" // Not yet needed at the moment.
+
+
 #include "mod_ecl.h"
 
 
@@ -1941,7 +1947,8 @@
  * @param[in] request
  *   The structure that represents the current request.
  *
- * @return ap_status --- on success: OK / on failure: HTTP_INTERNAL_SERVER_ERROR, DECLINED
+ * @return ap_status ---  on success: OK /  on failure: one of  the (none-) HTTP
+ *   status codes (HTTP_INTERNAL_SERVER_ERROR, DECLINED)
  */
 
 static int ecl_hook_handler(request_rec * request)
@@ -1949,24 +1956,28 @@ static int ecl_hook_handler(request_rec * request)
   int ap_status = HTTP_INTERNAL_SERVER_ERROR;
   status_t status = FAILURE;
 
+
+
   // Check if we should handle the request.
 
   if (strcmp(request->handler, "application/x-httpd-ecl"))
   {
     // We should not handle the request.
 
-    // Set the status code.  We do not handle the request.
+    // Return status code.  We do not handle the request.
 
+// error.log
+    
     ap_status = DECLINED;
-
-    // Return status code.
-
     return (ap_status);
   }
   else
   {
     // We should handle the request.
   }
+
+
+
 
   // Now we output data to the request.
 
@@ -2044,20 +2055,47 @@ static int ecl_hook_handler(request_rec * request)
     status = getRequestRecPathInfo(request, & path_info);
     if (SUCCESS == status)
     {
-      ap_rprintf(request, "path_info = \"%s\"<br>\n", path_info);
+      ap_rprintf(request, "path_info = \"%s\"", path_info);
     }
     else
     {
-      ap_rputs("path_info = ERROR<br>\n", request);
+      ap_rputs("path_info = ERROR", request);
     }
-  }
 
-  // Set the status code.  We have handled the request.
 
-  ap_status = OK;
+ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "mod_ecl --- ecl_ecl_hook_handler --- begin");
 
+// ??? io-filter
+//
+ecl_output_filter_context = (ecl_output_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_output_filter_context_t));
+(* ecl_output_filter_context).dummy = 0; // dummy value, we can remove this later
+ap_filter_t * output_filter = NULL;
+output_filter = ap_add_output_filter("ecl-output-filter", ecl_output_filter_context, request, request->connection);
+if (NULL == output_filter)
+{
+  // We do not have a output filter.
+
+// error.log
+  
   // Return status code.
 
+  ap_status = HTTP_INTERNAL_SERVER_ERROR;
+  return (ap_status);
+}
+else
+{
+  // We do have a output filter.
+}
+
+ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "mod_ecl --- ecl_ecl_hook_handler --- end");
+
+  }
+
+// error.log
+
+  // Return status code.  We have handled the request.
+
+  ap_status = OK;
   return (ap_status);
 }
 
@@ -2479,6 +2517,13 @@ static const command_rec config_file_commands[1] =
 
 static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
 {
+// ??? io-filter
+//
+// The Rast mod_ecl output filter handler.
+//
+ap_register_output_filter("ecl-output-filter", ecl_output_filter_hander, ecl_output_filter_initalize, AP_FTYPE_RESOURCE);
+//ap_register_output_filter_protocol("ecl", ecl_output_filter_hander, ecl_output_filter_initalize, AP_FTYPE_RESOURCE, (AP_FILTER_PROTO_CHANGE|AP_FILTER_PROTO_CHANGE_LENGTH));
+
   // The RaSt mod_ecl hook handler.
 
   ap_hook_handler(ecl_hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
