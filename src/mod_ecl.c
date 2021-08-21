@@ -1967,7 +1967,7 @@ static int ecl_hook_handler(request_rec * request)
     // Return status code.  We do not handle the request.
 
 // error.log
-    
+
     ap_status = DECLINED;
     return (ap_status);
   }
@@ -1993,6 +1993,40 @@ static int ecl_hook_handler(request_rec * request)
   }
   else
   {
+
+
+
+ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "mod_ecl --- ecl_ecl_hook_handler --- begin");
+
+
+
+// ??? io-filter
+//
+//ecl_output_filter_context = (ecl_output_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_output_filter_context_t));
+//ecl_output_filter_context->dummy = -1; // dummy value, we can remove this later
+//ecl_output_filter_context->brigade = apr_brigade_create(request->pool, request->connection->bucket_alloc);
+//
+ap_filter_t * output_filter = NULL;
+output_filter = ap_add_output_filter("ecl-output-filter", ecl_output_filter_context, request, request->connection);
+//
+if (NULL == output_filter)
+{
+  // We do not have a output filter.
+
+// error.log
+
+  // Return status code.
+
+  ap_status = HTTP_INTERNAL_SERVER_ERROR;
+  return (ap_status);
+}
+else
+{
+  // We do have a output filter.
+}
+
+
+
     // Output header and data.
 
     ap_rputs("Hello, it's me --- your RaSt mod_ecl.<br>\n", request);
@@ -2063,31 +2097,10 @@ static int ecl_hook_handler(request_rec * request)
     }
 
 
-ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "mod_ecl --- ecl_ecl_hook_handler --- begin");
-
-// ??? io-filter
-//
-ecl_output_filter_context = (ecl_output_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_output_filter_context_t));
-(* ecl_output_filter_context).dummy = 0; // dummy value, we can remove this later
-ap_filter_t * output_filter = NULL;
-output_filter = ap_add_output_filter("ecl-output-filter", ecl_output_filter_context, request, request->connection);
-if (NULL == output_filter)
-{
-  // We do not have a output filter.
-
-// error.log
-  
-  // Return status code.
-
-  ap_status = HTTP_INTERNAL_SERVER_ERROR;
-  return (ap_status);
-}
-else
-{
-  // We do have a output filter.
-}
 
 ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, request, "mod_ecl --- ecl_ecl_hook_handler --- end");
+
+
 
   }
 
@@ -2517,12 +2530,17 @@ static const command_rec config_file_commands[1] =
 
 static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
 {
+
+
+
 // ??? io-filter
 //
 // The Rast mod_ecl output filter handler.
 //
 ap_register_output_filter("ecl-output-filter", ecl_output_filter_hander, ecl_output_filter_initalize, AP_FTYPE_RESOURCE);
 //ap_register_output_filter_protocol("ecl", ecl_output_filter_hander, ecl_output_filter_initalize, AP_FTYPE_RESOURCE, (AP_FILTER_PROTO_CHANGE|AP_FILTER_PROTO_CHANGE_LENGTH));
+
+
 
   // The RaSt mod_ecl hook handler.
 
