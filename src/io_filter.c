@@ -121,8 +121,8 @@ int ecl_output_filter_initalize(ap_filter_t * output_filter)
   // Initalize the output filter context.
 
   ecl_output_filter_context_t * ecl_output_filter_context = NULL;
-  ecl_output_filter_context = output_filter->ctx;
-  (* ecl_output_filter_context).dummy = 0; // dummy value, we can remove this later
+  ecl_output_filter_context = (ecl_output_filter_context_t *) output_filter->ctx;
+  ecl_output_filter_context->dummy = 0; // dummy value, we can remove this later
 
   // Return status code.
 
@@ -178,11 +178,15 @@ int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * o
 
   // Check if the output filter is already initialised.
 
-  if (NULL == output_filter)
+  ecl_output_filter_context_t * ecl_output_filter_context = NULL;
+  ecl_output_filter_context = (ecl_output_filter_context_t *) output_filter->ctx;
+
+  if (NULL == ecl_output_filter_context)
   {
     // Output filter is not initialised.
 
     ap_status = ecl_output_filter_initalize(output_filter);
+    ecl_output_filter_context = (ecl_output_filter_context_t *) output_filter->ctx;
 
     // Check if we have initialised the output filter.
 
