@@ -38,6 +38,7 @@
 typedef struct
 {
   int dummy; // dummy value, we can remove this later
+  apr_bucket_brigade * contect_output_brigade;
 } ecl_output_filter_context_t;
 extern ecl_output_filter_context_t * ecl_output_filter_context;
 int ecl_output_filter_initalize(ap_filter_t * output_filter);

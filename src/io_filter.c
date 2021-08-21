@@ -123,6 +123,7 @@ int ecl_output_filter_initalize(ap_filter_t * output_filter)
   ecl_output_filter_context_t * ecl_output_filter_context = NULL;
   ecl_output_filter_context = (ecl_output_filter_context_t *) output_filter->ctx;
   ecl_output_filter_context->dummy = 0; // dummy value, we can remove this later
+  ecl_output_filter_context->contect_output_brigade = apr_brigade_create(output_filter->r->pool, output_filter->r->connection->bucket_alloc);
 
   // Return status code.
 
@@ -234,13 +235,9 @@ int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * o
   // Create a new bucket and fill it using the data form the output bucket.
   //
 
-  // Create input brigade.
+  // Check if we have a output filter context brigade.
 
-  apr_bucket_brigade * brigade = NULL;
-  brigade = apr_brigade_create(output_filter->r->pool, output_filter->r->connection->bucket_alloc);
-
-  // Check if we have a brigade.
-  if (NULL == brigade)
+  if (NULL == ecl_output_filter_context->contect_output_brigade)
   {
     // We have no brigade.
 
@@ -257,7 +254,7 @@ int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * o
   char * output_begin_text = "( output begin text )";
   apr_bucket * output_begin_bucket = NULL;
   output_begin_bucket = apr_bucket_heap_create(output_begin_text, strlen(output_begin_text), NULL, output_filter->r->connection->bucket_alloc);
-  APR_BRIGADE_INSERT_TAIL(brigade, output_begin_bucket);
+  APR_BRIGADE_INSERT_TAIL(ecl_output_filter_context->contect_output_brigade, output_begin_bucket);
 
   // Loop throu output brigade and build brigade.
 
@@ -308,18 +305,18 @@ int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * o
 
     // Add to tail of bucket.
 
-    APR_BRIGADE_INSERT_TAIL(brigade, temp_bucket);
+    APR_BRIGADE_INSERT_TAIL(ecl_output_filter_context->contect_output_brigade, temp_bucket);
   }
 
   // dummy value, we can remove this later
   char * output_end_text = "( output end text )";
   apr_bucket * output_end_bucket = NULL;
   output_end_bucket = apr_bucket_heap_create(output_end_text, strlen(output_end_text), NULL, output_filter->r->connection->bucket_alloc);
-  APR_BRIGADE_INSERT_TAIL(brigade, output_end_bucket);
+  APR_BRIGADE_INSERT_TAIL(ecl_output_filter_context->contect_output_brigade, output_end_bucket);
 
   // We add an EOS bucket to the end of the input brigade.
 
-  APR_BRIGADE_INSERT_TAIL(brigade, eos_bucket);
+  APR_BRIGADE_INSERT_TAIL(ecl_output_filter_context->contect_output_brigade, eos_bucket);
 
   //
   // Pass the output bucket.
@@ -327,7 +324,7 @@ int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * o
 
   // Pass the output bucket down to the next filter on the filter stack.
 
-  apr_status = ap_pass_brigade(output_filter->next, brigade);
+  apr_status = ap_pass_brigade(output_filter->next, ecl_output_filter_context->contect_output_brigade);
 
   // Check if we passed the output brigade.
 
