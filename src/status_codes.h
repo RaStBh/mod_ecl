@@ -35,6 +35,12 @@
 #ifndef STATUS_CODES_H
 #define STATUS_CODES_H
 
+/**
+ * @brief General APR error.
+ */
+
+#define APR_FAILURE (1)
+
 typedef int status_t;
 extern const status_t FAILURE;
 extern const status_t SUCCESS;
