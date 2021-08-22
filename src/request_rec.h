@@ -35,10 +35,10 @@
 #ifndef REQUEST_REC_H
 #define REQUEST_REC_H
 
-status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri);
-status_t getRequestRecUri(request_rec * request, char ** uri);
-status_t getRequestRecFilename(request_rec * request, char ** filename);
-status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename);
-status_t getRequestRecPathInfo(request_rec * request, char ** path_info);
+apr_status_t getRequestRecUnparsedUri(request_rec * request, char ** unparsed_uri);
+apr_status_t getRequestRecUri(request_rec * request, char ** uri);
+apr_status_t getRequestRecFilename(request_rec * request, char ** filename);
+apr_status_t getRequestRecCanonicalFilename(request_rec * request, char ** canonical_filename);
+apr_status_t getRequestRecPathInfo(request_rec * request, char ** path_info);
 
 #endif
