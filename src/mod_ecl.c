@@ -124,7 +124,6 @@
 // Header from RaSt mod_ecl.
 
 #include "boolean.h"
-#include "status_codes.h"
 
 //#include "conn_rec.h" // Not yet needed at the moment.
 //#include "process_rec.h" // Not yet needed at the moment.
@@ -1954,7 +1953,7 @@
 static int ecl_hook_handler(request_rec * request)
 {
   int ap_status = HTTP_INTERNAL_SERVER_ERROR;
-  status_t status = FAILURE;
+  apr_status_t apr_status = APR_EGENERAL;
 
   //
   // Accept or decline handling the request.
@@ -2061,8 +2060,8 @@ static int ecl_hook_handler(request_rec * request)
     // Output the URI without any parsing performed.
 
     char * unparsed_uri = NULL;
-    status = getRequestRecUnparsedUri(request, & unparsed_uri);
-    if (SUCCESS == status)
+    apr_status = getRequestRecUnparsedUri(request, & unparsed_uri);
+    if (APR_EGENERAL == apr_status)
     {
       ap_rprintf(request, "unparsed_uri = \"%s\"<br>\n", unparsed_uri);
     }
@@ -2074,8 +2073,8 @@ static int ecl_hook_handler(request_rec * request)
     // Output the path portion of the URI, or "/" if no path provided.
 
     char * uri = NULL;
-    status = getRequestRecUri(request, & uri);
-    if (SUCCESS == status)
+    apr_status = getRequestRecUri(request, & uri);
+    if (APR_EGENERAL == apr_status)
     {
       ap_rprintf(request, "uri = \"%s\"<br>\n", uri);
     }
@@ -2087,8 +2086,8 @@ static int ecl_hook_handler(request_rec * request)
     // Output the filename on disk corresponding to this response.
 
     char * filename = NULL;
-    status = getRequestRecFilename(request, & filename);
-    if (SUCCESS == status)
+    apr_status = getRequestRecFilename(request, & filename);
+    if (APR_EGENERAL == apr_status)
     {
       ap_rprintf(request, "filename = \"%s\"<br>\n", filename);
     }
@@ -2100,8 +2099,8 @@ static int ecl_hook_handler(request_rec * request)
     // Output the true filename stored in the filesystem.
 
     char * canonical_filename = NULL;
-    status = getRequestRecCanonicalFilename(request, & canonical_filename);
-    if (SUCCESS == status)
+    apr_status = getRequestRecCanonicalFilename(request, & canonical_filename);
+    if (APR_EGENERAL == apr_status)
     {
       ap_rprintf(request, "canonical_filename = \"%s\"<br>\n", canonical_filename);
     }
@@ -2113,8 +2112,8 @@ static int ecl_hook_handler(request_rec * request)
     // Output the PATH_INFO extracted from this request.
 
     char * path_info = NULL;
-    status = getRequestRecPathInfo(request, & path_info);
-    if (SUCCESS == status)
+    apr_status = getRequestRecPathInfo(request, & path_info);
+    if (APR_EGENERAL == apr_status)
     {
       ap_rprintf(request, "path_info = \"%s\"", path_info);
     }

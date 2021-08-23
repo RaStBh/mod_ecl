@@ -58,7 +58,6 @@
 // Header from RaSt mod_ecl.
 
 #include "boolean.h"
-#include "status_codes.h"
 
 #include "io_filter.h"
 
@@ -163,7 +162,7 @@ int ecl_input_filter_hander(ap_filter_t * input_filter,
                             apr_off_t readbytes)
 {
   int ap_status = HTTP_INTERNAL_SERVER_ERROR;
-  apr_status_t apr_status = APR_FAILURE;
+  apr_status_t apr_status = APR_EGENERAL;
 
   //
   // Initalize the input filter.
@@ -480,7 +479,7 @@ int ecl_output_filter_initalize(ap_filter_t * output_filter)
 int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * output_brigade)
 {
   int ap_status = HTTP_INTERNAL_SERVER_ERROR;
-  apr_status_t apr_status = APR_FAILURE;
+  apr_status_t apr_status = APR_EGENERAL;
 
   //
   // Initalize the output filter.
