@@ -42,7 +42,12 @@ typedef struct
 } ecl_input_filter_context_t;
 extern ecl_input_filter_context_t * ecl_input_filter_context;
 int ecl_input_filter_initalize(ap_filter_t * input_filter);
+
+/*
 int ecl_input_filter_hander(ap_filter_t * input_filter, apr_bucket_brigade * input_brigade, ap_input_mode_t mode, apr_read_type_e block, apr_off_t readbytes);
+*/
+
+
 
 typedef struct
 {
@@ -52,5 +57,7 @@ typedef struct
 extern ecl_output_filter_context_t * ecl_output_filter_context;
 int ecl_output_filter_initalize(ap_filter_t * output_filter);
 int ecl_output_filter_hander(ap_filter_t * output_filter, apr_bucket_brigade * output_brigade);
+
+void heap_free(__attribute__((unused)) void * data);
 
 #endif
