@@ -1992,44 +1992,14 @@ static int ecl_hook_handler(request_rec * request)
   else
   {
     //
-    // Add input filter.
-    //
-
-    // Initialise the input filter context instead of using ecl_input_filter_initalize.
-
-    //ecl_input_filter_context = (ecl_input_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_input_filter_context_t));
-    //ecl_input_filter_context->dummy = -1; // dummy value, we can remove this later
-    //ecl_input_filter_context->brigade = apr_brigade_create(request->pool, request->connection->bucket_alloc);
-
-    // Add the input filter.
-
-    ap_filter_t * input_filter = NULL;
-    input_filter = ap_add_input_filter("ecl-input-filter", ecl_input_filter_context, request, request->connection);
-
-    // Check if we have added the input filter.
-
-    if (NULL == input_filter)
-    {
-      // We do not have a output filter.
-
-      // Return status code.
-
-      return (ap_status);
-    }
-    else
-    {
-      // We do have a output filter.
-    }
-
-    //
     // Add output filter
     //
 
     // Initialise the output filter context instead of using ecl_output_filter_initalize.
 
-    //ecl_output_filter_context = (ecl_output_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_output_filter_context_t));
-    //ecl_output_filter_context->dummy = -1; // dummy value, we can remove this later
-    //ecl_output_filter_context->brigade = apr_brigade_create(request->pool, request->connection->bucket_alloc);
+    ecl_output_filter_context = (ecl_output_filter_context_t *) apr_palloc(request->pool, sizeof(ecl_output_filter_context_t));
+    ecl_output_filter_context->dummy = -1; // dummy value, we can remove this later
+    ecl_output_filter_context->brigade = apr_brigade_create(request->pool, request->connection->bucket_alloc);
 
     // Add the output filter.
 
@@ -2061,7 +2031,7 @@ static int ecl_hook_handler(request_rec * request)
 
     char * unparsed_uri = NULL;
     apr_status = getRequestRecUnparsedUri(request, & unparsed_uri);
-    if (APR_EGENERAL == apr_status)
+    if (APR_SUCCESS == apr_status)
     {
       ap_rprintf(request, "unparsed_uri = \"%s\"<br>\n", unparsed_uri);
     }
@@ -2074,7 +2044,7 @@ static int ecl_hook_handler(request_rec * request)
 
     char * uri = NULL;
     apr_status = getRequestRecUri(request, & uri);
-    if (APR_EGENERAL == apr_status)
+    if (APR_SUCCESS == apr_status)
     {
       ap_rprintf(request, "uri = \"%s\"<br>\n", uri);
     }
@@ -2087,7 +2057,7 @@ static int ecl_hook_handler(request_rec * request)
 
     char * filename = NULL;
     apr_status = getRequestRecFilename(request, & filename);
-    if (APR_EGENERAL == apr_status)
+    if (APR_SUCCESS == apr_status)
     {
       ap_rprintf(request, "filename = \"%s\"<br>\n", filename);
     }
@@ -2100,7 +2070,7 @@ static int ecl_hook_handler(request_rec * request)
 
     char * canonical_filename = NULL;
     apr_status = getRequestRecCanonicalFilename(request, & canonical_filename);
-    if (APR_EGENERAL == apr_status)
+    if (APR_SUCCESS == apr_status)
     {
       ap_rprintf(request, "canonical_filename = \"%s\"<br>\n", canonical_filename);
     }
@@ -2113,7 +2083,7 @@ static int ecl_hook_handler(request_rec * request)
 
     char * path_info = NULL;
     apr_status = getRequestRecPathInfo(request, & path_info);
-    if (APR_EGENERAL == apr_status)
+    if (APR_SUCCESS == apr_status)
     {
       ap_rprintf(request, "path_info = \"%s\"", path_info);
     }
@@ -2539,7 +2509,7 @@ static const command_rec config_file_commands[1] =
  * AP_FILTER_PROTO_NO_PROXY --- Filter should not run in a proxy.
  *
  * AP_FILTER_PROTO_TRANSFORM  --- Filter  is  incompatible with  "Cache-Control:
- * no-transform".
+ *   no-transform".
  *
  * @see [Apache HTTP Server --- Core routines --- Filter Chain](https://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__FILTER.html)
  *
@@ -2551,14 +2521,27 @@ static const command_rec config_file_commands[1] =
 
 static void register_hooks(__attribute__((unused)) apr_pool_t * pool)
 {
+
+
+
+/* ??? filter
   // The Rast mod_ecl input filter handler.
 
   ap_register_input_filter("ecl-input-filter", ecl_input_filter_hander, ecl_input_filter_initalize, AP_FTYPE_RESOURCE);
+*/
+//ap_register_input_filter("ecl-input-filter", ecl_input_filter_hander, NULL, AP_FTYPE_RESOURCE);
 
+
+
+/* ??? filter
   // The Rast mod_ecl output filter handler.
 
   ap_register_output_filter("ecl-output-filter", ecl_output_filter_hander, ecl_output_filter_initalize, AP_FTYPE_RESOURCE);
   //ap_register_output_filter_protocol("ecl-output-filter", ecl_output_filter_hander, ecl_output_filter_initalize, AP_FTYPE_RESOURCE, (AP_FILTER_PROTO_CHANGE | AP_FILTER_PROTO_CHANGE_LENGTH));
+*/
+ap_register_output_filter("ecl-output-filter", ecl_output_filter_hander, NULL, AP_FTYPE_RESOURCE);
+
+
 
   // The RaSt mod_ecl hook handler.
 
